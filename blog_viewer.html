@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1.0">
+    <title>District 4 - Blog</title>
+
+    <!-- Define  this later -->
+    <link rel="stylesheet" href="CSS/style.css">
+
+    <script src="JS/config.js"></script>
+    <script src="JS/blog-viewer.js"></script>
+    <script src="JS/components.js"></script>
+    <script>
+        window.onload = initComponents;
+    </script>
+</head>
+<body>
+    <main class="blog-display">
+        <h2 class="blog-title" id="blog-title"></h2>
+        <small class="blog-meta" id="blog-meta"></small>
+
+        <!-- The body may contain images and other things, so this is a div -->
+        <div class="blog-body" id="blog-body"></div>
+    </main>
+    <script>
+        showBlog();
+    </script>
+</body>
+</html>

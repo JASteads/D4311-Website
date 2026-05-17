@@ -7,7 +7,7 @@
 
 html {
     background: radial-gradient(rgb(0, 83, 69), rgb(20, 2, 27));
-    background-image: url("./Images/sbg.png");
+    background-image: url("../Resources/Images/sbg.png");
     background-size: cover;
     background-repeat: no-repeat;
     background-position: top center;
@@ -157,10 +157,10 @@ main h2 {
     list-style: none;
 }
 
-.news-feed li {
+.news-feed .blog-preview {
     width: 90%;
     padding-bottom: 20px;
-    margin: 0 30px 30px 35px;
+    margin: 0 30px 30px 35px;   
     border-radius: 10px 10px 4px 4px;
     border-bottom: 1px solid #0a0;
     overflow: hidden;
@@ -187,7 +187,8 @@ main h2 {
 }
 
 .news-feed .date {
-    margin-top: 10px;   
+    display: block;
+    margin: 0 20px;
     font-style: italic;
     text-align: right;
     font-size: 0.75rem;

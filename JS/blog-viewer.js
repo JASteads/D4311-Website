@@ -1,16 +1,3 @@
-class BlogPost {
-    /** 
-     * @param {string} title
-     * @param {string} author
-     * @param {string} bodyText
-    */
-    constructor(title, author, bodyText) {
-        this.title = title;
-        this.author = author;
-        this.bodyText = bodyText;
-    }
-}
-
 /**
  * Generates a string-formatted date from a valid timestamp.
  * @param {string} timestamp 
@@ -43,30 +30,6 @@ const getDaySuffix = day => {
         default: return 'th';
     }
 }
-
-/**
- * Creates a blog post record for the database using admin-specific credentials.
- * @param {string} title 
- * @param {string} bodyText 
- */
-const postAdminBlog = async (title, bodyText) => {
-    const newBlog = new BlogPost(title, 'Lemonfaace', bodyText);
-
-    try {
-        const res = await fetch(`${API_URL}/api/blog`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newBlog)
-        });
-
-        if (!res.ok) throw new Error("Failed to create blog post");
-
-        const blogResult = await res.json();
-        alert("Added: " + blogResult.title);
-    } catch (e) {
-        console.error("Failed to add:", e);
-    }
-};
 
 /**
  * Returns the blog post from the database containing the given id, if possible.
@@ -116,42 +79,88 @@ const getRecentBlogs = async (n = null) => {
 /**
  * Takes a blog and presents it in the desired format.
  * @param {Object} blog
- * @returns {HTMLElement} display
+ * @param {string} blog.title
+ * @param {string} blog.author
+ * @param {string} blog.body
+ * @param {string} blog.created_at
+ * @returns {HTMLElement} preview
  */
-const generateBlogHTML = blog => {
-    if (!blog) return document.createElement('div');
+const generateBlogPreview = blog => {
 
-    const display = document.createElement('div');
-    display.className = 'blog-post';
+    if (!blog) return document.createElement('li');
 
-    const title = document.createElement('h2');
+    const preview = document.createElement('li');
+    const link = document.createElement('a');
+    const title = document.createElement('h3');
+    const meta = document.createElement('small');
+    const body = document.createElement('p');
+
     title.textContent = blog.title;
 
-    const meta = document.createElement('small');
-    meta.textContent = `${blog.author} | ${blog.created_at}`;
+    link.href = `blog_viewer.html?id=${blog.id}`;
+    link.appendChild(title);
 
-    const body = document.createElement('p');
+    meta.className = 'date';
+    meta.textContent = `${blog.author} | ${formatBlogDate(blog.created_at)}`;  
+
     body.textContent = blog.body;
+    
+    preview.className = 'blog-preview';
+    preview.append(link, body, meta);
 
-    display.append(title, meta, body);
-
-    return display;
+    return preview;
 }
 
 /**
- * Appends the target blog entry given the provided id.
- * @param {HTMLElement} parent 
- * @param {number} id 
+ * Takes a blog and presents it in the desired format.
+ * @param {Object} blog
+ * @param {string} blog.title
+ * @param {string} blog.author
+ * @param {string} blog.body
+ * @param {string} blog.created_at
  */
-const showBlog = async (parent, id) => {
-    if (!parent) {
-        console.error("No valid parent to display blogs in");
+const generateBlogFull = blog => {
+    if (!blog) {
+        alert('Failed to load blog.');
         return;
     }
 
-    const blog = await getBlog(id);
+    const title = document.getElementById('blog-title');
+    const meta = document.getElementById('blog-meta');
+    const body = document.getElementById('blog-body');
     
-    parent.appendChild(generateBlogHTML(blog));
+    title.textContent = blog.title;
+    meta.textContent = `${blog.author} | ${formatBlogDate(blog.created_at)}`;    
+    body.textContent = blog.body; // Will replace with a more robust process later
+    
+    localStorage.setItem('currentBlog', JSON.stringify(blog));
+
+    document.title = `District 4 - ${blog.title}`;
+}
+
+/**
+ * Populates the blog viewer with the target blog via ID.
+ */
+const showBlog = async () => {
+    const params = new URLSearchParams(window.location.search);
+    let paramsID = params.get('id');
+
+    if (!paramsID) paramsID = 1;
+
+    // Try grabbing from cache
+    const cached = localStorage.getItem('currentBlog');
+    if (cached) {
+        console.log('Found blog in cache.');
+        const blog = JSON.parse(cached);
+
+        if (`${blog.id}` === paramsID) {
+            console.log('Cached blog is the one we\'re looking for');
+            generateBlogFull(blog);
+            return;
+        }
+    }
+
+    generateBlogFull(await getBlog(paramsID));
 }
 
 /**
@@ -167,5 +176,5 @@ const showRecentBlogs = async (parent, amount = null) => {
 
     const blogs = await getRecentBlogs(amount);
 
-    blogs.forEach(b => parent.appendChild(generateBlogHTML(b)));
+    blogs.forEach(b => parent.appendChild(generateBlogPreview(b)));
 }
