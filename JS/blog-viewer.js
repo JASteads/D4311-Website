@@ -1,4 +1,174 @@
 /**
+ * Parses a body of text into all identifiable labels and returns them as a string of text.
+ * @param {string} text 
+ * @returns {string}
+ */
+const parseLabels = text => {
+    if (!text || text === '') return '';
+
+    let result = '';
+    let i = 0;
+    
+    /**
+     * Process
+     * 
+     * 1. Read as normal until finding a valid label
+     * 2. Upon finding a valid label, append previous text to result
+     * 3. Recursively call parse function with the label type as the end condition.
+     *    Pass index position
+     * 4. In recursive function, repeat process until finding a close label. 
+     *    Pass updated index position while traversing string
+     * 5. Upon finding close label, use label type to generate 
+     *    the correct innerHTML and return it to upper level
+     * 6. Upon exiting recursive loop, continue at final updated index position
+     *    until next valid label or end of text
+     * 7. At end of text, append remaining text to result and return it
+     */
+
+
+    const parseLabelInfo = (start, end) => {
+        const label = text.substring(start + 1, end);
+        const equalIndex = label.indexOf('=');
+
+        /**
+         * ------------ EXAMPLES ------------
+         * a. [b]Text[/b]
+         * b. [url="localhost.3000/?id=7"]Link[/url]
+         * c. [size=20][/size]
+         */
+        
+        let type, info = '';
+
+        if (equalIndex === -1) {
+            type = label;
+        }
+        else {
+            type = label.substring(0, equalIndex);
+            info = label.substring(equalIndex + 1);
+
+            if (info.startsWith('"') && info.endsWith('"')) {
+                info = info.slice(1, -1); // Remove quotation marks
+            }
+        }
+
+        if (!type || type.includes('?') || type.includes('[')) {
+            console.warn("Label type is invalid:", label);
+            return { type: null, info: '' };
+        }
+
+        return {type, info};
+    }
+    
+    const parseLabel = (type, info) => {
+        if (!type) return '';
+        
+        let content = '';
+
+        // Assume cursor is correctly placed after the label start
+        while (i < text.length) {
+            if (text[i] === '[') {
+                if (text.startsWith(`/${type}]`, i + 1)) {
+                    // Escape label found
+                    i += 3 + type.length; // '[/]' + `${type}`
+                    return LabelToinnerHTML(type, info, content); // Handles intended behavior for each type
+                }
+                else if (text[i + 1] !== '/') {
+                    // Found another potential label
+                    const labelEnd = text.indexOf(']', i);
+                    if (labelEnd !== -1) {
+                        const { type: innerType, info: innerInfo } = parseLabelInfo(i, labelEnd);
+
+                        i = labelEnd + 1;
+                        content += parseLabel(innerType, innerInfo);
+                        continue;
+                    }
+                }
+            }
+
+            content += text[i++];
+        }
+
+        return `[${type}]${content}`;
+    }
+
+    while (i < text.length) {
+        if (text[i] === '[' && text[i + 1] !== '/') {
+            const labelEnd = text.indexOf(']', i);
+            
+            if (labelEnd === -1) {
+                console.warn('Label start found, but no label end to complete it');
+                break;
+            }
+
+            const {type, info} = parseLabelInfo(i, labelEnd);
+            i = labelEnd + 1;
+
+            result += parseLabel(type, info);
+        }
+        else result += text[i++];
+    }
+
+    return result;
+}
+
+/**
+ * Uses a label type and info to handle the HTML formatting for a body of text.
+ * If the label type is invalid, the label and its content is returned in plain text.
+ * @param {string} type 
+ * @param {string} info 
+ * @param {string} content 
+ * @returns {string}
+ */
+const LabelToinnerHTML = (type, info, content) => {
+    const defaultSize = 1.6; // Measured in em
+
+    const handlers = {
+        'b': (info, content) => `<strong>${content}</strong>`,
+        'i': (info, content) => `<em>${content}</em>`,
+        'u': (info, content) => `<u>${content}</u>`,
+
+        'url': (info, content) => {
+            const href = info || '#';
+
+            return `<a href="${escapeHTML(href)}" target="_blank">${content}</a>`;
+        },
+
+        'img': (info, content) => {
+            const source = info || '';
+            const alt = content || '';
+
+            return `<img src="${escapeHTML(source)}" alt="${escapeHTML(alt)}">`;
+        },
+
+        'size': (info, content) => {
+            const size = parseInt(info) || defaultSize;
+
+            return `<span style="font-size: ${size}em;">${content}</span>`;
+        }
+    }
+
+    const handler = handlers[type];
+    if (handler) return handler(info, content);
+
+    console.warn("Invalid label type provided:", type);
+    return `[${type}${(info ? `=${info}` : '')}]${content}[/${type}]`;
+}
+
+/**
+ * Alters characters into HTML-safe strings that are commonly read as normal characters
+ * @param {string} unsafe 
+ * @returns {string}
+ */
+const escapeHTML = unsafe => {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+
+/**
  * Generates a string-formatted date from a valid timestamp.
  * @param {string} timestamp 
  * @returns {string}
@@ -103,7 +273,7 @@ const generateBlogPreview = blog => {
     meta.className = 'date';
     meta.textContent = `${blog.author} | ${formatBlogDate(blog.created_at)}`;  
 
-    body.textContent = blog.body;
+    body.innerHTML = parseLabels(blog.body);
     
     preview.className = 'blog-preview';
     preview.append(link, body, meta);
@@ -131,7 +301,7 @@ const generateBlogFull = blog => {
     
     title.textContent = blog.title;
     meta.textContent = `${blog.author} | ${formatBlogDate(blog.created_at)}`;    
-    body.textContent = blog.body; // Will replace with a more robust process later
+    body.innerHTML = parseLabels(blog.body);
     
     localStorage.setItem('currentBlog', JSON.stringify(blog));
 

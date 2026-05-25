@@ -134,11 +134,15 @@ nav a:hover {
 /* Main Content */
 main {
     background: rgb(15, 22, 15);
+    display: flex;
     flex: 1;
-    max-width: 720px;
+    flex-direction: column;
+    position: relative;
+    min-height: 600px;
+    width: 720px;
+    max-width: 100%;
     border: 2px solid rgba(0, 100, 0, 0.3);
     border-radius: 2px;
-    min-height: 600px;
 }
 
 main h2 {
@@ -155,6 +159,8 @@ main h2 {
 /* News Feed */
 .news-feed {
     list-style: none;
+    flex: 1;
+    padding: 20px 0;
 }
 
 .news-feed .blog-preview {
@@ -198,8 +204,9 @@ main h2 {
 
 /* Fabu Image */
 .fabu-container {
+    margin-top: auto;
     text-align: center;
-    margin: 50px 0 30px;
+    padding-bottom: 40px;
 }
 
 /* Fabu Image */
@@ -242,6 +249,8 @@ footer p {
     }
 
     main {
-        max-width: 100%;
+        max-width: 720px;
+        min-height: 500px;
+        width: 100%;
     }
 }
