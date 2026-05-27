@@ -236,6 +236,39 @@ footer p {
     opacity: 0.85;
 }
 
+/* ====================== EDITOR ====================== */
+
+.editor {
+    padding: 20px;
+}
+
+.blog-title {
+    background-color: rgb(34, 30, 41);
+    border-style: ridge;
+    color: white;
+}
+
+.editor-body {
+    margin: 10px auto;
+    border: 1px solid rgb(62, 58, 77);
+    background-color: rgb(28, 25, 34);
+    color: white;
+    padding: 10px;
+    min-height: 200px;
+}
+
+.editor-content {
+    outline: none;
+}
+
+.editor-placeholder {
+    color: rgb(93, 89, 105);
+    pointer-events: none;
+    user-select: none;
+    display: none;
+}
+
+
 /* ====================== RESPONSIVE ====================== */
 @media (max-width: 1100px) {
     .container {
