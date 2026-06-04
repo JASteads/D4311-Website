@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale="1.0">
+    <title>District 4 - Blog Editor</title>
+    <link rel="stylesheet" href="CSS/style.css">
+
+    <script type="module" src="JS/blog-editor.ts"></script>
+</head>
+<body>
+    <div class="editor">
+        <label class="title-label" for="blog-title">Title</label>
+        <input class="blog-title" type="text" id="blog-title" placeholder="Untitlted">
+
+        <!-- Formatting buttons -->
+        <button id="bold-button">Bold</button>
+        <button id="em-button">Italics</button>
+        <button id="u-button">Underline</button>
+        <button id="url-button">URL</button>
+        <button id="image-button">Image</button>
+        <button id="size-button">Size</button>
+
+        <div class="editor-body" id="editor-body">
+            <span class="editor-content" contenteditable="true" id="editor-content"></span>
+            <span class="editor-placeholder" id="editor-placeholder">Content goes here ...</span>
+        </div>
+        <button id="publish-button">Publish</button>
+    </div>
+</body>
+</html>
