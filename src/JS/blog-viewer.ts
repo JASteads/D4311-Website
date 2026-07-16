@@ -1,4 +1,5 @@
 import { API_URL } from './config';
+import { DEV_URL } from './config';
 
 class Blog {
     id: number;
@@ -261,7 +262,7 @@ export class BlogViewer {
 
         title.textContent = blog.title;
 
-        link.href = `blog_viewer.html?id=${blog.id}`;
+        link.href = `${DEV_URL}/blog_viewer.html?id=${blog.id}`;
         link.appendChild(title);
 
         meta.className = 'date';
@@ -306,22 +307,35 @@ export class BlogViewer {
         const params = new URLSearchParams(window.location.search);
         let paramsID: number | null = params.get('id') as number | null;
 
-        if (!paramsID) paramsID = 1;
-
-        // Try grabbing from cache
-        const cached = localStorage.getItem('currentBlog');
-        if (cached) {
-            console.log('Found blog in cache.');
-            const blog: Blog = JSON.parse(cached);
-
-            if (`${blog.id}` as unknown === paramsID) {
-                console.log('Cached blog is the one we\'re looking for');
-                this.generateBlogFull(blog);
-                return;
+        try {
+            // Validate ID parameter
+            if (!paramsID) {
+                throw new Error('No blog ID provided in URL');
             }
-        }
 
-        this.generateBlogFull(await this.getBlog(paramsID));
+            // Try grabbing from cache
+            const cached = localStorage.getItem('currentBlog');
+            if (cached) {
+                console.log('Found blog in cache.');
+                const blog: Blog = JSON.parse(cached);
+
+                if (`${blog.id}` as unknown === paramsID) {
+                    console.log('Cached blog is the one we\'re looking for');
+                    this.generateBlogFull(blog);
+                    return;
+                }
+            }
+
+            const blog = await this.getBlog(paramsID);
+            if (!blog || !blog.id) {
+                throw new Error('Blog does not exist.');
+            }
+
+            this.generateBlogFull(blog);
+        } catch (e) {
+            window.location.href = `${DEV_URL}/load_fail.html`;
+            return;
+        }
     }
 
     /**

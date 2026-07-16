@@ -2,59 +2,40 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { Client } = require('pg');
+const { Pool } = require('pg');
+const path = require('path');
+
 
 const app = express();
-app.use(cors());           // Allows frontend to call this server
+app.use(cors()); // Allows frontend to call the server
 app.use(express.json());
 
-const client = new Client({
+const pool = new Pool({
     connectionString: process.env.DB_CONNECTION_STRING
 });
 
 // SETUP
 const onDatabaseConnect = async () => {
-    // Ensure all db tables exist
     try {
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS blogs(
-                id SERIAL PRIMARY KEY,
-                title TEXT,
-                author TEXT,
-                body TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-        `);
-
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS products(
-                id SERIAL PRIMARY KEY,
-                title TEXT,
-                creator TEXT,
-                description TEXT,
-                txn_link TEXT
-            );
-        `);
-        console.log("Tables created and/or verified");
-    } catch (e) {
-        console.error("Table verification failed:", e);
+        await initialiazeDatabase();
+        console.log("✅ Database connected and initialized");
     }
-    
-    console.log("✅ Database connected");
+    catch (e) {
+        console.error("❌ DB Error", e);
+    }
 }
 
 // Connect once when server starts
-client.connect()
-    .then(onDatabaseConnect)
-    .catch(e => console.error("❌ DB Error", e));
-
+const startServer = () => {
+    onDatabaseConnect();
+}
 
 // === API Routes ===
 // Get target blog entry
 app.get('/api/blogs/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await client.query(`
+        const result = await pool.query(`
             SELECT *
             FROM blogs
             WHERE id = $1
@@ -92,7 +73,7 @@ app.get('/api/blogs', async (req, res) => {
             params.push(safeLimit);
         }
 
-        const result = await client.query(queryText, params);
+        const result = await pool.query(queryText, params);
 
         res.json(result.rows);
     } catch (e) {
@@ -105,7 +86,7 @@ app.get('/api/blogs', async (req, res) => {
 app.post('/api/blog', async (req, res) => {
     try {
         const { title, author, bodyText } = req.body;
-        const result = await client.query(`
+        const result = await pool.query(`
             INSERT INTO blogs (title, author, body)
             VALUES ($1, $2, $3)
             RETURNING *
@@ -117,5 +98,81 @@ app.post('/api/blog', async (req, res) => {
     }
 });
 
+// Get portfolio items
+app.get('/api/portfolio', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT title, type, lang_api, date, description, image_link, project_link
+            FROM portfolio_items
+        `);
+
+        res.json(result.rows);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(__dirname, './src/load_fail.html'));
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PORT}`));
+
+/**
+ * Ensures all DB tables exist and creates them if they don't.
+ */
+const initialiazeDatabase = async () => {
+    // Table creation queries to run
+    const queries = [
+        {
+            name: "Blogs", 
+            sql: `
+                CREATE TABLE IF NOT EXISTS blogs(
+                    id SERIAL PRIMARY KEY,
+                    title TEXT,
+                    author TEXT,
+                    body TEXT,
+                    created_at TIMESTAMP DEFAULT NOW()
+                );`
+        },
+        {
+            name: "Products", 
+            sql: `
+                CREATE TABLE IF NOT EXISTS products(
+                    id SERIAL PRIMARY KEY,
+                    title TEXT,
+                    creator TEXT,
+                    description TEXT,
+                    txn_link TEXT
+                );`
+        },
+        {
+            name: "Portfolio Items",
+            sql: `
+                CREATE TABLE IF NOT EXISTS portfolio_items(
+                    id SERIAL PRIMARY KEY,
+                    title TEXT,
+                    type TEXT,
+                    lang_api TEXT,
+                    date TEXT,
+                    description TEXT,
+                    image_link TEXT,
+                    project_link TEXT
+                );`
+        }
+    ];
+
+    // Run all queries in parallel and log results
+    const results = await Promise.allSettled(queries.map(q => pool.query(q.sql)));
+    results.forEach((result, i) => {
+        const qName = queries[i].name;
+
+        if (result.status === 'fulfilled')  
+            console.log(`Verified ${qName} table`);
+        else
+            console.error(`${qName} table verification failed:`, result.reason);
+    });
+}
+
+startServer();

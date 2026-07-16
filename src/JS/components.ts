@@ -1,22 +1,27 @@
 export class Components {
     constructor() {
-        this.initComponents();
+        const body = document.body;
+
+        body.insertBefore(this.createHeader(), body.firstChild);
+        body.appendChild(this.createFooter());
     }
 
-    /**
-     */
-    private createLogo = () : HTMLElement => {
+    private createLogo = (className: string) : HTMLAnchorElement => {
         const logo = document.createElement('img');
+        const indexLink = document.createElement('a');
         
         logo.className = 'logo';
         logo.src = 'Resources/Images/LoL.png';
         logo.alt = "A Lemon head";
+
         
-        return logo;
+        indexLink.href = 'index.html';
+        indexLink.className = className;
+        indexLink.appendChild(logo);
+        
+        return indexLink;
     }
 
-    /**
-     */
     private createHeader = () : HTMLElement => {
         const header = document.createElement('header');
         const title = document.createElement('h1');
@@ -24,37 +29,23 @@ export class Components {
         title.textContent = 'District 4';
         
         header.className = 'main-header';
-        header.append(this.createLogo(), title);
+        header.append(this.createLogo('header-logo'), title);
 
         return header;
     }
 
-    /**
-     */
     private createFooter = () : HTMLElement => {
         const footer = document.createElement('footer');
-        const indexLink = document.createElement('a');
         const motto = document.createElement('p');
+        const logo = this.createLogo('footer-logo');
 
-        indexLink.href = 'index.html';
-        indexLink.className = 'footer-logo';
-        indexLink.appendChild(this.createLogo());
+
 
         motto.innerText = 'The Intermission is Real';
 
         footer.className = 'main-footer';
-        footer.append(indexLink, motto);
+        footer.append(logo, motto);
 
         return footer;
-    }
-
-    /**
-     * Creates common page elements for the document body.
-     */
-    private initComponents = () => {
-        const body = document.body;
-
-        body.insertBefore(this.createHeader(), body.firstChild);
-        body.appendChild(this.createFooter());
     }
 }

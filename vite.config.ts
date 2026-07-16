@@ -9,7 +9,9 @@ export default defineConfig({
             input: {
                 main: "./src/index.html",
                 blogViewer: "./src/blog_viewer.html",
-                blogEditor: "./src/blog_editor.html"
+                blogEditor: "./src/blog_editor.html",
+                portfolio: "./src/portfolio.html",
+                loadFail: "./src/load_fail.html"
             }
         }
     },
@@ -20,7 +22,7 @@ export default defineConfig({
                 target: 'http://localhost:3000',
                 changeOrigin: true,
                 secure: false,
+            }
         }
-        }
-  }
-})
+    }
+});

@@ -154,6 +154,27 @@ class BlogEditor {
 
         publishButton?.addEventListener('click', this.publishBlog);
     }
+
+    private deleteBlog = async (blogId: string) => {
+        try {
+            const res = await fetch(`${API_URL}/api/blog/${blogId}`, {
+                method: "DELETE"
+            });
+
+            if (!res.ok) throw new Error("Failed to delete blog post");
+
+            alert("Deleted blog post with ID: " + blogId);
+        } 
+        catch (e) {
+            console.error("Failed to delete:", e);
+        }
+    }
+    
+    private confirmDelete = (blogId: string) => {
+        if (confirm("Are you sure you want to delete this blog post?")) {
+            this.deleteBlog(blogId);
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
