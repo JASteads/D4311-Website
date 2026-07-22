@@ -3,10 +3,11 @@ export class Components {
         const body = document.body;
 
         body.insertBefore(this.createHeader(), body.firstChild);
+        body.insertBefore(this.createNavigation(), body.firstChild);
         body.appendChild(this.createFooter());
     }
 
-    private createLogo = (className: string) : HTMLAnchorElement => {
+    private createLogo = (className: string): HTMLAnchorElement => {
         const logo = document.createElement('img');
         const indexLink = document.createElement('a');
         
@@ -22,7 +23,7 @@ export class Components {
         return indexLink;
     }
 
-    private createHeader = () : HTMLElement => {
+    private createHeader = (): HTMLElement => {
         const header = document.createElement('header');
         const title = document.createElement('h1');
         
@@ -34,12 +35,10 @@ export class Components {
         return header;
     }
 
-    private createFooter = () : HTMLElement => {
+    private createFooter = (): HTMLElement => {
         const footer = document.createElement('footer');
         const motto = document.createElement('p');
         const logo = this.createLogo('footer-logo');
-
-
 
         motto.innerText = 'The Intermission is Real';
 
@@ -47,5 +46,36 @@ export class Components {
         footer.append(logo, motto);
 
         return footer;
+    }
+
+    private createNavigation = (): HTMLElement => {
+        const navigation = document.createElement('div');
+        navigation.className = 'navigation';
+
+        const sectionLeft = document.createElement('section');
+        const sectionMid = document.createElement('section');
+        const sectionRight = document.createElement('section');
+
+        const accountButton = document.createElement('a')
+        accountButton.className = 'navigation-button';
+        accountButton.textContent = 'Lemonfaace';
+        accountButton.href = '#';
+
+        const uploadButton = document.createElement('a');
+        uploadButton.className = 'navigation-button';
+        uploadButton.textContent = 'Upload';
+        uploadButton.href = '../upload.html';
+
+        const websiteTitle = document.createElement('a');
+        websiteTitle.className = 'website-title'
+        websiteTitle.textContent = 'District 4';
+        websiteTitle.href = '../index.html';
+
+        sectionLeft.append(websiteTitle);
+        sectionRight.append(uploadButton, accountButton);
+
+        navigation.append(sectionLeft, sectionMid, sectionRight);
+
+        return navigation;
     }
 }

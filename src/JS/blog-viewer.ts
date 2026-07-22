@@ -6,14 +6,14 @@ class Blog {
     title: string;
     author: string;
     body: string;
-    created_at: string;
+    createdAt: string;
 
-    constructor(id: number, title: string, author: string, body: string, created_at: string) {
+    constructor(id: number, title: string, author: string, body: string, createdAt: string) {
         this.id = id;
         this.title = title;
         this.author = author;
         this.body = body;
-        this.created_at = created_at;
+        this.createdAt = createdAt;
     }
 }
 
@@ -209,7 +209,7 @@ export class BlogViewer {
     /**
      * Returns the blog post from the database containing the given id, if possible.
      */
-    private getBlog = async (id: number) => {
+    private getBlog = async (id: number): Promise<any> => {
         try {
             const res = await fetch(`${API_URL}/api/blogs/${id}`);
 
@@ -229,7 +229,7 @@ export class BlogViewer {
     /**
      * Returns n blog entries from the main database (n === 0 for all blogs).
      */
-    private getRecentBlogs = async (n: number | null = null) => {
+    private getRecentBlogs = async (n: number | null = null): Promise<any[]> => {
         try {
             const url = n && n > 0 
                 ? `${API_URL}/api/blogs?limit=${n}` 
@@ -266,7 +266,7 @@ export class BlogViewer {
         link.appendChild(title);
 
         meta.className = 'date';
-        meta.textContent = `${blog.author} | ${this.formatBlogDate(blog.created_at)}`;  
+        meta.textContent = `${blog.author} | ${this.formatBlogDate(blog.createdAt)}`;  
 
         body.innerHTML = this.parseLabels(blog.body);
         
@@ -291,7 +291,7 @@ export class BlogViewer {
         
         if (title != null && meta != null && body != null) {
             title.textContent = blog.title;
-            meta.textContent = `${blog.author} | ${this.formatBlogDate(blog.created_at)}`;    
+            meta.textContent = `${blog.author} | ${this.formatBlogDate(blog.createdAt)}`;    
             body.innerHTML = this.parseLabels(blog.body);
         }
         

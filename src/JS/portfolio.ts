@@ -22,7 +22,7 @@ class PortfolioItem {
     }
 }
 
-const getPortfolioItems = async (): Promise<any> => {
+const getPortfolioItems = async (): Promise<any[]> => {
     try {
         const res = await fetch(`${API_URL}/api/portfolio`);
 
@@ -34,13 +34,13 @@ const getPortfolioItems = async (): Promise<any> => {
     }
     catch (e) {
         console.error("Failed to fetch portfolio items:", e);
+        return [];
     }
 }
 
 const loadPorfolio = async () => {
     const portfolioItems = await getPortfolioItems();
-
-    if (!portfolioItems) {
+    if (!portfolioItems || portfolioItems.length === 0) {
         console.error("No portfolio items found.");
         return;
     }
@@ -70,9 +70,9 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     date.className = 'project-date';
     date.innerText = `(${item.date})`;
 
-    const langApi = document.createElement('small');
-    langApi.className = 'project-lang-api';
-    langApi.innerText = item.lang_api;
+    const lang_api = document.createElement('small');
+    lang_api.className = 'project-lang-api';
+    lang_api.innerText = item.lang_api;
 
     const description = document.createElement('p');
     description.className = 'project-description';
@@ -80,9 +80,9 @@ const generatePortfolioItem = (item: PortfolioItem) => {
 
     const imgLinkURL = `Resources/Portfolio/References/${item.image_link}`;
 
-    const imageLink = document.createElement('a');
-    imageLink.href = imgLinkURL;
-    imageLink.target = '_blank';
+    const image_link = document.createElement('a');
+    image_link.href = imgLinkURL;
+    image_link.target = '_blank';
 
     const image = document.createElement('img');
     image.className = 'project-image';
@@ -90,7 +90,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     image.alt = item.title;
     image.style.maxWidth = '250px';
 
-    imageLink.appendChild(image);
+    image_link.appendChild(image);
 
     const link = document.createElement('a');
     link.className = 'project-link';
@@ -98,7 +98,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     link.target = '_blank';
     link.innerText = 'View Project';
 
-    projectItem.append(title, date, langApi, description, imageLink, link);
+    projectItem.append(title, date, lang_api, description, image_link, link);
     projectList.appendChild(projectItem);
 }
 

@@ -8,8 +8,10 @@ export default defineConfig({
         rolldownOptions: {
             input: {
                 main: "./src/index.html",
+                upload: "./src/upload.html",
                 blogViewer: "./src/blog_viewer.html",
                 blogEditor: "./src/blog_editor.html",
+                gallery: "./src/gallery.html",
                 portfolio: "./src/portfolio.html",
                 loadFail: "./src/load_fail.html"
             }

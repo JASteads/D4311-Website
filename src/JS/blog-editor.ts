@@ -102,6 +102,7 @@ class BlogEditor {
         }
     }
 
+    // Doesn't work super well right now, but it does prevent pasting rich text
     private fixPaste = (e: ClipboardEvent) => {
         if (!e.clipboardData) return;
 

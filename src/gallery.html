@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>District 4 - Gallery</title>
+    <link rel="stylesheet" href="CSS/style.css">
+    <script type="module" src="JS/gallery.ts"></script>
+</head>
+<body>
+    <h1>Gallery</h1>
+    <div class="gallery-container" id="gallery-container" style="margin: 10px 30px">
+        <!-- Filter and upload stuff -->
+        <label for="gallery-select" class="gallery-label" id="gallery-label">Filter by Category:</label>
+        <select class="gallery-select" id="gallery-select">
+            <option value="">None</option>
+        </select>
+        <a class="upload-text" id="upload-text" style="cursor: pointer"><u>Upload New Image</u></a>
+        
+        <!-- NOTE : Use CSS display to hide the region, rather than unloading it. Toggle between 'block' and 'none' -->
+        <div class="upload-container" id="upload-container" style="display: none; margin: 20px 0;">
+            <label for="upload-preview" style="display: block; padding: 10px 0;"><b>Image Upload</b></label>
+            <div class="upload-preview" id="upload-preview" style="display: inline-block; background-color: white; height: 1.4em; width: 200px; color:black; font-size: 0.8em;">File Name..</div>
+            <button class="browse-button" id="browse-button">Browse</button>
+            <label for="category-select">Category:</label>
+            <select id="category-select">
+                <option value="">None</option>
+            </select>
+
+            <label for="title-field" style="display: block;">Title</label>
+            <div class="title-field" id="title-field" style="background-color: white; height: 1.4em; width: 300px; color:black; font-size: 0.8em;" contenteditable="true"></div>
+
+            <label for="description-field" style="display: block";>Description</label>
+            <div style="background-color: white; height: 11.2em; width: 600px; color:black; font-size: 0.8em;" contenteditable="true"></div>
+
+            <button id="upload-button" style="display: inline-block; margin: 5px 0;">Upload</button>
+            <button id="close-button" style="margin: 5px 0;">Close</button>
+        </div>
+
+        <!-- Gallery placeholders -->
+        <div class="gallery-grid" id="gallery-grid">
+            <div class="empty-gallery-message" id="empty-gallery-message">
+                <h3>Nothing to see here!</h3>
+                <p>Stay tuned for new art drops for this category.</p>
+            </div>
+
+            <section class="card-section" id="card-section">
+                <h2>Game Category A</h2>
+                <div class="card-container">
+                    <image class="gallery-card"></image>
+                </div>
+            </section>
+            
+            <section class="card-section" id="card-section">
+                <h2>Game Category B</h2>
+                <div class="image-container">
+                    <image class="gallery-card"></image>
+                    <image class="gallery-card"></image>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
