@@ -1,7 +1,6 @@
 import { API_URL } from './config';
-import { Components } from './components';
 
-class BlogEditor {
+export class BlogEditor {
     private editorBody: HTMLElement | null;
     private editorContent: HTMLElement | null;
     private editorPlaceholder: HTMLElement | null;
@@ -177,8 +176,3 @@ class BlogEditor {
         }
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    new Components();
-    new BlogEditor();
-});

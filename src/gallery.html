@@ -18,23 +18,23 @@
         <a class="upload-text" id="upload-text" style="cursor: pointer"><u>Upload New Image</u></a>
         
         <!-- NOTE : Use CSS display to hide the region, rather than unloading it. Toggle between 'block' and 'none' -->
-        <div class="upload-container" id="upload-container" style="display: none; margin: 20px 0;">
-            <label for="upload-preview" style="display: block; padding: 10px 0;"><b>Image Upload</b></label>
-            <div class="upload-preview" id="upload-preview" style="display: inline-block; background-color: white; height: 1.4em; width: 200px; color:black; font-size: 0.8em;">File Name..</div>
+        <div class="upload-container" id="upload-container">
+            <label for="upload-preview" class="upload-preview-label"><b>Image Upload</b></label>
+            <div class="upload-preview" id="upload-preview"></div>
             <button class="browse-button" id="browse-button">Browse</button>
-            <label for="category-select">Category:</label>
+            <label for="category-select" class="category-select-label">Category:</label>
             <select id="category-select">
                 <option value="">None</option>
             </select>
 
-            <label for="title-field" style="display: block;">Title</label>
-            <div class="title-field" id="title-field" style="background-color: white; height: 1.4em; width: 300px; color:black; font-size: 0.8em;" contenteditable="true"></div>
+            <label for="title-field" class="title-field-label">Title</label>
+            <div class="title-field" id="title-field" contenteditable="true"></div>
 
-            <label for="description-field" style="display: block";>Description</label>
-            <div style="background-color: white; height: 11.2em; width: 600px; color:black; font-size: 0.8em;" contenteditable="true"></div>
+            <label for="description-field" class="description-field-label">Description</label>
+            <div class="description-field" contenteditable="true"></div>
 
-            <button id="upload-button" style="display: inline-block; margin: 5px 0;">Upload</button>
-            <button id="close-button" style="margin: 5px 0;">Close</button>
+            <button id="upload-button">Upload</button>
+            <button id="close-button">Close</button>
         </div>
 
         <!-- Gallery placeholders -->

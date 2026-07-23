@@ -2,12 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, intial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>District 4 - Upload</title>
     <link rel="stylesheet" href="CSS/style.css">
     <script type="module" src="JS/upload.ts"></script>
 </head>
 <body>
+    <div class="main-upload">
+        <section>
+            <fieldset>
+                <legend>Choose an item to upload</legend>
+                <div>
+                    <input type="radio" name="upload" id="product-input" value="product-writer" checked>
+                    <label for="product-input">Product Item</label>
+                    <p>Publish information games and game expansions. Useful for theming images and blog posts.</p>
+                </div>
+                <div>
+                    <input type="radio" name="upload" id="image-input" value="gallery-uploader">
+                    <label for="image-input">Gallery Image</label>
+                    <p></p>
+                </div>
+                <div>
+                    <input type="radio" name="upload" id="blog-input" value="blog-editor">
+                    <label for="blog-input">Blog Post</label>
+                    <p>Write up a new blog entry using the built-in editor.</p>
+                </div>
+                <div>
+                    <input type="radio" name="upload" id="portfolio-input" value="portfolio-writer">
+                    <label for="portfolio-input">Portfolio Item</label>
+                    <p>Add a new entry to the porfolio page.</p>
+                </div>
+                <button id="choose-button">Choose</button>
+            </fieldset>
+            <small>* Selecting a new type can reset the menu. Previous information may be lost!</small>
+        </section>
+        
+        <section class="submission-details">
+            <div class="product-writer" id="product-writer">
+                <h2>Publish a Product</h2>
+                <label for="product-title-field" class="field-label">Title</label>
+                <div class="title-field" id="product-title-field" contenteditable="true"></div>
 
+                <label for="product-description-field" class="field-label">Description</label>
+                <div class="description-field" id="product-description-field" contenteditable="true"></div>
+
+                <button id="product-upload-button">Upload</button>
+            </div>
+
+            <div class="blog-editor" id="blog-editor">
+                <label class="title-label" for="blog-title">Title</label>
+                <input class="blog-title" type="text" id="blog-title" placeholder="Untitlted">
+
+                <!-- Formatting buttons -->
+                <button id="bold-button">Bold</button>
+                <button id="em-button">Italics</button>
+                <button id="u-button">Underline</button>
+                <button id="url-button">URL</button>
+                <button id="image-button">Image</button>
+                <button id="size-button">Size</button>
+
+                <div class="blog-editor-body" id="editor-body">
+                    <span class="blog-editor-content" contenteditable="true" id="editor-content"></span>
+                    <span class="blog-editor-placeholder" id="editor-placeholder">Content goes here ...</span>
+                </div>
+                <button id="publish-button">Publish</button>
+            </div>
+
+            <div class="upload-container" id="gallery-uploader">
+                <label for="upload-preview" class="upload-preview-label"><b>Image Upload</b></label>
+                <div class="upload-preview" id="upload-preview"></div>
+
+                <button class="browse-button" id="browse-button">Browse</button>
+                
+                <label for="category-select" class="category-select-label">Category:</label>
+                <select id="category-select">
+                    <option value="">None</option>
+                </select>
+
+                <label for="title-field" class="title-field-label">Title</label>
+                <div class="title-field" id="title-field" contenteditable="true"></div>
+
+                <label for="description-field" class="description-field-label">Description</label>
+                <div class="description-field" contenteditable="true"></div>
+
+                <button id="upload-button">Upload</button>
+                <button id="close-button">Close</button>
+            </div>
+
+            <div class="portfolio-writer" id="portfolio-writer">
+                <h2>Submit a Portfolio Item</h2>
+                <ul>
+                    <li>
+                        <label for="portfolio-title-field">Title</label>
+                        <div id="portfolio-title-field" contenteditable="true"></div>
+                    </li>
+                    <li>
+                        <label for="portfolio-langapi-field">Languages / APIs</label>
+                        <div id="portfolio-langapi-field" contenteditable="true"></div>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <label for="portfolio-project-link-field">Project Link</label>
+                        <div id="portfolio-project-link-field" contenteditable="true"></div>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <label for="portfolio-image-link-field">Image Link</label>
+                        <div id="portfolio-image-link-field" contenteditable="true"></div>
+                    </li>
+                    <li>
+                        <label for="portfolio-date-field">Date</label>
+                        <div id="portfolio-date-field" contenteditable="true"></div>
+                    </li>
+                </ul>
+
+                <label for="portfolio-description-field" class="description-field-label">Description</label>
+                <div class="portfolio-description-field" contenteditable="true"></div>
+
+                <button id="portfolio-upload-button">Upload</button>
+            </div>
+
+        </section>
+    </div>
+    
 </body>
 </html>

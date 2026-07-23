@@ -6,10 +6,10 @@
     <title>District 4 - Blog Editor</title>
     <link rel="stylesheet" href="CSS/style.css">
 
-    <script type="module" src="JS/blog-editor.ts"></script>
+    <script type="module" src="JS/blog-writing.ts"></script>
 </head>
 <body>
-    <div class="editor">
+    <div class="blog-editor" style="padding: 20px;">
         <label class="title-label" for="blog-title">Title</label>
         <input class="blog-title" type="text" id="blog-title" placeholder="Untitlted">
 
@@ -21,9 +21,9 @@
         <button id="image-button">Image</button>
         <button id="size-button">Size</button>
 
-        <div class="editor-body" id="editor-body">
-            <span class="editor-content" contenteditable="true" id="editor-content"></span>
-            <span class="editor-placeholder" id="editor-placeholder">Content goes here ...</span>
+        <div class="blog-editor-body" id="editor-body">
+            <span class="blog-editor-content" contenteditable="true" id="editor-content"></span>
+            <span class="blog-editor-placeholder" id="editor-placeholder">Content goes here ...</span>
         </div>
         <button id="publish-button">Publish</button>
     </div>

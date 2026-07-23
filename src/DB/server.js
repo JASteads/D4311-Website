@@ -94,7 +94,7 @@ app.post('/api/products', async (req, res) => {
             INSERT INTO products (title, description, release_date, splash_art_link, txn_link)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
-        `, [title, description, Date.now().toLocaleString(), splash_art_link, txn_link]);
+        `, [title, description, new Date().toISOString(Date.now()), splash_art_link, txn_link]);
         res.json(result.rows[0]);
     } catch (e) {
         res.status(500).json({ error: e.message });

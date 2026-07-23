@@ -1,23 +1,7 @@
 import { Components } from "./components.ts";
 import { API_URL } from "./config.ts";
-
-class GalleryItem {
-    title: string;
-    category: string;
-    caption: string;
-    thumbnail_link: string;
-    image_link: string;
-    date_created: string;   
-
-    constructor(title: string, category: string, caption: string, thumbnail_link: string, image_link: string, date_created: Date) {
-        this.title = title;
-        this.category = category;
-        this.caption = caption;
-        this.thumbnail_link = thumbnail_link;
-        this.image_link = image_link;
-        this.date_created = date_created.toISOString();
-    }
-}
+import { GalleryUploader } from "./gallery-uploader.ts";
+import { GalleryItem } from "./gallery-item.ts";
 
 // =================== PERSISTENT DATA ===================
 
@@ -25,11 +9,9 @@ let cardMap: Map<string, HTMLElement>; // Stores generated cards that can be ove
 let sections: Record<string, HTMLElement>;
 let categories: string[];
 
-let pendingUpload: File | null;
-
 let gallerySelect: HTMLSelectElement;
-let categorySelect: HTMLSelectElement;
 let emptyGalleryMessage: HTMLElement | null;
+let uploader: GalleryUploader;
 
 // =================== GALLERY LOADING ===================
 
@@ -137,100 +119,13 @@ const getGalleryItems = async (category?: string): Promise<any[]> => {
     }
 }
 
-// =================== IMAGE UPLOADING ===================
-
-const browseImages = () => {
-    let input: (HTMLInputElement | null) = document.createElement('input');
-    input.type = 'file';
-
-    const handleBrowse = (e: Event) => {
-        const removeInput = () => {
-            input?.removeEventListener('change', handleBrowse);
-            input = null;
-        }
-
-        const target = e.target as HTMLInputElement;
-        if (!target.files) {
-            console.error("No files selected");
-            removeInput();
-            return;
-        }
-
-        if (target.files[0].type !== 'image/png') {
-            alert('File must be a PNG');
-            removeInput();
-            return;
-        }
-
-        const preview = document.getElementById('upload-preview');
-        if (!preview) {
-            console.error("Preview is missing");
-            removeInput();
-            return;
-        }
-
-        pendingUpload = target.files[0];
-        preview.textContent = pendingUpload.name;
-        removeInput();
-    }
-
-    input.addEventListener('change', handleBrowse);
-    input.click();
-}
-
-const uploadImage = async () => {
-    if (!pendingUpload) {
-        console.warn(`No file has been prepared to upload`);
-        return;
-    }
-
-    // Prepare and attempt uploading new item
-    const newItem = generateGalleryItem();
-    try {
-        const res = await fetch(`${API_URL}/api/gallery/upload`, {
-            method: 'POST',
-            body: pendingUpload,
-            headers: {
-                'Content-Type': pendingUpload.type || 'application/octet-stream',
-                'X-File-Name': encodeURIComponent(pendingUpload.name),
-                'Path': '/Resources/Images/Gallery',
-                'Gallery-Item': JSON.stringify(newItem)
-            }
-        });
-
-        if (!res.ok) {
-            console.error("Upload failed");
-            throw new Error(`HTTP Error: ${res.status}`);
-        }
-
-        alert('File uploaded to gallery successful');
-    } catch (e) {
-        console.error('File upload failed:', e);
-        return;
-    }
-}
-
-const generateGalleryItem = (): GalleryItem =>  {
-    const title = document.getElementById('title-field');
-    const category = document.getElementById('category-select') as HTMLSelectElement;
-    const description = document.getElementById('description-field');
-
-    return new GalleryItem(
-        title ? title.textContent : 'Untitled',
-        category ? category.value : 'Other',
-        description ? description.textContent : '',
-        '', // Thumbnail link not used
-        '', // Image link not used
-        new Date(Date.now())
-    );
-}
-
 // =================== SETUP ===================
 
-const updateCategories = async () => {
+// Special version of the GalleryUploader updateCategories() for efficiency
+const updateCategories = async (uploader: GalleryUploader) => {
     // Disable filters until prepared
     gallerySelect.disabled = true; 
-    categorySelect.disabled = true;
+    uploader.setSelectDisabled(true);
 
     try {
         const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
@@ -243,21 +138,18 @@ const updateCategories = async () => {
         categories = await resCategories.json();
         categories.forEach(c => {
             const nextOptGallery = document.createElement('option');
-            const nextOptCategory = document.createElement('option');
             
             nextOptGallery.value = c;
             nextOptGallery.textContent = c;
-            
-            nextOptCategory.value = c;
-            nextOptCategory.textContent = c;
 
             gallerySelect.add(nextOptGallery);
-            categorySelect.add(nextOptCategory);
+
+            uploader.addCategory(c);
         });
 
         // Re-enable filters only on success
         gallerySelect.disabled = false;
-        categorySelect.disabled = false;
+        uploader.setSelectDisabled(false);
 
         console.log("Categories updated");
     } catch (e) {
@@ -288,12 +180,13 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
         }
 
         // Remove the pending upload so we can start over
-        pendingUpload = null;
+        uploader.clearPendingUpload();
     }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     new Components();
+    uploader = new GalleryUploader(false);
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');
     if (emptyGalleryMessage) {
@@ -301,14 +194,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     gallerySelect = document.getElementById('gallery-select') as HTMLSelectElement;
-    categorySelect = document.getElementById('category-select') as HTMLSelectElement;
-    if (gallerySelect && categorySelect) {
-        updateCategories();
+    if (gallerySelect) {
         gallerySelect.addEventListener('change', () => loadGallery(gallerySelect.value));
+        updateCategories(uploader);
     }
-
-    const browseButton = document.getElementById('browse-button');
-    browseButton?.addEventListener('click', browseImages);
 
     const openUploadButton = document.getElementById('upload-text');
     openUploadButton?.addEventListener('click', () => setUploadMenuVisibility(true));
@@ -316,8 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeUploadButton = document.getElementById('close-button');
     closeUploadButton?.addEventListener('click', () => setUploadMenuVisibility(false));
 
-    const uploadButton = document.getElementById('upload-button') as HTMLButtonElement;
-    uploadButton?.addEventListener('click', uploadImage);
-    
+    setUploadMenuVisibility(false);
     loadGallery();
 });
