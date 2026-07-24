@@ -6,7 +6,8 @@ export class GalleryItem {
     image_link: string;
     date_created: string;   
 
-    constructor(title: string, category: string, caption: string, thumbnail_link: string, image_link: string, date_created: Date) {
+    constructor(title: string, category: string, caption: string, 
+        thumbnail_link: string, image_link: string, date_created: Date) {
         this.title = title;
         this.category = category;
         this.caption = caption;

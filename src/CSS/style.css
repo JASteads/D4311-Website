@@ -339,15 +339,18 @@ footer p {
     margin: 15px 0;
 }
 
-.card-container {
-    display: block;
+.image-container {
+    display: flex;
 }
 
 .gallery-card {
-    background-color: white;
-    height: 135px;
-    width: 240px;
-    margin: 0 5px 10px 0;
+    margin: 0 20px 10px 0;
+}
+
+.gallery-card img {
+    max-height: 200px;
+    border: 3px solid #0a0;
+    border-radius: 2px;
 }
 
 /* ====================== GALLERY UPLOADER ====================== */

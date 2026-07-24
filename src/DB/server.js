@@ -12,7 +12,8 @@ app.use(cors()); // Allows frontend to call the server
 app.use(express.json());
 
 // Reference values
-const tempFolder = '../Resources/tmp';
+const tempFolder = 'Resources/tmp';
+const SRC_DIR = path.resolve(__dirname, '..');
 
 const pool = new Pool({
     connectionString: process.env.DB_CONNECTION_STRING
@@ -22,6 +23,7 @@ const pool = new Pool({
 const onDatabaseConnect = async () => {
     try {
         await initialiazeDatabase();
+        console.log('Current root:', SRC_DIR);
         console.log("✅ Database connected and initialized");
     }
     catch (e) {
@@ -46,6 +48,7 @@ app.get('/api/products/:id', async (req, res) => {
 
         const result = await pool.query(`
             SELECT 
+                id,
                 title, 
                 description, 
                 release_date, 
@@ -238,35 +241,65 @@ app.get('/api/gallery', async (req, res) => {
 
 // For uploading pics to the gallery
 app.post('/api/gallery/upload', async (req, res) => {
-    const { tempPath, tempName, stream } = prepareTemp();
+    const { container } = req.query;
+    if (!container) {
+        console.error('Provide a container before attempting a gallery item upload');
+        return;
+    }
 
     // TODO : Prepare actual thumbnail images from backend for storage
     // NOTE : Assume (for now) that thumbnails aren't actually generated yet
 
+    const { tempPath, tempName, stream } = prepareTemp();
+    
+    const containerItems = JSON.parse(decodeURIComponent(container));
+    console.log('Container:', containerItems);
+    
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
     const realName = decodeURIComponent(req.headers['x-file-name']);
-    const realPath = path.join(__dirname, req.headers['path']);
+    const realPath = path.join(SRC_DIR, req.headers['path']);
+
+    console.log('Real Name:', realName);
+    console.log('Real Path:', realPath);
+
     if (!fs.existsSync(path.dirname(realPath))) {
         fs.mkdirSync(path.dirname(realPath), { recursive: true });
     }
 
     stream.on('finish', async () => {
         try {
-            // Unwrap the stringified GalleryItem
-            const { title, category, caption, thumbnailLink, imageLink, dateCreated } = JSON.parse(req.headers['gallery-item']);
+            const items = { 
+                title: containerItems.item.title, 
+                gameID: containerItems.id, 
+                caption: containerItems.item.caption,
+                dateCreated: containerItems.item.date_created 
+            };
+            console.log('Items prepared:', items);
+
             const finalPath = path.join(realPath, realName);
+            console.log('Final path:', finalPath);
 
             // Insert into DB
             const result = await pool.query(`
-                INSERT INTO gallery (title, category, caption, thumbnailLink, imageLink, dateCreated)
+                INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
-            `, [title, category, caption, `preview_${finalPath}`, finalPath, dateCreated]);
+            `, [items.title, items.gameID, items.caption, `preview_${realName}`, realName, items.dateCreated]);
 
             // Move the temp file into its permanent location
-            await fs.rename(path.join(tempPath, tempName), finalPath);
+            console.log('Moving temp file from:', path.join(tempPath, tempName));
+            console.log('..to:', finalPath);
+
+            await fs.rename(path.join(tempPath, tempName), finalPath, (e) => {
+                if (e) {
+                    throw e;
+                }
+                
+                console.log('File moved');
+            });
+
             res.status(200).json({
                 message: 'Image downloaded to gallery',
                 savedAs: realName,
@@ -286,7 +319,7 @@ app.post('/api/gallery/upload', async (req, res) => {
 });
 
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '../load_fail.html'));
+    res.status(404).sendFile(path.join(SRC_DIR, '../load_fail.html'));
 });
 
 const PORT = 3000;
@@ -299,17 +332,21 @@ app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PO
  * @returns { Object(string, string fs.WriteStream) }
  */
 const prepareTemp = () => {
-    const name = `temp_${crypto.randomBytes(10).toString('hex')}.dat`;
-    const path = path.join(__dirname, tempFolder);
+    const tempName = `temp_${crypto.randomBytes(10).toString('hex')}.dat`;
+    const tempPath = path.join(SRC_DIR, tempFolder);
 
-    if (!fs.existsSync(path.dirname(path))) {
-        fs.mkdirSync(path.dirname(path), { recursive: true });
+    console.log('Temp Name:', tempName)
+    console.log('Temporary Path:', tempPath);
+
+    if (!fs.existsSync(tempPath)) {
+        console.log('Temp folder does not exist. Creating new one...');
+        fs.mkdirSync(tempPath, { recursive: true });
     }
 
     return { 
-        tempPath: path, 
-        tempName: name, 
-        stream: fs.createWriteStream(path.join(path, name)) 
+        tempPath: tempPath, 
+        tempName: tempName, 
+        stream: fs.createWriteStream(path.join(tempPath, tempName)) 
     };
 }
 

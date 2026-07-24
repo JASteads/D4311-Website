@@ -3,10 +3,20 @@ import { API_URL } from "./config.ts";
 import { GalleryUploader } from "./gallery-uploader.ts";
 import { GalleryItem } from "./gallery-item.ts";
 
+class Section {
+    section: HTMLElement;
+    container: HTMLElement;
+
+    constructor(section: HTMLElement, container: HTMLElement) {
+        this.section = section;
+        this.container = container;
+    }
+}
+
 // =================== PERSISTENT DATA ===================
 
-let cardMap: Map<string, HTMLElement>; // Stores generated cards that can be overwritten via filter
-let sections: Record<string, HTMLElement>;
+let cardMap: Map<string, HTMLElement[]>; // Stores generated cards that can be overwritten via filter
+let sections: Record<string, Section>;
 let categories: string[];
 
 let gallerySelect: HTMLSelectElement;
@@ -17,6 +27,7 @@ let uploader: GalleryUploader;
 
 const loadGallery = async (category?: string) => {
     const galleryGrid = document.getElementById('gallery-grid');
+
     if (!galleryGrid) {
         console.error("Gallery grid container not found.");
         return;
@@ -38,62 +49,75 @@ const loadGallery = async (category?: string) => {
     galleryItems.forEach((i: GalleryItem) => {
         const { category, element } = generateImageCard(i);
 
-        cardMap.set(category, element);
+        if (!cardMap.has(category)) {
+            cardMap.set(category, []);
+        }
+
+        cardMap.get(category)?.push(element);
     });
+    console.log(cardMap);
 
     // Create and populate sections with the new cards
-    cardMap.forEach((element, category) => {
+    cardMap.forEach((section, category) => {
         if (!(category in sections)) {
             sections[category] = generateCardSection(category);
         }
-        sections[category].appendChild(element);
+
+        const container = sections[category].container;
+
+        section.forEach((e) => container.appendChild(e));
     });
+    console.log(sections);
+
+    for (let category in sections) {
+        galleryGrid.appendChild(sections[category].section);
+    }
 }
 
-const generateCardSection = (categoryName: string): HTMLElement => {
+const generateCardSection = (categoryName: string): Section => {
     const section = document.createElement('section');
+    section.className = 'card-section';
     
     const title = document.createElement('h2');
     title.textContent = categoryName;
 
-    const cardContainer = document.createElement('div');
-    cardContainer.className = 'card-section';
+    const container = document.createElement('div');
+    container.className = 'image-container';
 
-    section.append(title, cardContainer);
+    section.appendChild(title);
+    section.appendChild(container);
 
-    return section;
+    return { section, container };
 }
 
 const emptyGallery = () => {
-    cardMap?.forEach(e => e.remove);
+    cardMap?.forEach(s => s.forEach(e => e.remove)); // Remove all cards
     for (let category in sections) {
-        sections[category].remove();
+        sections[category].section.remove();
     }
 
-    cardMap = new Map<string, HTMLElement>();
+    cardMap = new Map<string, HTMLElement[]>();
     sections = {};
 }
 
 // Does not use caption or date yet. This is intended for when full images are rendered on top of the page.
 const generateImageCard = (item: GalleryItem) => {
+    console.log('Generating image card for', item.title);
+    const galleryLocation = 'Resources/Images/Gallery/';
+
     const cardElement = document.createElement('div');
     cardElement.className = 'gallery-card';
 
     const image_link = document.createElement('a');
-    image_link.href = item.image_link;
+    image_link.href = galleryLocation.concat(item.image_link);
     image_link.target = '_blank';
     cardElement.appendChild(image_link);
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'card-thumbnail';
-    thumbnail.src = item.thumbnail_link;
+    thumbnail.src = galleryLocation.concat(item.image_link);
     thumbnail.alt = item.title;
     image_link.appendChild(thumbnail);
-
-    const title = document.createElement('h3');
-    title.className = 'card-title';
-    title.textContent = item.title;
-    cardElement.appendChild(title);
 
     return { category: item.category, element: cardElement };
 }

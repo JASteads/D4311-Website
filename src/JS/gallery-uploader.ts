@@ -1,5 +1,6 @@
-import { API_URL } from "./config";
+import { API_URL, DEV_URL } from "./config";
 import { GalleryItem } from "./gallery-item";
+import { Product } from "./product";
 
 export class GalleryUploader {
     private readonly categorySelect: HTMLSelectElement;
@@ -122,16 +123,20 @@ export class GalleryUploader {
         }
     
         // Prepare and attempt uploading new item
-        const newItem = this.generateGalleryItem();
+        const newItem = await this.generateGalleryItem();
+        const container = encodeURIComponent(JSON.stringify(newItem));
+
+        console.log('Item:', newItem);
+        console.log('Encoded Container:', container);
+        
         try {
-            const res = await fetch(`${API_URL}/api/gallery/upload`, {
+            const res = await fetch(`${API_URL}/api/gallery/upload?container=${container}`, {
                 method: 'POST',
                 body: this.pendingUpload,
                 headers: {
                     'Content-Type': this.pendingUpload.type || 'application/octet-stream',
                     'X-File-Name': encodeURIComponent(this.pendingUpload.name),
-                    'Path': '/Resources/Images/Gallery',
-                    'Gallery-Item': JSON.stringify(newItem)
+                    'Path': '/Resources/Images/Gallery'
                 }
             });
     
@@ -141,24 +146,69 @@ export class GalleryUploader {
             }
     
             alert('File uploaded to gallery successful');
+
+            // Redirect or refresh
+            const galleryURL = `${DEV_URL}/gallery.html`;
+
+            if (window.location.href !== galleryURL) {
+                window.location.replace(galleryURL);
+                window.open(galleryURL);
+            } else {
+                window.location.reload();
+            }
+            
         } catch (e) {
             console.error('File upload failed:', e);
             return;
         }
     }
 
-    private generateGalleryItem = (): GalleryItem =>  {
-        const title = document.getElementById('title-field');
+    private generateGalleryItem = async () =>  {
+        const title = document.getElementById('gallery-title-field');
         const category = document.getElementById('category-select') as HTMLSelectElement;
-        const description = document.getElementById('description-field');
+        const caption = document.getElementById('gallery-description-field');
+
+        const gameID = await this.getGameID(category?.value) as Number;
     
-        return new GalleryItem(
-            title ? title.textContent : 'Untitled',
-            category ? category.value : 'Other',
-            description ? description.textContent : '',
-            '', // Thumbnail link not used
-            '', // Image link not used
-            new Date(Date.now())
-        );
+        return {
+            item: new GalleryItem(
+                title ? title.textContent : 'Untitled',
+                category ? category.value : 'Other',
+                caption ? caption.textContent : '',
+                '', // Thumbnail link not used
+                '', // Image link not used
+                new Date(Date.now())),
+            id: gameID 
+        };
+    }
+
+    private getGameID = async (category: string) => {
+        const categoryOther = 1;
+
+        if (!category) {
+            return categoryOther;
+        }
+
+        try {
+            const result = await fetch(`${API_URL}/api/products`);
+
+            if (!result.ok) {
+                throw new Error(`HTTP Error: ${result.status}`);
+            }
+
+            const products = await result.json() as Product[];
+            const target = products.find((p) => p.title === category);
+
+            if (!target) {
+                console.log('Could not find product. Check DB for validity');
+                return categoryOther;
+            }
+
+            return target.id;
+
+        } catch (e) {
+            console.error('Failed to get a game ID..', e);
+            return categoryOther;
+        }
     }
 }
