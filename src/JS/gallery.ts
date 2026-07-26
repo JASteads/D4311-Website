@@ -91,7 +91,7 @@ const generateCardSection = (categoryName: string): Section => {
 }
 
 const emptyGallery = () => {
-    cardMap?.forEach(s => s.forEach(e => e.remove)); // Remove all cards
+    cardMap?.forEach(s => s.forEach(e => e.remove())); // Remove all cards
     for (let category in sections) {
         sections[category].section.remove();
     }
@@ -115,8 +115,10 @@ const generateImageCard = (item: GalleryItem) => {
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'card-thumbnail';
-    thumbnail.src = galleryLocation.concat(item.image_link);
+    thumbnail.src = galleryLocation.concat(item.thumbnail_link);
     thumbnail.alt = item.title;
+    thumbnail.loading = 'lazy';
+    thumbnail.decoding = 'async';
     image_link.appendChild(thumbnail);
 
     return { category: item.category, element: cardElement };

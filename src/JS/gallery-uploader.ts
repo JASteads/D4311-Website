@@ -126,10 +126,26 @@ export class GalleryUploader {
         const newItem = await this.generateGalleryItem();
         const container = encodeURIComponent(JSON.stringify(newItem));
 
+        // Prepare thumbnail
+        let thumbnail: Blob;
+        try {
+            thumbnail = await this.generateThumbnail();
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+        
+        const thumbnailFile = new File(
+            [thumbnail],
+            encodeURIComponent(`preview_${this.pendingUpload.name}`),
+            { type: thumbnail.type });
+
         console.log('Item:', newItem);
         console.log('Encoded Container:', container);
         
         try {
+            // ------------- FULL IMAGE UPLOAD -------------
+
             const res = await fetch(`${API_URL}/api/gallery/upload?container=${container}`, {
                 method: 'POST',
                 body: this.pendingUpload,
@@ -141,11 +157,34 @@ export class GalleryUploader {
             });
     
             if (!res.ok) {
-                console.error("Upload failed");
+                console.error('Upload failed..');
                 throw new Error(`HTTP Error: ${res.status}`);
+            }
+
+            // ------------- THUMBNAIL UPLOAD -------------
+
+            // NOTE : If uploading thumbnails begins to create issues, 
+            //        consider creating an image repair module
+            const resThumbnail = await fetch(
+                `${API_URL}/api/gallery/upload?thumbnail=true`, {
+                    method: 'POST',
+                    body: thumbnailFile,
+                    headers: {
+                        'Content-Type': this.pendingUpload.type || 'application/octet-stream',
+                        'X-File-Name': thumbnailFile.name,
+                        'Path': '/Resources/Images/Gallery'
+                    }
+                }
+            );
+
+            if (!resThumbnail.ok) {
+                console.error('Thumbnail upload failed..');
+                throw new Error(`HTTP Error: ${resThumbnail.status}`);
             }
     
             alert('File uploaded to gallery successful');
+
+            this.clearPendingUpload();
 
             // Redirect or refresh
             const galleryURL = `${DEV_URL}/gallery.html`;
@@ -156,11 +195,46 @@ export class GalleryUploader {
             } else {
                 window.location.reload();
             }
-            
         } catch (e) {
-            console.error('File upload failed:', e);
-            return;
+            alert(`File upload failed: ${e}`);
+            this.clearPendingUpload();
         }
+    }
+
+    private generateThumbnail = async (): Promise<Blob> => {
+        // We know this won't be null by the time it's called
+        const bitmap = await createImageBitmap(this.pendingUpload!);
+        const maxSize = 400;
+        const imageQuality = 0.85; // From a scale of 0 to 1
+
+        // Fix image resolution to thumbnail-sized values
+        let { width, height } = bitmap;
+        if (width > height) {
+            height = Math.round(height * (maxSize / width));
+            width = maxSize;
+        } else if (height > maxSize) {
+            width = Math.round(width * (maxSize / height));
+            height = maxSize;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        // Prepare conversion
+        const context = canvas.getContext('2d')!;
+        context.drawImage(bitmap, 0, 0, width, height);
+        bitmap.close();
+
+        return new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Thumbnail generation failed..'));
+                }
+            }, 'image/png', imageQuality); // Consider webp if loading times become an issue
+        });
     }
 
     private generateGalleryItem = async () =>  {
@@ -175,8 +249,8 @@ export class GalleryUploader {
                 title ? title.textContent : 'Untitled',
                 category ? category.value : 'Other',
                 caption ? caption.textContent : '',
-                '', // Thumbnail link not used
-                '', // Image link not used
+                '', // Thumbnail link not used, may change
+                '', // Image link not used, may change
                 new Date(Date.now())),
             id: gameID 
         };

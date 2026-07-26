@@ -14,7 +14,8 @@ html {
     background-position: top center;
     font-family: "Verdana", system-ui, sans-serif;
     min-height: 100vh;
-    color: white
+    color: white;
+    scrollbar-gutter: stable;
 }
 
 body {
@@ -24,6 +25,13 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 30px 10px rgb(0, 17, 9);
+    border-left: 3px;
+    border-right: 3px;
+    border-bottom: 0;
+    border-top: 0;
+    border-style: solid;
+    border-color: rgb(0, 29, 0);
 }
 
 /* ====================== HEADER ====================== */
@@ -113,6 +121,7 @@ header .logo {
 
 .welcome {
     text-align: center;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     font-size: 2.2rem;
     padding: 20px 40px;
     margin: 20px auto 40px;
@@ -194,8 +203,9 @@ main {
     min-height: 600px;
     width: 720px;
     max-width: 100%;
-    border: 2px solid rgba(0, 100, 0, 0.3);
-    border-radius: 2px;
+    border: 3px solid rgba(132, 192, 132, 0.3);
+    border-radius: 5px;
+    box-shadow: 0 0 30px 5px rgba(0, 102, 9, 0.6) inset;
 }
 
 main h2 {
@@ -205,7 +215,12 @@ main h2 {
     text-align: center;
     margin-bottom: 30px;
     padding: 15px 15px;
-    border-bottom: 3px solid #0a0;
+    border-left: 3px;
+    border-right: 3px;
+    border-style: solid;
+    border-color: #0a0;
+    box-shadow: 0 0 10px 0 #0a0;
+    text-shadow: 0 0 40px #0a0;
     color: rgb(87, 255, 87)
 }
 
@@ -264,8 +279,11 @@ main h2 {
 
 /* Fabu Image */
 #fabu_img {
-    width: 100px;
+    width: 110px;
+    border-style: solid;
+    border-color: #0a0;
     border-radius: 20px;
+    border-width: 3px;
     transition: transform 0.1s ease;
     cursor: pointer;
 }
@@ -348,6 +366,7 @@ footer p {
 }
 
 .gallery-card img {
+    height: 200px;
     max-height: 200px;
     border: 3px solid #0a0;
     border-radius: 2px;
@@ -519,6 +538,7 @@ footer p {
 }
 
 /* ====================== RESPONSIVE ====================== */
+
 @media (max-width: 1100px) {
     .container {
         flex-direction: column;

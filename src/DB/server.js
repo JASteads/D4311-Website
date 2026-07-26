@@ -241,25 +241,50 @@ app.get('/api/gallery', async (req, res) => {
 
 // For uploading pics to the gallery
 app.post('/api/gallery/upload', async (req, res) => {
-    const { container } = req.query;
-    if (!container) {
-        console.error('Provide a container before attempting a gallery item upload');
-        return;
-    }
+    const { container, thumbnail } = req.query;
 
     // TODO : Prepare actual thumbnail images from backend for storage
     // NOTE : Assume (for now) that thumbnails aren't actually generated yet
 
     const { tempPath, tempName, stream } = prepareTemp();
     
-    const containerItems = JSON.parse(decodeURIComponent(container));
-    console.log('Container:', containerItems);
-    
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
     const realName = decodeURIComponent(req.headers['x-file-name']);
     const realPath = path.join(SRC_DIR, req.headers['path']);
+    const finalPath = path.join(realPath, realName);
+
+    console.log('Final path:', finalPath);
+
+    const addGalleryEntry = async () => {
+        // Adding item to database
+        const containerItems = JSON.parse(decodeURIComponent(container));
+        console.log('Container:', containerItems);
+
+        const items = { 
+            title: containerItems.item.title, 
+            gameID: containerItems.id, 
+            caption: containerItems.item.caption,
+            dateCreated: containerItems.item.date_created 
+        };
+        console.log('Items prepared:', items);
+
+        return new Promise((resolve, reject) => {
+            try {
+                // Insert into DB
+                const result = pool.query(`
+                    INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    RETURNING *
+                `, [items.title, items.gameID, items.caption, `preview_${realName}`, realName, items.dateCreated]);
+                
+                resolve(result);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
 
     console.log('Real Name:', realName);
     console.log('Real Path:', realPath);
@@ -270,51 +295,53 @@ app.post('/api/gallery/upload', async (req, res) => {
 
     stream.on('finish', async () => {
         try {
-            const items = { 
-                title: containerItems.item.title, 
-                gameID: containerItems.id, 
-                caption: containerItems.item.caption,
-                dateCreated: containerItems.item.date_created 
-            };
-            console.log('Items prepared:', items);
-
-            const finalPath = path.join(realPath, realName);
-            console.log('Final path:', finalPath);
-
-            // Insert into DB
-            const result = await pool.query(`
-                INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING *
-            `, [items.title, items.gameID, items.caption, `preview_${realName}`, realName, items.dateCreated]);
-
             // Move the temp file into its permanent location
             console.log('Moving temp file from:', path.join(tempPath, tempName));
             console.log('..to:', finalPath);
+            
+            let queryResult;
 
-            await fs.rename(path.join(tempPath, tempName), finalPath, (e) => {
-                if (e) {
-                    throw e;
+            // Only update DB when adding a full image
+            if (container) {
+                console.log('Container found. Updating database..');
+                try {
+                    queryResult = await addGalleryEntry();    
+                } catch (e) {
+                    console.error('Database upload failed..', e);
+                    return res.status(500).json({
+                        error: 'Failed to add gallery record to the database',
+                        details: e.message
+                    });
                 }
-                
+            }
+            
+            try {
+                await fs.promises.rename(path.join(tempPath, tempName), finalPath);
                 console.log('File moved');
-            });
+            } catch (e) {
+                console.error(e);
+            }
+            
+            const response = {
+                message: `${(thumbnail) ? 'Thumbnail' : 'Image'} downloaded to gallery`,
+                savedAs: thumbnail ? `preview_${realName}` : realName
+            };
 
-            res.status(200).json({
-                message: 'Image downloaded to gallery',
-                savedAs: realName,
-                object: result.rows[0]
-            });
+            if (queryResult) {
+                response.object = queryResult.rows[0];
+            }
+
+            res.status(200).json(response);
         } catch (e) {
-            console.error('Database upload failed..');
-            res.status(500).send('Image download failed');
+            console.error('Image download failed');
+            res.status(500).json(e);
         }
     });
     
     // Error handling
     stream.on('error', () => {
         console.error('Something went wrong with the download..');
-        res.status(500).send('Image download failed');
+        res.status(500).json('Image download failed');
     });
 });
 
