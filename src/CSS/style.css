@@ -18,6 +18,10 @@ html {
     scrollbar-gutter: stable;
 }
 
+.circle {
+    border-radius: 50%;
+}
+
 body {
     background: rgba(25, 50, 25, 0.92);
     max-width: 1400px;
@@ -88,6 +92,7 @@ header .logo {
     font-size: 16px;
     font-weight: bold;
     text-align: center;
+    text-decoration: none;
     transition: background-color 0.1s ease;
 }
 
@@ -132,12 +137,20 @@ header .logo {
 }
 
 /* ====================== HOME NAV ====================== */
-nav {
-    text-align: center;
-    margin: 20px 0 40px;
+.home-nav {
+    display: flex;
+    justify-content: space-around;
+    height: 220px;
+    background-color: rgb(0, 15, 0);
+    border-top: #0a0 solid 1px;
+    border-bottom: #0a0 solid 1px;
+    padding: 30px 0px;
+    margin-bottom: 25px;
 }
-nav a {
+
+/* .home-nav a {
     color: rgb(10, 255, 10);
+    background-color: rgb(0, 48, 0);
     text-decoration: none;
     font-family: "Verdana", system-ui, sans-serif;
     font-size: 1.1rem;
@@ -147,11 +160,62 @@ nav a {
     border-bottom: 1px solid #0a0;
     border-radius: 6px;
     transition: all 0.15s ease;
+} */
+
+.home-nav .discord-button {
+    background-color:rgb(45, 51, 122);
+    color:rgb(223, 230, 255);
+    border:rgb(177, 195, 233) inset 5px;
+    border-radius: 20px;
+    width: 280px;
+    font-size: 2.4em;
+    font-family: 'Soopafresh', 'Verdana';
+    padding: 0 10px;
 }
-nav a:hover {
+
+.home-nav .promo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.home-nav .promo-container {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+}
+
+.home-nav .promo-container aside {
+    background-color: rgb(72, 63, 82);
+    border: white solid 2px;
+    border-style: none;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 1.5em;
+    align-content: center;
+    margin: 0 5px;
+    padding: 0 3px;
+}
+
+.home-nav .promo-image {
+    border: white solid 2px;
+    border-style: none;
+    border-radius: 5px;
+    background-color: #0a0;
+    height: 150px;
+    width: 267px;
+}
+
+.home-nav .circle {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+}
+
+/* .home-nav a:hover {
     background-color: rgba(80, 110, 80, 0.6);
     transform: translateY(-2px);
-}
+} */
 
 /* ====================== MAIN LAYOUT ====================== */
 
@@ -178,6 +242,7 @@ nav a:hover {
     font-size: 1.8rem;
     text-align: center;
     padding: 12px;
+    border-radius: 3px;
     border-bottom: 3px solid #0a0;
 }
 
@@ -488,6 +553,61 @@ footer p {
     font-size: 0.8em;
 }
 
+/* ====================== LIBRARY ====================== */
+
+.product-list-item {
+    background-color: black;
+    width: 100%;
+    height: 220px;
+    border: #0a0 solid 2px;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 2px 0;
+}
+
+/* ====================== LIBRARY ====================== */
+
+.product-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    background-blend-mode: hard-light;
+    background-image: url("../Resources/Images/test_background.png");
+    background-color: rgb(27, 99, 59);
+    width: 100%;
+    padding: 30px 50px;
+}
+
+.product-body-sections {
+    display: flex;
+}
+
+.product-body h1 {
+    letter-spacing: 7px;
+    word-spacing: 5px;
+    font-weight: lighter;
+    font-size: 2.5em;
+    padding-bottom: 2px;
+}
+
+.product-body small {
+    color: gray;
+    padding-bottom: 20px;
+}
+
+.product-body p {
+    width: 720px;
+    line-height: 1.4;
+    max-width: 100%;
+}
+
+.product-body .trailer {
+    margin-top: 120px;
+    background-color: #0a0;
+    width: 640px;
+    height: 360px;
+}
+
 /* ====================== MAIN UPLOADER ====================== */
 
 .main-upload {
@@ -560,6 +680,12 @@ footer p {
     main {
         max-width: 720px;
         min-height: 500px;
+        width: 100%;
+    }
+
+    .product-body-sections {
+        flex-direction: column;
+        max-width: 720px;
         width: 100%;
     }
 }

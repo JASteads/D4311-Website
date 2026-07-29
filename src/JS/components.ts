@@ -1,3 +1,13 @@
+class NavItem {
+    name: string;
+    link: string;
+
+    constructor(name: string, link: string) {
+        this.name = name;
+        this.link = link;
+    }
+}
+
 export class Components {
     constructor() {
         const body = document.body;
@@ -15,7 +25,6 @@ export class Components {
         logo.src = 'Resources/Images/LoL.png';
         logo.alt = "A Lemon head";
 
-        
         indexLink.href = 'index.html';
         indexLink.className = className;
         indexLink.appendChild(logo);
@@ -48,23 +57,42 @@ export class Components {
         return footer;
     }
 
+    // Create on-demand, stored references aren't needed
+    private getNavSections = () => {
+        return {
+            middle: [
+                { name: 'Blogs',   link: 'blog_viewer'},
+                { name: 'Library', link: 'library'},
+                { name: 'Gallery', link: 'gallery' },
+                { name: 'Portfolio', link: 'portfolio'}
+            ] as NavItem[],
+            right: [
+                { name: 'Upload',     link: 'upload' },
+                { name: 'Lemonfaace', link: '#' }
+            ] as NavItem[]
+        };
+    }
+
     private createNavigation = (): HTMLElement => {
+        const generateNavButtons = (items: NavItem[]): HTMLAnchorElement[] => {
+            return items.map(i => {
+                const button = document.createElement('a');
+                button.className = 'navigation-button';
+                button.textContent = i.name;
+                button.href = `/${i.link}.html`;
+
+                return button;
+            });
+        };
+
         const navigation = document.createElement('div');
         navigation.className = 'navigation';
 
+        const { middle, right } = this.getNavSections();
+        
         const sectionLeft = document.createElement('section');
         const sectionMid = document.createElement('section');
         const sectionRight = document.createElement('section');
-
-        const accountButton = document.createElement('a')
-        accountButton.className = 'navigation-button';
-        accountButton.textContent = 'Lemonfaace';
-        accountButton.href = '#';
-
-        const uploadButton = document.createElement('a');
-        uploadButton.className = 'navigation-button';
-        uploadButton.textContent = 'Upload';
-        uploadButton.href = '../upload.html';
 
         const websiteTitle = document.createElement('a');
         websiteTitle.className = 'website-title'
@@ -72,7 +100,8 @@ export class Components {
         websiteTitle.href = '../index.html';
 
         sectionLeft.append(websiteTitle);
-        sectionRight.append(uploadButton, accountButton);
+        sectionMid.append(...generateNavButtons(middle));
+        sectionRight.append(...generateNavButtons(right));
 
         navigation.append(sectionLeft, sectionMid, sectionRight);
 
