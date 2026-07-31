@@ -77,7 +77,12 @@ header .logo {
     height: 40px;
     justify-content: space-between;
     padding: 0 10px;
+    padding-left: 60px;
     z-index: 4311;
+}
+
+.navigation section {
+    display: flex;
 }
 
 .navigation-button {
@@ -86,8 +91,7 @@ header .logo {
     color: white;
     padding: 8px 20px;
     margin-left: 5px;
-    border-style: solid;
-    border-color:rgb(71, 70, 78);
+    border: rgb(71, 70, 78) solid 0;
     border-width: 0 1px;
     font-size: 16px;
     font-weight: bold;
@@ -110,6 +114,22 @@ header .logo {
 
 .navigation-button:hover {
     background-color: rgba(78, 69, 116, 0.3);
+}
+
+.account-button-container .dropdown {
+    display: none;
+    position: absolute;
+    border: rgb(101, 98, 110) solid 2px;
+    border-radius: 2px;
+    background-color: rgba(55, 53, 70, 0.3);
+    height: 300px;
+    width: 180px;
+    top: 100%;
+    right: 8px;
+}
+
+.account-button-container:hover .dropdown {
+    display: block;
 }
 
 /* ====================== BANNER ====================== */
@@ -606,6 +626,53 @@ footer p {
     background-color: #0a0;
     width: 640px;
     height: 360px;
+}
+
+/* ====================== BLOG HISTORY ====================== */
+
+.blog-history-header {
+    text-align: center;
+    padding: 40px;
+}
+
+.blog-history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    row-gap: 30px;
+    justify-content: center;
+    justify-items: center;
+    list-style: none;
+    padding: 50px 100px;
+    width: 100%;
+    margin-bottom: 50px;
+}
+
+.history-card {
+    max-width: 360px;
+}
+
+.history-card .preview {
+    background-color: #0a0;
+    width: 360px;
+    min-height: 230px;
+    margin-bottom: 5px;
+}
+
+.history-card .category {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.history-card .date {
+    color: rgb(122, 194, 101);
+}
+
+.history-card h3 {
+    padding: 10px 0;
+}
+
+.history-card p {
+    font-size: 0.9em;
 }
 
 /* ====================== MAIN UPLOADER ====================== */

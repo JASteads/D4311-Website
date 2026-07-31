@@ -57,33 +57,51 @@ export class Components {
         return footer;
     }
 
+    private createAccountDropdown = () => {
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown';
+
+        const accountInfo = document.createElement('div');
+        const username = document.createElement('span');
+        const icon = document.createElement('img');
+
+        accountInfo.append(username, icon);
+
+        const accountSettings = document.createElement('span');
+        const logout = document.createElement('span');
+
+        dropdown.append(accountInfo, accountSettings, logout);
+
+        return dropdown;
+    }
+
     // Create on-demand, stored references aren't needed
     private getNavSections = () => {
         return {
             middle: [
-                { name: 'Blogs',   link: 'blog_viewer'},
+                { name: 'Blogs',   link: 'blog_history'},
                 { name: 'Library', link: 'library'},
                 { name: 'Gallery', link: 'gallery' },
                 { name: 'Portfolio', link: 'portfolio'}
             ] as NavItem[],
             right: [
                 { name: 'Upload',     link: 'upload' },
-                { name: 'Lemonfaace', link: '#' }
+                // { name: 'Lemonfaace', link: '#' }
             ] as NavItem[]
         };
     }
 
-    private createNavigation = (): HTMLElement => {
-        const generateNavButtons = (items: NavItem[]): HTMLAnchorElement[] => {
-            return items.map(i => {
-                const button = document.createElement('a');
-                button.className = 'navigation-button';
-                button.textContent = i.name;
-                button.href = `/${i.link}.html`;
+    private createNavButton = (item: NavItem) => {
+        const button = document.createElement('a');
+        button.className = 'navigation-button';
+        button.textContent = item.name;
+        button.href = `/${item.link}.html`;
 
-                return button;
-            });
-        };
+        return button;
+    }
+
+    private createNavigation = (): HTMLElement => {
+        const generateNavButtons = (items: NavItem[]) => items.map(i => this.createNavButton(i));
 
         const navigation = document.createElement('div');
         navigation.className = 'navigation';
@@ -102,6 +120,13 @@ export class Components {
         sectionLeft.append(websiteTitle);
         sectionMid.append(...generateNavButtons(middle));
         sectionRight.append(...generateNavButtons(right));
+
+        const accountButtonContainer = document.createElement('div');
+        accountButtonContainer.className = 'account-button-container';
+        const accountButton = this.createNavButton({ name: 'Lemonfaace', link: '#' });
+
+        accountButtonContainer.append(accountButton, this.createAccountDropdown());
+        sectionRight.appendChild(accountButtonContainer);
 
         navigation.append(sectionLeft, sectionMid, sectionRight);
 
