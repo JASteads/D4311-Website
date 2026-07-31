@@ -47,12 +47,14 @@ export class Components {
     private createFooter = (): HTMLElement => {
         const footer = document.createElement('footer');
         const motto = document.createElement('p');
+        const siteName = document.createElement('small');
         const logo = this.createLogo('footer-logo');
 
+        siteName.innerText = 'District 4';
         motto.innerText = 'The Intermission is Real';
 
         footer.className = 'main-footer';
-        footer.append(logo, motto);
+        footer.append(motto, logo, siteName);
 
         return footer;
     }
