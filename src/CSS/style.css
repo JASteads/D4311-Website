@@ -38,6 +38,28 @@ body {
     border-color: rgb(0, 29, 0);
 }
 
+.dropdown {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    border: rgb(101, 98, 110) solid 2px;
+    border-radius: 2px;
+    background-color: rgba(55, 53, 70, 0.3);
+    min-height: 100px;
+    width: 160px;
+    top: 100%;
+    right: 0;
+}
+
+.dropdown button {
+    font-family: "Courier", system-ui, sans-serif;
+    font-size: 1em;
+    color: white;
+    background-color: rgba(100, 255, 100, 0.1);
+    border: #0a0 solid 1px;
+    padding: 5px;
+}
+
 /* ====================== HEADER ====================== */
 
 header {
@@ -71,15 +93,14 @@ header .logo {
 
 .navigation {
     position: fixed;
-    align-self: center;
-    display: flex;
+    left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     background: linear-gradient(rgb(32, 31, 37), rgb(21, 20, 24));
     border-bottom: rgb(0, 102, 0) solid 2px;
     width: 100%;
     height: 40px;
-    justify-content: space-between;
     padding: 0 10px;
-    padding-left: 60px;
     z-index: 4311;
 }
 
@@ -87,11 +108,38 @@ header .logo {
     display: flex;
 }
 
+/* Introducing myself to the > operator, which enables direct child referencing */
+.navigation > section:nth-child(1) {
+    padding-left: 40px;
+    justify-content: start;
+}
+
+.navigation > section:nth-child(2) {
+    justify-content: center;
+}
+
+.navigation > section:nth-child(3) {
+    justify-content: end;
+}
+
+.website-title {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    letter-spacing: 7px;
+    white-space: pre;
+}
+
 .navigation-button {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    height: 100%;
     background: rgba(51, 48, 80, 0.3);
     color: white;
-    padding: 8px 20px;
+    padding: 0 20px;
     margin-left: 5px;
     border: rgb(71, 70, 78) solid 0;
     border-width: 0 1px;
@@ -102,36 +150,16 @@ header .logo {
     transition: background-color 0.1s ease;
 }
 
-.website-title {
-    display: inline-block;
-    text-decoration: none;
-    color: white;
-    padding: 8px 20px;
-    font-size: 16px;
-    letter-spacing: 7px;
-    font-weight: bold;
-    text-align: center;
-    white-space: pre;
-}
-
 .navigation-button:hover {
     background-color: rgba(78, 69, 116, 0.3);
 }
 
-.account-button-container .dropdown {
-    display: none;
-    position: absolute;
-    border: rgb(101, 98, 110) solid 2px;
-    border-radius: 2px;
-    background-color: rgba(55, 53, 70, 0.3);
-    height: 300px;
-    width: 180px;
-    top: 100%;
-    right: 8px;
+.main-nav-button-container {
+    position: relative;
 }
 
-.account-button-container:hover .dropdown {
-    display: block;
+.main-nav-button-container:hover .dropdown {
+    display: flex;
 }
 
 /* ====================== FOOTER ====================== */
@@ -168,6 +196,7 @@ footer small {
 }
 
 /* ====================== HOME NAV ====================== */
+
 .home-nav {
     display: flex;
     justify-content: space-around;
@@ -228,11 +257,6 @@ footer small {
     height: 12px;
     cursor: pointer;
 }
-
-/* .home-nav a:hover {
-    background-color: rgba(80, 110, 80, 0.6);
-    transform: translateY(-2px);
-} */
 
 /* ====================== HOME PAGE ====================== */
 
@@ -651,31 +675,33 @@ main h2 {
     margin-bottom: 50px;
 }
 
-.history-card {
+.blog-history-container li {
     max-width: 360px;
 }
 
-.history-card .preview {
+.blog-history-container li .preview {
     background-color: #0a0;
     width: 360px;
     min-height: 230px;
     margin-bottom: 5px;
 }
 
-.history-card .category {
+
+.blog-history-container li .category {
     font-weight: bold;
     text-transform: uppercase;
 }
 
-.history-card .date {
+
+.blog-history-container li .date {
     color: rgb(122, 194, 101);
 }
 
-.history-card h3 {
+.blog-history-container li h3 {
     padding: 10px 0;
 }
 
-.history-card p {
+.blog-history-container li p {
     font-size: 0.9em;
 }
 

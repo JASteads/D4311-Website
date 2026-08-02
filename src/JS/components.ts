@@ -59,36 +59,27 @@ export class Components {
         return footer;
     }
 
-    private createAccountDropdown = () => {
+    private createDropdown = (childNodes: Node[]) => {
         const dropdown = document.createElement('div');
         dropdown.className = 'dropdown';
 
-        const accountInfo = document.createElement('div');
-        const username = document.createElement('span');
-        const icon = document.createElement('img');
-
-        accountInfo.append(username, icon);
-
-        const accountSettings = document.createElement('span');
-        const logout = document.createElement('span');
-
-        dropdown.append(accountInfo, accountSettings, logout);
-
+        dropdown.append(...childNodes);
         return dropdown;
     }
+
+    
 
     // Create on-demand, stored references aren't needed
     private getNavSections = () => {
         return {
             middle: [
-                { name: 'Blogs',   link: 'blog_history'},
+                { name: 'News',   link: 'blog_history'},
                 { name: 'Library', link: 'library'},
                 { name: 'Gallery', link: 'gallery' },
                 { name: 'Portfolio', link: 'portfolio'}
             ] as NavItem[],
             right: [
-                { name: 'Upload',     link: 'upload' },
-                // { name: 'Lemonfaace', link: '#' }
+                { name: 'Upload',     link: 'upload' }
             ] as NavItem[]
         };
     }
@@ -102,34 +93,80 @@ export class Components {
         return button;
     }
 
-    private createNavigation = (): HTMLElement => {
-        const generateNavButtons = (items: NavItem[]) => items.map(i => this.createNavButton(i));
-
-        const navigation = document.createElement('div');
-        navigation.className = 'navigation';
-
-        const { middle, right } = this.getNavSections();
+    private createButtonContainer = (nodes: Node[]) => {
+        const container = document.createElement('div');
+        container.className = 'main-nav-button-container';
         
-        const sectionLeft = document.createElement('section');
-        const sectionMid = document.createElement('section');
-        const sectionRight = document.createElement('section');
+        container.append(...nodes);
+        return container;
+    }
 
+    private createNavigation = (): HTMLElement => {
         const websiteTitle = document.createElement('a');
         websiteTitle.className = 'website-title'
         websiteTitle.textContent = 'District 4';
         websiteTitle.href = '../index.html';
 
+        // Prepare sections
+        const generateNavButtons = (items: NavItem[]) => items.map(i => this.createNavButton(i));
+        const sectionLeft = document.createElement('section');
+        const sectionMid = document.createElement('section');
+        const sectionRight = document.createElement('section');
+        const { middle, right } = this.getNavSections();
+
+        // Append default buttons
         sectionLeft.append(websiteTitle);
         sectionMid.append(...generateNavButtons(middle));
         sectionRight.append(...generateNavButtons(right));
 
-        const accountButtonContainer = document.createElement('div');
-        accountButtonContainer.className = 'account-button-container';
-        const accountButton = this.createNavButton({ name: 'Lemonfaace', link: '#' });
+        /* ================= MANUAL NODE GROUP HANDLING ================= */
 
-        accountButtonContainer.append(accountButton, this.createAccountDropdown());
-        sectionRight.appendChild(accountButtonContainer);
+        const createAccountDropdown = () => {
+            const accountInfo = document.createElement('div');
+            const username = document.createElement('span');
+            const icon = document.createElement('img');
 
+            accountInfo.append(username, icon);
+
+            const accountSettings = document.createElement('span');
+            const logout = document.createElement('span');
+
+            return this.createDropdown([accountInfo, accountSettings, logout]);
+        }
+
+        // TODO: Move to server-side injection when preparing for launch
+        const createAdminDropdown = () => {
+            const adminPanelButton = document.createElement('button');
+            adminPanelButton.textContent = 'Admin Panel';
+            adminPanelButton.addEventListener('click', () => {});
+
+            const adminViewButton = document.createElement('button');
+            adminViewButton.textContent = 'Admin View';
+            adminViewButton.addEventListener('click', () => {});
+
+            return this.createDropdown([ adminPanelButton, adminViewButton ]);
+        }
+
+        const rightGroups = { 
+            accountNodes: [
+                this.createNavButton({ name: 'Lemonfaace', link: '#' }),
+                createAccountDropdown()
+            ],
+            adminNodes: [
+                this.createNavButton({ name: 'Admin', link: '#' }),
+                createAdminDropdown()
+            ]
+        };
+        const rightContainers = [
+            this.createButtonContainer(rightGroups.accountNodes),
+            this.createButtonContainer(rightGroups.adminNodes)
+        ]
+
+        sectionRight.append(...rightContainers);
+
+        // Finally, create the nav bar
+        const navigation = document.createElement('div');
+        navigation.className = 'navigation';
         navigation.append(sectionLeft, sectionMid, sectionRight);
 
         return navigation;

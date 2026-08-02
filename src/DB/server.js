@@ -24,10 +24,10 @@ const onDatabaseConnect = async () => {
     try {
         await initialiazeDatabase();
         console.log('Current root:', SRC_DIR);
-        console.log("✅ Database connected and initialized");
+        console.log('✅ Database connected and initialized');
     }
     catch (e) {
-        console.error("❌ DB Error", e);
+        console.error('❌ DB Error', e);
     }
 }
 
@@ -118,7 +118,7 @@ app.get('/api/blogs/:id', async (req, res) => {
         `, [id]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Blog not found" });
+            return res.status(404).json({ error: 'Blog not found' });
         }
 
         res.json(result.rows[0]);
@@ -152,7 +152,7 @@ app.get('/api/blogs', async (req, res) => {
 
         res.json(result.rows);
     } catch (e) {
-        res.status(500).json({ error: "Failed to fetch blogs" });
+        res.status(500).json({ error: 'Failed to fetch blogs' });
     }
 });
 
@@ -384,7 +384,7 @@ const initialiazeDatabase = async () => {
     // Table creation queries to run
     const queries = [
         {
-            name: "Blogs", 
+            name: 'Blogs', 
             sql: `
                 CREATE TABLE IF NOT EXISTS blogs(
                     id SERIAL PRIMARY KEY,
@@ -397,7 +397,7 @@ const initialiazeDatabase = async () => {
                 );`
         },
         {
-            name: "Products", 
+            name: 'Products', 
             sql: `
                 CREATE TABLE IF NOT EXISTS products(
                     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -409,7 +409,7 @@ const initialiazeDatabase = async () => {
                 );`
         },
         {
-            name: "Portfolio Items",
+            name: 'Portfolio Items',
             sql: `
                 CREATE TABLE IF NOT EXISTS portfolio_items(
                     id SERIAL PRIMARY KEY,
@@ -423,7 +423,7 @@ const initialiazeDatabase = async () => {
                 );`
         },
         {
-            name: "Gallery Items",
+            name: 'Gallery Items',
             sql: `
                 CREATE TABLE IF NOT EXISTS gallery_items(
                     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
