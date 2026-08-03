@@ -13,17 +13,26 @@ app.use(express.json());
 
 // Reference values
 const tempFolder = 'Resources/tmp';
+const devEnvLink = 'http://localhost:5173';
+const debugMode = process.env.DEV_MODE;
 const SRC_DIR = path.resolve(__dirname, '..');
 
 const pool = new Pool({
     connectionString: process.env.DB_CONNECTION_STRING
 });
 
-// SETUP
+// =========== SETUP ===========
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
+
 const onDatabaseConnect = async () => {
     try {
         await initialiazeDatabase();
         console.log('Current root:', SRC_DIR);
+        console.log('Debug Mode:', debugMode);
         console.log('✅ Database connected and initialized');
     }
     catch (e) {
@@ -38,7 +47,22 @@ const startServer = () => {
 
 // === API Routes ===
 
-// ----------- PRODUCT ROUTES -----------
+// =========== INJECTION ROUTES ===========
+
+// TODO : Make this a more robust authentication
+const authenticate = (auth) => {
+    return auth === 'true';
+}
+
+app.post('/api/admin_panel', async (req, res) => {
+    // TODO : Replace with real authentication and account info
+    const { auth } = req.body;
+
+    console.log(auth);
+    return safeRedirect(res, (authenticate(auth) ? 'admin_panel.html' : 'load_fail.html'));
+});
+
+// =========== PRODUCT ROUTES ===========
 
 // Get specific products
 app.get('/api/products/:id', async (req, res) => {
@@ -104,7 +128,7 @@ app.post('/api/products', async (req, res) => {
     }
 })
 
-// ----------- BLOG ROUTES ----------- 
+// =========== BLOG ROUTES =========== 
 
 // Get target blog entry
 app.get('/api/blogs/:id', async (req, res) => {
@@ -172,7 +196,7 @@ app.post('/api/blog', async (req, res) => {
     }
 });
 
-// ----------- PORTFOLIO ROUTES -----------
+// =========== PORTFOLIO ROUTES ===========
 
 // Get portfolio items
 app.get('/api/portfolio', async (req, res) => {
@@ -202,7 +226,7 @@ app.post('/api/portfolio', async (req, res) => {
     }
 });
 
-// ----------- GALLERY ROUTES -----------
+// =========== GALLERY ROUTES ===========
 
 // Get gallery items -- Lazy method for now. Add filter when gallery grows too large
 app.get('/api/gallery', async (req, res) => {
@@ -345,14 +369,26 @@ app.post('/api/gallery/upload', async (req, res) => {
     });
 });
 
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(SRC_DIR, '../load_fail.html'));
-});
+
+
+// app.use((req, res) => {
+//     safeRedirect(res, 'load_fail.html');
+// });
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PORT}`));
 
-// ----------- HELPER FUNCTIONS -----------
+// =========== HELPER FUNCTIONS ===========
+
+const safeRedirect = (res, file) => {
+    if (debugMode === 'true') {
+        return res.json({
+            redirectTo: `${devEnvLink}/${file}`
+        });
+    } else {
+        return res.status(404).sendFile(path.join(SRC_DIR, file));
+    }
+}
 
 /**
  * 

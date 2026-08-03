@@ -3,8 +3,9 @@ import { defineConfig } from 'vite'
 // Loads pages properly
 const input = {
     main: './src/index.html',
-    login: './src/login.html',
+    adminPanel: './src/admin_panel.html',
     upload: './src/upload.html',
+    login: './src/login.html',
     blogViewer: './src/blog_viewer.html',
     blogEditor: './src/blog_editor.html',
     productViewer: './src/product_viewer.html',
