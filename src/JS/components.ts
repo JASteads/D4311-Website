@@ -14,8 +14,6 @@ export class Components {
     adminTest: boolean;
     
     constructor() {
-        const body = document.body;
-
         // Admin view test -- Remove later
         this.adminTest = window.localStorage.getItem('admin-test') === 'true';
         if (this.adminTest === null) {
@@ -24,9 +22,7 @@ export class Components {
             window.localStorage.setItem('admin-test', `${this.adminTest}`);
         }
 
-        body.insertBefore(this.createHeader(), body.firstChild);
-        body.insertBefore(this.createNavigation(), body.firstChild);
-        body.appendChild(this.createFooter());
+        this.buildComponents();
     }
 
     private createLogo = (className: string): HTMLAnchorElement => {
@@ -72,6 +68,9 @@ export class Components {
     }
 
     private createDropdown = (childNodes: Node[]) => {
+        if (childNodes.length === 0) {
+
+        }
         const dropdown = document.createElement('div');
         dropdown.className = 'dropdown';
 
@@ -102,6 +101,10 @@ export class Components {
     }
 
     private createButtonContainer = (nodes: Node[]) => {
+        if (nodes.length === 0) {
+            return null;
+        }
+
         const container = document.createElement('div');
         container.className = 'main-nav-button-container';
         
@@ -110,34 +113,88 @@ export class Components {
     }
 
     private toggleAdminTest = () => {
+        const tryAdminLoad = async (url: string) => {
+            const res = await this.tryAdminRequest(url);
+            const redirect = JSON.parse(res);
+
+            if (redirect) {
+                window.location.href = redirect.redirectTo;
+            } else {
+                console.error('Load failed');
+            }
+        }
+
         this.adminTest = !this.adminTest;
         localStorage.setItem('admin-test', `${this.adminTest}`)
 
         if (window.location.href === `${DEV_URL}/admin_panel.html`) {
-            this.tryAdminLoad(`${API_URL}/api/admin_panel`);
+            tryAdminLoad(`${API_URL}/api/admin_panel`);
         } else {
             location.reload();
         }
     }
 
-    private tryAdminLoad = async (url: string) => {
+    private tryAdminRequest = async (url: string) => {
         const res = await fetch(url, {
             method: 'POST',
-            body: JSON.stringify({ auth: window.localStorage.getItem('admin-test') }),
+            body: JSON.stringify({ session: window.localStorage.getItem('admin-test') }),
             headers: { 'Content-Type': 'application/json' }
         });
-        
-        const redirect = await res.json();
 
-        if (redirect.redirectTo) {
-            console.log(redirect.redirectTo);
-            window.location.href = redirect.redirectTo;
-        } else {
-            console.error('Load failed');
-        }
+        return res.text();
     }
 
-    private createNavigation = (): HTMLElement => {
+    private tryAdminNodes = async () => {
+        console.log('Getting admin nodes...');
+        const result: Node[] = [];
+
+        try {
+            const dropDownHTML = await this.tryAdminRequest(`${API_URL}/api/get_admin_nav`);
+
+            if (dropDownHTML) {
+                const adminNodes: Node[] = [];
+                console.log('Found admin elements!');
+                document.body.insertAdjacentHTML('beforeend', dropDownHTML);
+
+                const panelButton = document.getElementById('admin-panel-button');
+                const portalButton = document.getElementById('admin-portal-button');
+
+                const linkPrefix = 'http://localhost:5173'; // TODO : Correct this
+
+                if (panelButton) {
+                    panelButton.addEventListener('click', () => {
+                        window.location.href = `${linkPrefix}/admin_panel.html`;
+                    });
+                    adminNodes.push(panelButton);
+                }
+
+                if (portalButton) {
+                    portalButton.addEventListener('click', () => {
+                        window.location.href = `${linkPrefix}/upload.html`;
+                    })
+                    adminNodes.push(portalButton);
+                }
+
+                result.push(this.createNavButton({ name: 'Admin', link: '#' }));
+                result.push(this.createDropdown(adminNodes));
+            } else {
+                console.warn('No admin nodes');
+            }
+        } catch (e) {
+            console.error('No good:', e);
+        }
+
+        return result;
+    }
+
+    private buildComponents = async () => {
+        const body = document.body;
+        body.insertBefore(this.createHeader(), body.firstChild);
+        body.insertBefore(await this.createNavigation(), body.firstChild);
+        body.appendChild(this.createFooter());
+    }
+    
+    private createNavigation = async () => {
         const createDevToggle = () => {
             const devToggleButton = document.createElement('button');
             devToggleButton.textContent = `${this.adminTest ? 'Guest' : 'Admin'} View`;
@@ -199,45 +256,22 @@ export class Components {
             return this.createDropdown([accountInfo, accountSettings, logout]);
         }
 
-        // TODO: Move to server-side injection when preparing for launch
-        const createAdminDropdown = () => {
-            // const adminPanelLink = document.createElement('a');
-            // adminPanelLink.href = `${API_URL}/api/admin_portal`;
-
-            const adminPanelButton = document.createElement('button');
-            adminPanelButton.textContent = 'Admin Panel';
-            adminPanelButton.addEventListener('click', async () => this.tryAdminLoad(`${API_URL}/api/admin_panel`));
-
-            const adminViewButton = document.createElement('button');
-            adminViewButton.textContent = 'Admin View';
-            adminViewButton.addEventListener('click', () => this.toggleAdminTest());
-
-            const blogEditorLink = document.createElement('a');
-            blogEditorLink.href = '/upload.html';
-
-            const uploadPortalButton = document.createElement('button');
-            uploadPortalButton.textContent = 'Upload Portal';
-            uploadPortalButton.addEventListener('click', () => blogEditorLink.click());
-
-            return this.createDropdown([ 
-                adminPanelButton, adminViewButton, uploadPortalButton
-            ]);
-        }
 
         const rightGroups = { 
             accountNodes: [
                 this.createNavButton({ name: 'Log In', link: 'login' }),
                 createAccountDropdown()
             ],
-            adminNodes: [
-                this.createNavButton({ name: 'Admin', link: '#' }),
-                createAdminDropdown()
-            ]
+            adminNodes: [ ...(await this.tryAdminNodes()) ]
         };
-        const rightContainers = [
-            this.createButtonContainer(rightGroups.accountNodes),
-            this.createButtonContainer(rightGroups.adminNodes)
-        ]
+        const rightContainers: Node[] = [ this.createButtonContainer(rightGroups.accountNodes)! ];
+
+        if (rightGroups.adminNodes.length > 0) {
+            const adminContainer = (this.createButtonContainer(rightGroups.adminNodes));
+            if (adminContainer) {
+                rightContainers.push(adminContainer);
+            }
+        }
 
         sectionRight.append(...rightContainers);
 

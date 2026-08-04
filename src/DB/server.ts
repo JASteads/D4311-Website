@@ -54,8 +54,8 @@ const startServer = () => {
 // =========== INJECTION ROUTES ===========
 
 // TODO : Make this a more robust authentication
-const authenticate = (credentials: string) => {
-    return credentials === 'true';
+const authenticate = (session: string) => {
+    return session === 'true';
 }
 
 const getSession = (req: any) => {
@@ -66,15 +66,23 @@ const getSession = (req: any) => {
 
 app.post('/api/admin_panel', async (req, res) => {
     // TODO : Replace with real authentication and account info
-    const credentials = getSession(req);
+    const session = getSession(req);
 
-    return safeRedirect(res, (authenticate(credentials) ? 'admin_panel.html' : 'load_fail.html'));
+    return res.send(safeRedirect(res, (authenticate(session) ? 'admin_panel.html' : 'load_fail.html')));
 });
 
 app.post('/api/get_admin_nav', async (req, res) => {
-    const auth = getSession(req);
+    const session = getSession(req);
 
-    
+    if (authenticate(session)) {
+        const panelButtonStr = ' <button id="admin-panel-button" onclick="goAdminPanel()">Admin Panel</button>';
+        const portalButtonStr = ' <button id="admin-portal-button" onclick="goUploadPortal()">Upload Portal</button>';
+        const html = panelButtonStr.concat(portalButtonStr);
+
+        return res.send(html);
+    } else {
+        return res.send();
+    }
 });
 
 // =========== PRODUCT ROUTES ===========
@@ -393,11 +401,17 @@ app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PO
 
 // =========== HELPER FUNCTIONS ===========
 
+const getSafeLink = (file: string) => {
+    return (debugMode === 'true') ? `${devEnvLink}/${file}` : path.join(SRC_DIR, file);
+}
+
 const safeRedirect = (res: ExpressResponse, file: string) => {
+    const link = getSafeLink(file);
+
     if (debugMode === 'true') {
-        return res.json({ redirectTo: `${devEnvLink}/${file}` });
+        return res.json({ redirectTo: link });
     } else {
-        return res.status(404).sendFile(path.join(SRC_DIR, file));
+        return res.status(404).sendFile(link);
     }
 }
 

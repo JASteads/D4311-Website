@@ -13,8 +13,9 @@
 
 html {
     background: radial-gradient(rgb(0, 83, 69), rgb(20, 2, 27));
-    background-image: url("../Resources/Images/sbg.png");
-    background-size: cover;
+    background-color: rgb(2, 0, 15);
+    background-image: url("../Resources/Images/sbgXL.png");
+    background-size: auto;
     background-repeat: no-repeat;
     background-position: top center;
     font-family: "Verdana", system-ui, sans-serif;
