@@ -268,7 +268,6 @@ footer small {
 /* ====================== LOGIN ====================== */
 
 .login-container {
-    display: flex;
     position: relative;
     align-self: center;
     justify-items: center;
@@ -278,18 +277,7 @@ footer small {
     margin: auto;
 }
 
-.login-container > .flavor {
-    display: flex;
-    flex-direction: column;
-    padding: 3px 0;
-    margin-right: 40px;
-}
-
-.login-container > .flavor small {
-    padding: 12px 0;
-}
-
-.login-container > .type-container {
+.login-container .type-container {
     position: absolute;
     display: flex;
     background-color: transparent;
@@ -308,18 +296,44 @@ footer small {
     font-size: 1em;
 }
 
-.login-container > .info-container {
+.sign-in {
     display: flex;
-    flex-direction: column;
 }
 
-.info-container div {
+.sign-in > .flavor, .sign-up > .flavor {
+    display: flex;
+    flex-direction: column;
+    padding: 3px 0;
+    margin-right: 40px;
+}
+
+.sign-in > .flavor small, .sign-up > .flavor small {
+    padding: 12px 0;
+}
+
+.sign-up {
+    display: none; 
+}
+
+#sign-in-toggle[data-active="true"], #sign-up-toggle[data-active="true"] {
+    font-weight: bold;
+    background-color: rgba(0, 170, 0, 0.3);
+}
+
+#sign-in-toggle[data-active="false"], #sign-up-toggle[data-active="false"] {
+    font-weight: 100;
+    background-color: transparent;
+}
+
+.sign-in-info div, .sign-up-info div {
+    color: black;
     background-color: white;
+    padding: 1px 5px;
     width: 240px;
     margin: 5px 0;
 }
 
-.info-container button {
+.sign-in-info button, .sign-up-info button {
     margin-top: 40px;
     padding: 2px;
     width: 100px;

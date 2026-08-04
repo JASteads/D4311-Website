@@ -1,17 +1,21 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-const fs = require('fs');
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const crypto = require('crypto');
-const { Pool } = require('pg'); 
+import fs from 'fs';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import crypto from 'crypto';
+import { Pool, type QueryResult } from 'pg';
+import type { Response as ExpressResponse } from 'express';
+import { fileURLToPath } from 'url';
  
 const app = express();
 app.use(cors()); // Allows frontend to call the server
 app.use(express.json());
 
 // Reference values
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const tempFolder = 'Resources/tmp';
 const devEnvLink = 'http://localhost:5173';
 const debugMode = process.env.DEV_MODE;
@@ -35,7 +39,7 @@ const onDatabaseConnect = async () => {
         console.log('Debug Mode:', debugMode);
         console.log('✅ Database connected and initialized');
     }
-    catch (e) {
+    catch (e: any) {
         console.error('❌ DB Error', e);
     }
 }
@@ -50,16 +54,27 @@ const startServer = () => {
 // =========== INJECTION ROUTES ===========
 
 // TODO : Make this a more robust authentication
-const authenticate = (auth) => {
-    return auth === 'true';
+const authenticate = (credentials: string) => {
+    return credentials === 'true';
+}
+
+const getSession = (req: any) => {
+    const { session } = req.body;
+
+    return session;
 }
 
 app.post('/api/admin_panel', async (req, res) => {
     // TODO : Replace with real authentication and account info
-    const { auth } = req.body;
+    const credentials = getSession(req);
 
-    console.log(auth);
-    return safeRedirect(res, (authenticate(auth) ? 'admin_panel.html' : 'load_fail.html'));
+    return safeRedirect(res, (authenticate(credentials) ? 'admin_panel.html' : 'load_fail.html'));
+});
+
+app.post('/api/get_admin_nav', async (req, res) => {
+    const auth = getSession(req);
+
+    
 });
 
 // =========== PRODUCT ROUTES ===========
@@ -89,7 +104,7 @@ app.get('/api/products/:id', async (req, res) => {
         }
 
         res.json(product);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: `Product fetch failed: ${e.message}` });
     }
 });
@@ -108,7 +123,7 @@ app.get('/api/products', async (req, res) => {
         
         res.json(result.rows);
     }
-    catch (e) {
+    catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -121,9 +136,9 @@ app.post('/api/products', async (req, res) => {
             INSERT INTO products (title, description, release_date, splash_art_link, txn_link)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
-        `, [title, description, new Date().toISOString(Date.now()), splash_art_link, txn_link]);
+        `, [title, description, new Date(Date.now()).toISOString(), splash_art_link, txn_link]);
         res.json(result.rows[0]);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 })
@@ -146,7 +161,7 @@ app.get('/api/blogs/:id', async (req, res) => {
         }
 
         res.json(result.rows[0]);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -167,7 +182,7 @@ app.get('/api/blogs', async (req, res) => {
         if (limit !== undefined) {
             const upperRecentLimit = 15;
 
-            const safeLimit = Math.min(Math.max(parseInt(limit) || 10, 1), upperRecentLimit);
+            const safeLimit = Math.min(Math.max(parseInt(limit as string) || 10, 1), upperRecentLimit);
             queryText += ` LIMIT $1`;
             params.push(safeLimit);
         }
@@ -175,7 +190,7 @@ app.get('/api/blogs', async (req, res) => {
         const result = await pool.query(queryText, params);
 
         res.json(result.rows);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: 'Failed to fetch blogs' });
     }
 });
@@ -191,7 +206,7 @@ app.post('/api/blog', async (req, res) => {
             `, [title, author, bodyText]);
             
         res.json(result.rows[0]);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -199,14 +214,14 @@ app.post('/api/blog', async (req, res) => {
 // =========== PORTFOLIO ROUTES ===========
 
 // Get portfolio items
-app.get('/api/portfolio', async (req, res) => {
+app.get('/api/portfolio', async (_, res) => {
     try {
         const result = await pool.query(`
             SELECT title, type, lang_api, date, description, image_link, project_link
             FROM portfolio_items
         `);
         res.json(result.rows);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -220,8 +235,8 @@ app.post('/api/portfolio', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
         `, [title, type, lang_api, date, description, image_link, project_link]);
-        res.json(results.rows[0]);
-    } catch (e) {
+        res.json(result.rows[0]);
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -258,7 +273,7 @@ app.get('/api/gallery', async (req, res) => {
 
         const result = await pool.query(query, requestParams);
         res.json(result.rows);
-    } catch (e) {
+    } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
@@ -275,15 +290,15 @@ app.post('/api/gallery/upload', async (req, res) => {
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
-    const realName = decodeURIComponent(req.headers['x-file-name']);
-    const realPath = path.join(SRC_DIR, req.headers['path']);
+    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
+    const realPath = path.join(SRC_DIR, req.headers['path'] as string);
     const finalPath = path.join(realPath, realName);
 
     console.log('Final path:', finalPath);
 
-    const addGalleryEntry = async () => {
+    const addGalleryEntry = async (): Promise<QueryResult> => {
         // Adding item to database
-        const containerItems = JSON.parse(decodeURIComponent(container));
+        const containerItems = JSON.parse(decodeURIComponent(container as string));
         console.log('Container:', containerItems);
 
         const items = { 
@@ -304,7 +319,7 @@ app.post('/api/gallery/upload', async (req, res) => {
                 `, [items.title, items.gameID, items.caption, `preview_${realName}`, realName, items.dateCreated]);
                 
                 resolve(result);
-            } catch (e) {
+            } catch (e: any) {
                 reject(e);
             }
         });
@@ -323,14 +338,14 @@ app.post('/api/gallery/upload', async (req, res) => {
             console.log('Moving temp file from:', path.join(tempPath, tempName));
             console.log('..to:', finalPath);
             
-            let queryResult;
+            let queryResult: QueryResult | null = null;
 
             // Only update DB when adding a full image
             if (container) {
                 console.log('Container found. Updating database..');
                 try {
                     queryResult = await addGalleryEntry();    
-                } catch (e) {
+                } catch (e: any) {
                     console.error('Database upload failed..', e);
                     return res.status(500).json({
                         error: 'Failed to add gallery record to the database',
@@ -342,11 +357,11 @@ app.post('/api/gallery/upload', async (req, res) => {
             try {
                 await fs.promises.rename(path.join(tempPath, tempName), finalPath);
                 console.log('File moved');
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e);
             }
             
-            const response = {
+            const response: any = {
                 message: `${(thumbnail) ? 'Thumbnail' : 'Image'} downloaded to gallery`,
                 savedAs: thumbnail ? `preview_${realName}` : realName
             };
@@ -356,7 +371,7 @@ app.post('/api/gallery/upload', async (req, res) => {
             }
 
             res.status(200).json(response);
-        } catch (e) {
+        } catch (e: any) {
             console.error('Image download failed');
             res.status(500).json(e);
         }
@@ -369,8 +384,6 @@ app.post('/api/gallery/upload', async (req, res) => {
     });
 });
 
-
-
 // app.use((req, res) => {
 //     safeRedirect(res, 'load_fail.html');
 // });
@@ -380,11 +393,9 @@ app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PO
 
 // =========== HELPER FUNCTIONS ===========
 
-const safeRedirect = (res, file) => {
+const safeRedirect = (res: ExpressResponse, file: string) => {
     if (debugMode === 'true') {
-        return res.json({
-            redirectTo: `${devEnvLink}/${file}`
-        });
+        return res.json({ redirectTo: `${devEnvLink}/${file}` });
     } else {
         return res.status(404).sendFile(path.join(SRC_DIR, file));
     }

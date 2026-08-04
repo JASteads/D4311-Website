@@ -9,22 +9,43 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="flavor">
-            <h2>Lock in!</h2>
-            <small><i>The white void awaits.</i></small>
-        </div>
         <div class="type-container">
-            <button class="type" id="sign-in">Sign In</button>
-            <button class="type" id="sign-up">Sign Up</button>
+            <button class="type" id="sign-in-toggle">Sign In</button>
+            <button class="type" id="sign-up-toggle">Sign Up</button>
+        </div>
+
+        <div class="sign-in" id="sign-in">
+            <div class="flavor">
+                <h2>Lock in!</h2>
+                <small><i>The white void beckons.</i></small>
+            </div>
+            <div class="sign-in-info">
+                <span>Username</span>
+                <div id="username" contenteditable="true"></div>
+                <span>Password</span>
+                <div id="password" contenteditable="true"></div>
+                <button id="sign-in-button">Log In</button>
+            </div>
+        </div>
+
+        <div class="sign-up" id="sign-up">
+            <div class="flavor">
+                <h2>New Here, are You?</h2>
+                <small><i>Go on, tell us more.</i></small>
+            </div>
+            <div class="sign-up-info">
+                <span>Username</span>
+                <div id="username" contenteditable="true"></div>
+                <span>Email Address</span>
+                <div id="email" contenteditable="true"></div>
+                <span>Password</span>
+                <div id="password" contenteditable="true"></div>
+                <span>Confirm Password</span>
+                <div id="confirm-password" contenteditable="true"></div>
+                <button id="register-button">Register</button>
+            </div>
         </div>
         
-        <div class="info-container">
-            <span>Username</span>
-            <div id="username" contenteditable="true"></div>
-            <span>Password</span>
-            <div id="password" contenteditable="true"></div>
-            <button id="login-button">Log In</button>
-        </div>
     </div>
 </body>
 </html>
