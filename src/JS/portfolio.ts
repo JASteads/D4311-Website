@@ -1,4 +1,4 @@
-import { Components } from "./components";
+import { buildComponents } from "./components";
 import { API_URL } from "./config";
 
 class PortfolioItem {
@@ -103,7 +103,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
 }
 
 const initPortfolio = () => {
-    new Components();
+    buildComponents();
     loadPorfolio();
 }
 

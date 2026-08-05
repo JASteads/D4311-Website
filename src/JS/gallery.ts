@@ -1,4 +1,4 @@
-import { Components } from "./components.ts";
+import { buildComponents } from "./components.ts";
 import { API_URL } from "./config.ts";
 import { GalleryUploader } from "./gallery-uploader.ts";
 import { GalleryItem } from "./gallery-item.ts";
@@ -223,7 +223,7 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    new Components();
+    buildComponents();
     uploader = new GalleryUploader(false);
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');

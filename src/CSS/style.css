@@ -70,8 +70,8 @@ body {
     background-color: rgba(128, 100, 255, 0.1);
     border: rgb(101, 98, 110) solid 0;
     padding: 5px;
-    transition: 0.1s background-color ease;
     cursor: pointer;
+    transition: 0.1s background-color ease;
 }
 
 .dropdown button:hover {
@@ -184,6 +184,26 @@ header .logo {
     display: flex;
 }
 
+.dev-toggle-button {
+    position: absolute;
+    padding: 5px 20px;
+    border: #0a0 solid 2px;
+    border-radius: 2px;
+    color: rgb(214, 255, 214);
+    background-color: rgba(0, 100, 0, 0.3);
+    font-size: 1.2em;
+    font-family: 'Courier', system-ui;
+    top: 160%;
+    left: 30px;
+    cursor: pointer;
+    transition: 0.1s transform ease;
+}
+
+.dev-toggle-button:hover {
+    background-color: rgba(104, 231, 125, 0.3);
+    transform: scale(1.1);
+}
+
 /* ====================== FOOTER ====================== */
 
 footer {
@@ -258,6 +278,8 @@ footer small {
 }
 
 .admin-panel li > .options {
+    display: inline-flex;
+    gap: 4px;
     justify-self: end;
     justify-content: right;
 }

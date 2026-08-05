@@ -1,5 +1,5 @@
 import { BlogViewer } from './blog-viewer';
-import { Components } from './components';
+import { buildComponents } from './components';
 
 const newsFeed = new BlogViewer();
 
@@ -52,5 +52,5 @@ document.addEventListener('DOMContentLoaded', () => {
     newsFeed.showRecentBlogs(document.getElementById('news-feed'));
     initBounceImg('fabu_img');
 
-    new Components();    
+    buildComponents();    
 });

@@ -47,7 +47,7 @@ const onDatabaseConnect = async () => {
 // Connect once when server starts
 const startServer = () => {
     onDatabaseConnect();
-}
+};
 
 // === API Routes ===
 
@@ -56,19 +56,28 @@ const startServer = () => {
 // TODO : Make this a more robust authentication
 const authenticate = (session: string) => {
     return session === 'true';
-}
+};
 
 const getSession = (req: any) => {
     const { session } = req.body;
 
     return session;
-}
+};
+
+// For simple access requests
+app.post('/api/admin_access', async (req, res) => {
+    return res.send(authenticate(getSession(req)));
+});
 
 app.post('/api/admin_panel', async (req, res) => {
     // TODO : Replace with real authentication and account info
     const session = getSession(req);
 
-    return res.send(safeRedirect(res, (authenticate(session) ? 'admin_panel.html' : 'load_fail.html')));
+    if (authenticate(session)) {
+        return safeRedirect(res, 'admin_panel.html');
+    } else {
+        return safeRedirect(res, 'load_fail.html');
+    }
 });
 
 app.post('/api/get_admin_nav', async (req, res) => {

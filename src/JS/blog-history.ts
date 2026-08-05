@@ -1,6 +1,6 @@
-import { Components } from "./components";
+import { buildComponents } from "./components";
 import { API_URL } from "./config";
 
 document.addEventListener('DOMContentLoaded', () => {
-    new Components();
+    buildComponents();
 });

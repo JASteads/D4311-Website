@@ -1,9 +1,9 @@
 import { BlogViewer } from "./blog-viewer";
-import { Components } from "./components";
+import { buildComponents } from "./components";
 
 const viewer = new BlogViewer();
 
 document.addEventListener('DOMContentLoaded', () => {
     viewer.showBlog();
-    new Components();
+    buildComponents();
 });

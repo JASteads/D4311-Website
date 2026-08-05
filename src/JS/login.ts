@@ -1,4 +1,4 @@
-import { Components } from "./components";
+import { buildComponents } from "./components";
 import { API_URL } from "./config";
 
 const toggleInterface = (toggle: HTMLElement, uiID: string) => {
@@ -48,5 +48,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerButton = document.getElementById('register-button');
     registerButton?.addEventListener('click', tryRegister);
 
-    new Components();
+    buildComponents();
 })
