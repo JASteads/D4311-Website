@@ -36,11 +36,7 @@ export const tryAdminTest = () => {
 
 export const basicAdminAccessRequest = async () => {
     return await requestAdminAccess(`${API_URL}/api/admin_access`);
-} 
-
-const setSession = (value: string) => {
-    return window.localStorage.setItem('admin-test', value);
-};
+}
 
 export const getSession = () => {
     if (!window.localStorage.getItem('admin-test')) {
@@ -49,4 +45,8 @@ export const getSession = () => {
     }
 
     return { session: window.localStorage.getItem('admin-test') };
+};
+
+const setSession = (value: string) => {
+    return window.localStorage.setItem('admin-test', value);
 };
