@@ -1,5 +1,5 @@
 import { API_URL } from "./config";
-import { requestAdminAccess } from "./permissions";
+import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
 
 class FillConfig {
@@ -130,8 +130,7 @@ const buildSections = async () => {
         return;
     }
 
-    const access = await requestAdminAccess(`${API_URL}/api/admin_access`);
-    if (access === 'false') {
+    if (await basicAdminAccessRequest() === 'false') {
         console.warn('Access denied');
         return;
     }

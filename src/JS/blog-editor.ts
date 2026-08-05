@@ -1,4 +1,5 @@
 import { API_URL } from './config';
+import { basicAdminAccessRequest } from './permissions';
 
 export class BlogEditor {
     private editorBody: HTMLElement | null;
@@ -73,6 +74,11 @@ export class BlogEditor {
     };
 
     public publishBlog = async () => {
+        if (await basicAdminAccessRequest() === 'false') {
+            console.warn('Access denied');
+            return;
+        }
+        
         const placeholderAuthor = 'Lemon'; // Replace later with local storage
         const titleElement = document.getElementById('blog-title');
         const bodyElement = document.getElementById('blog-body');

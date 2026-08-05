@@ -1,4 +1,5 @@
 import { API_URL, DEV_URL } from "./config";
+import { basicAdminAccessRequest } from "./permissions";
 import { GalleryItem } from "./gallery-item";
 import { Product } from "./product";
 
@@ -117,6 +118,11 @@ export class GalleryUploader {
     }
     
     private uploadImage = async () => {
+        if (await basicAdminAccessRequest() === 'false') {
+            console.warn('Access denied');
+            return;
+        }
+        
         if (!this.pendingUpload) {
             console.warn(`No file has been prepared to upload`);
             return;

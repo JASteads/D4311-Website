@@ -1,4 +1,5 @@
 import { API_URL } from "./config";
+import { basicAdminAccessRequest } from "./permissions";
 
 export class PortfolioWriter {
     titleField: HTMLElement | null;
@@ -23,6 +24,11 @@ export class PortfolioWriter {
     }
 
     private publish = async () => {
+        if (await basicAdminAccessRequest() === 'false') {
+            console.warn('Access denied');
+            return;
+        }
+        
         const record = {
             title: this.titleField?.textContent || 'Untitled',
             type: this.getProjectLinkType(),
