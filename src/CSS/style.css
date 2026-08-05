@@ -1,5 +1,10 @@
 ﻿/* ====================== DEFAULTS + BASE ====================== */
 
+/* Variable Declarations */
+:root {
+    --login-border-size: 2px;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -8,8 +13,9 @@
 
 html {
     background: radial-gradient(rgb(0, 83, 69), rgb(20, 2, 27));
-    background-image: url("../Resources/Images/sbg.png");
-    background-size: cover;
+    background-color: rgb(2, 0, 15);
+    background-image: url("../Resources/Images/sbgXL.png");
+    background-size: auto;
     background-repeat: no-repeat;
     background-position: top center;
     font-family: "Verdana", system-ui, sans-serif;
@@ -18,7 +24,17 @@ html {
     scrollbar-gutter: stable;
 }
 
+button {
+    font-family: 'Verdana', system-ui, sans-serif;
+    padding: 2px 5px;
+}
+
+.circle {
+    border-radius: 50%;
+}
+
 body {
+    position: relative;
     background: rgba(25, 50, 25, 0.92);
     max-width: 1400px;
     margin: 0 auto;
@@ -34,10 +50,42 @@ body {
     border-color: rgb(0, 29, 0);
 }
 
+.dropdown {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    border: rgb(101, 98, 110) solid 2px;
+    border-radius: 2px;
+    background-color: rgba(55, 53, 70, 0.3);
+    min-height: 50px;
+    width: 160px;
+    top: 100%;
+    right: 0;
+}
+
+.dropdown button {
+    font-family: "Courier", system-ui, sans-serif;
+    font-size: 1em;
+    color: white;
+    background-color: rgba(128, 100, 255, 0.1);
+    border: rgb(101, 98, 110) solid 0;
+    padding: 5px;
+    cursor: pointer;
+    transition: 0.1s background-color ease;
+}
+
+.dropdown button:hover {
+    background-color: rgba(100, 255, 100, 0.2);
+}
+
+.admin-only {
+    display: none;
+}
+
 /* ====================== HEADER ====================== */
 
 header {
-    background: rgba(20, 37, 20, 0.8);
+    background: rgba(14, 26, 14, 0.8);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -53,6 +101,8 @@ header h1 {
     text-transform: uppercase;
     font-size: 2.8rem;
     color: white;
+    user-select: none;
+    cursor: default;
 }
 
 header .logo {
@@ -65,49 +115,317 @@ header .logo {
 
 .navigation {
     position: fixed;
-    align-self: center;
-    display: flex;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     background: linear-gradient(rgb(32, 31, 37), rgb(21, 20, 24));
     border-bottom: rgb(0, 102, 0) solid 2px;
     width: 100%;
     height: 40px;
-    justify-content: space-between;
     padding: 0 10px;
     z-index: 4311;
 }
 
+.navigation section {
+    display: flex;
+}
+
+/* Introducing myself to the > operator, which enables direct child referencing */
+.navigation > section:nth-child(1) {
+    padding-left: 40px;
+    justify-content: start;
+}
+
+.navigation > section:nth-child(2) {
+    justify-content: center;
+}
+
+.navigation > section:nth-child(3) {
+    justify-content: end;
+}
+
+.website-title {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    letter-spacing: 7px;
+    white-space: pre;
+}
+
 .navigation-button {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    height: 100%;
     background: rgba(51, 48, 80, 0.3);
     color: white;
-    padding: 8px 20px;
+    padding: 0 20px;
     margin-left: 5px;
-    border-style: solid;
-    border-color:rgb(71, 70, 78);
+    border: rgb(71, 70, 78) solid 0;
     border-width: 0 1px;
     font-size: 16px;
     font-weight: bold;
     text-align: center;
-    transition: background-color 0.1s ease;
-}
-
-.website-title {
-    display: inline-block;
     text-decoration: none;
-    color: white;
-    padding: 8px 20px;
-    font-size: 16px;
-    letter-spacing: 7px;
-    font-weight: bold;
-    text-align: center;
-    white-space: pre;
+    transition: background-color 0.1s ease;
 }
 
 .navigation-button:hover {
     background-color: rgba(78, 69, 116, 0.3);
 }
 
-/* ====================== BANNER ====================== */
+.main-nav-button-container {
+    position: relative;
+}
+
+.main-nav-button-container:hover > .dropdown {
+    display: flex;
+}
+
+.dev-toggle-button {
+    position: absolute;
+    padding: 5px 20px;
+    border: #0a0 solid 2px;
+    border-radius: 2px;
+    color: rgb(214, 255, 214);
+    background-color: rgba(0, 100, 0, 0.3);
+    font-size: 1.2em;
+    font-family: 'Courier', system-ui;
+    top: 160%;
+    left: 30px;
+    cursor: pointer;
+    transition: 0.1s transform ease;
+}
+
+.dev-toggle-button:hover {
+    background-color: rgba(104, 231, 125, 0.3);
+    transform: scale(1.1);
+}
+
+/* ====================== FOOTER ====================== */
+
+footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgb(3, 10, 3);
+    padding: 40px 40px;
+    margin-top: auto;
+    text-align: center;
+    border-top: 3px solid #0a0;
+}
+
+.footer-logo img {
+    display: block;
+    height: 55px;
+    margin: 30px 0 15px 0;
+    border: rgb(0, 109, 0) solid 3px;
+    border-radius: 50%;
+    mix-blend-mode:luminosity;
+}
+
+footer p {
+    font-size: 0.9rem;
+    color:rgb(154, 231, 154);
+    font-weight: bold;
+    opacity: 0.85;
+}
+
+footer small {
+    color:rgb(73, 105, 80);
+}
+
+/* ====================== ADMIN PANEL ====================== */
+
+.admin-panel {
+    padding: 20px;
+}
+
+.admin-panel section {
+    border-bottom:#0a0 solid 1px;
+    padding-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+.admin-panel section > h2 {
+    text-align: left;
+    width: 100%;
+    padding: 5px 0;
+    margin-bottom: 10px;
+    border-bottom: #0a0 solid 1px;
+}
+
+.admin-panel ul {
+    list-style: none;
+}
+
+.admin-panel li {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    padding: 3px 5px;
+    border-bottom: rgba(0, 150, 0, 0.3) dotted 1px;
+}
+
+.admin-panel li .file-size {
+    color:rgba(163, 163, 163, 0.8);
+}
+
+.admin-panel li > .date {
+    align-items: center;
+    justify-self: center;
+}
+
+.admin-panel li > .options {
+    display: inline-flex;
+    gap: 4px;
+    justify-self: end;
+    justify-content: right;
+}
+
+.admin-panel li > .options a {
+    color:rgb(0, 223, 0);
+}
+
+/* ====================== LOGIN ====================== */
+
+.login-container {
+    position: relative;
+    align-self: center;
+    justify-items: center;
+    border: #0a0 solid var(--login-border-size);
+    border-radius: 2px;
+    padding: 40px;
+    margin: auto;
+}
+
+.login-container .type-container {
+    position: absolute;
+    display: flex;
+    background-color: transparent;
+    outline: #0a0 solid var(--login-border-size);
+    bottom: 100%;
+    margin-bottom: var(--login-border-size);
+    right: 0;
+}
+
+.type-container button {
+    color: white;
+    background-color: transparent;
+    padding: 5px 10px;
+    outline: #0a0 solid 1px;
+    border-style: none;
+    font-size: 1em;
+}
+
+.sign-in {
+    display: flex;
+}
+
+.sign-in > .flavor, .sign-up > .flavor {
+    display: flex;
+    flex-direction: column;
+    padding: 3px 0;
+    margin-right: 40px;
+}
+
+.sign-in > .flavor small, .sign-up > .flavor small {
+    padding: 12px 0;
+}
+
+.sign-up {
+    display: none; 
+}
+
+#sign-in-toggle[data-active="true"], #sign-up-toggle[data-active="true"] {
+    font-weight: bold;
+    background-color: rgba(0, 170, 0, 0.3);
+}
+
+#sign-in-toggle[data-active="false"], #sign-up-toggle[data-active="false"] {
+    font-weight: 100;
+    background-color: transparent;
+}
+
+.sign-in-info div, .sign-up-info div {
+    color: black;
+    background-color: white;
+    padding: 1px 5px;
+    width: 240px;
+    margin: 5px 0;
+}
+
+.sign-in-info button, .sign-up-info button {
+    margin-top: 40px;
+    padding: 2px;
+    width: 100px;
+}
+
+/* ====================== HOME NAV ====================== */
+
+.home-nav {
+    display: flex;
+    justify-content: space-around;
+    height: 220px;
+    background-color: rgb(0, 15, 0);
+    border-top: #0a0 solid 1px;
+    border-bottom: #0a0 solid 1px;
+    padding: 30px 0px;
+    margin-bottom: 25px;
+}
+
+.home-nav .discord-button {
+    background-color:rgb(45, 51, 122);
+    color:rgb(223, 230, 255);
+    border:rgb(177, 195, 233) inset 5px;
+    border-radius: 20px;
+    width: 280px;
+    font-size: 2.4em;
+    font-family: 'Soopafresh', 'Verdana';
+    padding: 0 10px;
+}
+
+.home-nav .promo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.home-nav .promo-container {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+}
+
+.home-nav .promo-container aside {
+    background-color: rgb(72, 63, 82);
+    border: white solid 2px;
+    border-style: none;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 1.5em;
+    align-content: center;
+    margin: 0 5px;
+    padding: 0 3px;
+}
+
+.home-nav .promo-image {
+    border: white solid 2px;
+    border-style: none;
+    border-radius: 5px;
+    background-color: #0a0;
+    height: 150px;
+    width: 267px;
+}
+
+.home-nav .circle {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+}
+
+/* ====================== HOME PAGE ====================== */
 
 .banner {
     background: rgba(0, 0, 0, 0.3);
@@ -116,8 +434,6 @@ header .logo {
     max-width: 1100px;
     margin: 30px auto;
 }
-
-/* ====================== WELCOME ====================== */
 
 .welcome {
     text-align: center;
@@ -129,31 +445,9 @@ header .logo {
     border-radius: 12px;
     max-width: 600px;
     opacity: 0.95;
+    cursor: default;
+    user-select: none;
 }
-
-/* ====================== HOME NAV ====================== */
-nav {
-    text-align: center;
-    margin: 20px 0 40px;
-}
-nav a {
-    color: rgb(10, 255, 10);
-    text-decoration: none;
-    font-family: "Verdana", system-ui, sans-serif;
-    font-size: 1.1rem;
-    margin: 0 15px;
-    padding: 12px 24px;
-    border-top: 1px solid #0a0;
-    border-bottom: 1px solid #0a0;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-}
-nav a:hover {
-    background-color: rgba(80, 110, 80, 0.6);
-    transform: translateY(-2px);
-}
-
-/* ====================== MAIN LAYOUT ====================== */
 
 .container {
     display: flex;
@@ -178,6 +472,7 @@ nav a:hover {
     font-size: 1.8rem;
     text-align: center;
     padding: 12px;
+    border-radius: 3px;
     border-bottom: 3px solid #0a0;
 }
 
@@ -221,7 +516,7 @@ main h2 {
     border-color: #0a0;
     box-shadow: 0 0 10px 0 #0a0;
     text-shadow: 0 0 40px #0a0;
-    color: rgb(87, 255, 87)
+    color: rgb(87, 255, 87);
 }
 
 /* News Feed */
@@ -249,6 +544,11 @@ main h2 {
     border-bottom: 2px solid #0a0;
 }
 
+.news-feed a {
+    color: white;
+    text-decoration: none;
+}
+
 .news-feed p {
     padding: 0 25px 10px;
     line-height: 1.3;
@@ -256,8 +556,8 @@ main h2 {
     margin-bottom: 8px;
 }
 
-.news-feed a {
-    color: white;
+.news-feed p a {
+    text-decoration: underline;
 }
 
 .news-feed .date {
@@ -288,26 +588,6 @@ main h2 {
     cursor: pointer;
 }
 
-/* ====================== FOOTER ====================== */
-
-footer {
-    background-color: rgb(25, 80, 25);
-    padding: 25px 40px;
-    margin-top: auto;
-    text-align: center;
-    border-top: 3px solid #0a0;
-}
-
-.footer-logo img {
-    height: 55px;
-    margin-bottom: 12px;
-}
-
-footer p {
-    font-size: 0.9rem;
-    opacity: 0.85;
-}
-
 /* ====================== BLOG EDITOR ====================== */
 
 .blog-title {
@@ -323,7 +603,16 @@ footer p {
     color: white;
     padding: 10px;
     min-height: 200px;
+    cursor:text;
+    outline-color: transparent;
+    transition: 0.05s outline-color ease;
 }
+
+.blog-editor-body:focus-within {
+    outline:#0a0 double 3px;
+    border-radius: 1px;
+}
+
 
 .blog-editor-content {
     outline: none;
@@ -488,6 +777,110 @@ footer p {
     font-size: 0.8em;
 }
 
+/* ====================== LIBRARY ====================== */
+
+.product-list-item {
+    background-color: black;
+    width: 100%;
+    height: 220px;
+    border: #0a0 solid 2px;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 2px 0;
+}
+
+/* ====================== LIBRARY ====================== */
+
+.product-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    background-blend-mode: hard-light;
+    background-image: url("../Resources/Images/test_background.png");
+    background-color: rgb(27, 99, 59);
+    width: 100%;
+    padding: 30px 50px;
+}
+
+.product-body-sections {
+    display: flex;
+}
+
+.product-body h1 {
+    letter-spacing: 7px;
+    word-spacing: 5px;
+    font-weight: lighter;
+    font-size: 2.5em;
+    padding-bottom: 2px;
+}
+
+.product-body small {
+    color: gray;
+    padding-bottom: 20px;
+}
+
+.product-body p {
+    width: 720px;
+    line-height: 1.4;
+    max-width: 100%;
+}
+
+.product-body .trailer {
+    margin-top: 120px;
+    background-color: #0a0;
+    width: 640px;
+    height: 360px;
+}
+
+/* ====================== BLOG HISTORY ====================== */
+
+.blog-history-header {
+    text-align: center;
+    padding: 40px;
+}
+
+.blog-history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    row-gap: 30px;
+    justify-content: center;
+    justify-items: center;
+    list-style: none;
+    padding: 50px 100px;
+    width: 100%;
+    margin-bottom: 50px;
+}
+
+.blog-history-container li {
+    max-width: 360px;
+}
+
+.blog-history-container li .preview {
+    background-color: #0a0;
+    width: 360px;
+    min-height: 230px;
+    margin-bottom: 5px;
+}
+
+
+.blog-history-container li .category {
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+
+.blog-history-container li .date {
+    color: rgb(122, 194, 101);
+}
+
+.blog-history-container li h3 {
+    padding: 10px 0;
+}
+
+.blog-history-container li p {
+    font-size: 0.9em;
+}
+
 /* ====================== MAIN UPLOADER ====================== */
 
 .main-upload {
@@ -560,6 +953,12 @@ footer p {
     main {
         max-width: 720px;
         min-height: 500px;
+        width: 100%;
+    }
+
+    .product-body-sections {
+        flex-direction: column;
+        max-width: 720px;
         width: 100%;
     }
 }

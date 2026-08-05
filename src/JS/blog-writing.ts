@@ -1,7 +1,7 @@
-import { Components } from './components';
+import { buildComponents } from './components';
 import { BlogEditor } from './blog-editor';
 
 document.addEventListener('DOMContentLoaded', () => {
-    new Components();
+    buildComponents();
     new BlogEditor();
 });

@@ -1,4 +1,5 @@
 import { API_URL } from './config';
+import { basicAdminAccessRequest } from './permissions';
 
 export class BlogEditor {
     private editorBody: HTMLElement | null;
@@ -58,21 +59,26 @@ export class BlogEditor {
     
         try {
             const res = await fetch(`${API_URL}/api/blog`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newBlog)
             });
 
-            if (!res.ok) throw new Error("Failed to create blog post");
+            if (!res.ok) throw new Error('Failed to create blog post');
 
             const blogResult = await res.json();
-            alert("Added: " + blogResult.title);
+            alert('Added: ' + blogResult.title);
         } catch (e) {
-            console.error("Failed to add:", e);
+            console.error('Failed to add:', e);
         }
     };
 
     public publishBlog = async () => {
+        if (await basicAdminAccessRequest() === 'false') {
+            console.warn('Access denied');
+            return;
+        }
+        
         const placeholderAuthor = 'Lemon'; // Replace later with local storage
         const titleElement = document.getElementById('blog-title');
         const bodyElement = document.getElementById('blog-body');
@@ -158,20 +164,20 @@ export class BlogEditor {
     private deleteBlog = async (blogId: string) => {
         try {
             const res = await fetch(`${API_URL}/api/blog/${blogId}`, {
-                method: "DELETE"
+                method: 'DELETE'
             });
 
-            if (!res.ok) throw new Error("Failed to delete blog post");
+            if (!res.ok) throw new Error('Failed to delete blog post');
 
-            alert("Deleted blog post with ID: " + blogId);
+            alert('Deleted blog post with ID: ' + blogId);
         } 
         catch (e) {
-            console.error("Failed to delete:", e);
+            console.error('Failed to delete:', e);
         }
     }
     
     private confirmDelete = (blogId: string) => {
-        if (confirm("Are you sure you want to delete this blog post?")) {
+        if (confirm('Are you sure you want to delete this blog post?')) {
             this.deleteBlog(blogId);
         }
     }

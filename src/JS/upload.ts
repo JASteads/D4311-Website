@@ -1,4 +1,4 @@
-import { Components } from "./components.ts";
+import { buildComponents } from "./components.ts";
 import { GalleryUploader } from "./gallery-uploader.ts";
 import { PortfolioWriter } from "./portfolio-writer.ts";
 import { ProductWriter } from "./product-writer.ts";
@@ -26,7 +26,7 @@ const selectEditor = () => {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    new Components();
+    buildComponents();
     new GalleryUploader(true);
     new BlogEditor();
     new PortfolioWriter();

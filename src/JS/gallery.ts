@@ -1,4 +1,4 @@
-import { Components } from "./components.ts";
+import { buildComponents } from "./components.ts";
 import { API_URL } from "./config.ts";
 import { GalleryUploader } from "./gallery-uploader.ts";
 import { GalleryItem } from "./gallery-item.ts";
@@ -39,13 +39,27 @@ const loadGallery = async (category?: string) => {
 
     // Gather the expected gallery data from DB
     const galleryItems = await getGalleryItems(category);
-    if (!galleryItems || galleryItems.length === 0) {
-        console.warn("No gallery items found.");
+    
+    if (!galleryItems) {
+        console.warn("Gallery query failed.");
         return;
     }
 
-    // Reset the gallery, then prepare the cards
     emptyGallery(); 
+    // Putting this in separate block so it immediately leaves scope after use
+    {
+        const emptyGalleryMessage = document.getElementById('empty-gallery-message');
+        if (emptyGalleryMessage) {
+            if (galleryItems.length === 0) {
+                emptyGalleryMessage.style.display = 'block';
+                return;
+            } else {
+                emptyGalleryMessage.style.display = 'none';
+            }      
+        }
+    }
+    
+    // Prepare the cards
     galleryItems.forEach((i: GalleryItem) => {
         const { category, element } = generateImageCard(i);
 
@@ -63,9 +77,7 @@ const loadGallery = async (category?: string) => {
             sections[category] = generateCardSection(category);
         }
 
-        const container = sections[category].container;
-
-        section.forEach((e) => container.appendChild(e));
+        sections[category].container.append(...section);
     });
     console.log(sections);
 
@@ -211,7 +223,7 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    new Components();
+    buildComponents();
     uploader = new GalleryUploader(false);
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');

@@ -1,3 +1,3 @@
-import { Components } from './components';
+import { buildComponents } from './components';
 
-document.addEventListener('DOMContentLoaded', () => new Components());
+document.addEventListener('DOMContentLoaded', () => buildComponents());

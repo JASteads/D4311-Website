@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>District 4 - Login</title>
+    <link rel="stylesheet" href="CSS/style.css">
+    <script type="module" src="JS/login.ts"></script>
+</head>
+<body>
+    <div class="login-container">
+        <div class="type-container">
+            <button class="type" id="sign-in-toggle">Sign In</button>
+            <button class="type" id="sign-up-toggle">Sign Up</button>
+        </div>
+
+        <div class="sign-in" id="sign-in">
+            <div class="flavor">
+                <h2>Lock in!</h2>
+                <small><i>The white void beckons.</i></small>
+            </div>
+            <div class="sign-in-info">
+                <span>Username</span>
+                <div id="username" contenteditable="true"></div>
+                <span>Password</span>
+                <div id="password" contenteditable="true"></div>
+                <button id="sign-in-button">Log In</button>
+            </div>
+        </div>
+
+        <div class="sign-up" id="sign-up">
+            <div class="flavor">
+                <h2>New Here, are You?</h2>
+                <small><i>Go on, tell us more.</i></small>
+            </div>
+            <div class="sign-up-info">
+                <span>Username</span>
+                <div id="username" contenteditable="true"></div>
+                <span>Email Address</span>
+                <div id="email" contenteditable="true"></div>
+                <span>Password</span>
+                <div id="password" contenteditable="true"></div>
+                <span>Confirm Password</span>
+                <div id="confirm-password" contenteditable="true"></div>
+                <button id="register-button">Register</button>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>
