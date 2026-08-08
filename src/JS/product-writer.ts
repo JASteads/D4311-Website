@@ -35,7 +35,7 @@ export class ProductWriter {
         };
 
         try {
-            const result = await fetch(`${API_URL}/api/products`, {
+            const result = await fetch(`${API_URL}/api/product`, {
                 method: 'POST',
                 body: JSON.stringify(record),
                 headers: { 'Content-Type': 'application/json' }

@@ -40,7 +40,7 @@ const onDatabaseConnect = async () => {
         console.log('✅ Database connected and initialized');
     }
     catch (e: any) {
-        console.error('❌ DB Error', e);
+        console.error('❌', e);
     }
 }
 
@@ -94,10 +94,17 @@ app.post('/api/get_admin_nav', async (req, res) => {
     }
 });
 
+// =========== GENERAL ROUTES ===========
+
+app.get('/api/redirect', async (req, res) => {
+    const { file } = req.query;
+    
+    return safeRedirect(res, file as string);
+});
+
 // =========== PRODUCT ROUTES ===========
 
-// Get specific products
-app.get('/api/products/:id', async (req, res) => {
+app.get('/api/product/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const genericSplashLink = `../Resources/Images/generic_splash.png`; // Fallback image
@@ -126,6 +133,41 @@ app.get('/api/products/:id', async (req, res) => {
     }
 });
 
+app.post('/api/product', async (req, res) => {
+    try {
+        const { title, description, splash_art_link, txn_link } = req.body;
+        const result = await pool.query(`
+            INSERT INTO products (title, description, release_date, splash_art_link, txn_link)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `, [title, description, new Date(Date.now()).toISOString(), splash_art_link, txn_link]);
+        res.json(result.rows[0]);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('api/product', async (req, res) => {
+    try {
+        const { id, columns } = req.body;
+        const result = await updateItem('products', id, columns);
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('api/product/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await removeItem('products', id);
+
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Gets all existing products. Use category query to get only categories
 app.get('/api/products', async (req, res) => {
     try {
@@ -145,29 +187,14 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// Simple product item upload
-app.post('/api/products', async (req, res) => {
-    try {
-        const { title, description, splash_art_link, txn_link } = req.body;
-        const result = await pool.query(`
-            INSERT INTO products (title, description, release_date, splash_art_link, txn_link)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *
-        `, [title, description, new Date(Date.now()).toISOString(), splash_art_link, txn_link]);
-        res.json(result.rows[0]);
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-})
-
 // =========== BLOG ROUTES =========== 
 
 // Get target blog entry
-app.get('/api/blogs/:id', async (req, res) => {
+app.get('/api/blog/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query(`
-            SELECT *
+            SELECT id, title, author, body, created_at, game_id
             FROM blogs
             WHERE id = $1
             LIMIT 1
@@ -183,6 +210,44 @@ app.get('/api/blogs/:id', async (req, res) => {
     }
 });
 
+// Add blog entry
+app.post('/api/blog', async (req, res) => {
+    try {
+        const { title, author, bodyText } = req.body;
+        const result = await pool.query(`
+            INSERT INTO blogs (title, author, body)
+            VALUES ($1, $2, $3)
+            RETURNING *
+            `, [title, author, bodyText]);
+            
+        res.json(result.rows[0]);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/blog', async (req, res) => {
+    try {
+        const { id, columns } = req.body;
+        const result = await updateItem('blogs', id, columns);
+
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/blog/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await removeItem('blogs', id);
+
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Get blog entries - defaults to ALL if no limit or id is given
 app.get('/api/blogs', async (req, res) => {
     try {
@@ -190,7 +255,7 @@ app.get('/api/blogs', async (req, res) => {
         const params = [];
 
         let queryText = `
-            SELECT *
+            SELECT id, title, author, body, created_at, game_id
             FROM blogs
             ORDER BY created_at DESC
         `;
@@ -209,22 +274,6 @@ app.get('/api/blogs', async (req, res) => {
         res.json(result.rows);
     } catch (e: any) {
         res.status(500).json({ error: 'Failed to fetch blogs' });
-    }
-});
-
-// Add blog entry
-app.post('/api/blog', async (req, res) => {
-    try {
-        const { title, author, bodyText } = req.body;
-        const result = await pool.query(`
-            INSERT INTO blogs (title, author, body)
-            VALUES ($1, $2, $3)
-            RETURNING *
-            `, [title, author, bodyText]);
-            
-        res.json(result.rows[0]);
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
     }
 });
 
@@ -253,6 +302,17 @@ app.post('/api/portfolio', async (req, res) => {
             RETURNING *
         `, [title, type, lang_api, date, description, image_link, project_link]);
         res.json(result.rows[0]);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/blog/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await removeItem('portfolio_items', id);
+
+        res.json(result);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -296,12 +356,8 @@ app.get('/api/gallery', async (req, res) => {
 });
 
 // For uploading pics to the gallery
-app.post('/api/gallery/upload', async (req, res) => {
+app.post('/api/gallery', async (req, res) => {
     const { container, thumbnail } = req.query;
-
-    // TODO : Prepare actual thumbnail images from backend for storage
-    // NOTE : Assume (for now) that thumbnails aren't actually generated yet
-
     const { tempPath, tempName, stream } = prepareTemp();
     
     req.pipe(stream);
@@ -401,9 +457,20 @@ app.post('/api/gallery/upload', async (req, res) => {
     });
 });
 
-// app.use((req, res) => {
-//     safeRedirect(res, 'load_fail.html');
-// });
+app.delete('/api/gallery/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await removeItem('gallery_items', id);
+
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.use((_, res) => {
+    safeRedirect(res, 'load_fail.html');
+});
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PORT}`));
@@ -424,10 +491,6 @@ const safeRedirect = (res: ExpressResponse, file: string) => {
     }
 }
 
-/**
- * 
- * @returns { Object(string, string fs.WriteStream) }
- */
 const prepareTemp = () => {
     const tempName = `temp_${crypto.randomBytes(10).toString('hex')}.dat`;
     const tempPath = path.join(SRC_DIR, tempFolder);
@@ -447,6 +510,43 @@ const prepareTemp = () => {
     };
 }
 
+const updateItem = async (tableName: string, id: number, columns: any) => {
+    try {
+            let count = 0; // Tally for each param added
+            let query = `UPDATE ${tableName} SET `;
+            const queryParams = [];
+
+            for (const column of columns) {
+                query += `${column.name} = ${++count}, `;
+                queryParams.push(column.value);
+            }
+            queryParams.push(id);
+            query += `WHERE id = ${++count}`;
+
+            await pool.query(`${query} RETURNING *`, queryParams);
+
+            return { message: `${tableName} #${id} has been updated.` };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+const removeItem = async (tableName: string, targetID: string) => {
+    try {
+        const result = await pool.query(
+            `DELETE FROM ${tableName} WHERE id = $1 RETURNING *`,
+        [targetID]);
+
+        console.log('Deleted item', result.rows[0]);
+
+        return({ 
+            message: `${tableName} #${targetID}: ${result.rows[0].title} has been deleted.` 
+        });
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
 /**
  * Ensures all DB tables exist and creates them if they don't.
  */
@@ -460,6 +560,7 @@ const initialiazeDatabase = async () => {
                     id SERIAL PRIMARY KEY,
                     title TEXT,
                     author TEXT,
+                    subject TEXT, -- Short description used in blips
                     body TEXT,
                     created_at TIMESTAMP DEFAULT NOW(),
                     game_id INT,
@@ -475,6 +576,8 @@ const initialiazeDatabase = async () => {
                     description TEXT,
                     release_date TIMESTAMP,
                     splash_art_link TEXT,
+                    library_doll_link TEXT,
+                    icon_link TEXT,
                     txn_link TEXT
                 );`
         },
@@ -508,16 +611,12 @@ const initialiazeDatabase = async () => {
         }
     ];
 
-    // Run all queries in parallel and log results
+    // Run all queries in parallel and verify results
     const results = await Promise.allSettled(queries.map(q => pool.query(q.sql)));
-    results.forEach((result, i) => {
-        const qName = queries[i].name;
-
-        if (result.status === 'fulfilled')  
-            console.log(`Verified ${qName} table`);
-        else
-            console.error(`${qName} table verification failed:`, result.reason);
-    });
+    
+    if (!results.every((result) => result.status === 'fulfilled')) {
+        throw new Error('Failed to connect to the database');
+    }
 }
 
 startServer();

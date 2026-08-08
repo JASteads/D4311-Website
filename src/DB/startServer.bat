@@ -1,4 +1,4 @@
 @echo off
 
 echo Starting server ...
-node server.ts
+node --watch server.ts

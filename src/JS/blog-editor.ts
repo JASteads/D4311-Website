@@ -163,16 +163,15 @@ export class BlogEditor {
 
     private deleteBlog = async (blogId: string) => {
         try {
-            const res = await fetch(`${API_URL}/api/blog/${blogId}`, {
-                method: 'DELETE'
-            });
+            const res = await fetch(`${API_URL}/api/blog/${blogId}`, { method: 'DELETE' });
 
-            if (!res.ok) throw new Error('Failed to delete blog post');
+            if (!res.ok) {
+                throw new Error(`Error code: ${res.status}`);
+            }
 
-            alert('Deleted blog post with ID: ' + blogId);
-        } 
-        catch (e) {
-            console.error('Failed to delete:', e);
+            window.location.reload();
+        } catch (e) {
+            alert(`Failed to delete blog: ${e}`);
         }
     }
     

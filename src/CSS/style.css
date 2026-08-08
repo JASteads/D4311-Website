@@ -30,6 +30,7 @@ button {
 }
 
 .circle {
+    border: transparent none 0;
     border-radius: 50%;
 }
 
@@ -68,7 +69,7 @@ body {
     font-size: 1em;
     color: white;
     background-color: rgba(128, 100, 255, 0.1);
-    border: rgb(101, 98, 110) solid 0;
+    border: none;
     padding: 5px;
     cursor: pointer;
     transition: 0.1s background-color ease;
@@ -114,9 +115,9 @@ header .logo {
 /* ====================== NAVIGATION ====================== */
 
 .navigation {
+    display: grid;
     position: fixed;
     left: 0;
-    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     background: linear-gradient(rgb(32, 31, 37), rgb(21, 20, 24));
     border-bottom: rgb(0, 102, 0) solid 2px;
@@ -163,7 +164,7 @@ header .logo {
     color: white;
     padding: 0 20px;
     margin-left: 5px;
-    border: rgb(71, 70, 78) solid 0;
+    border: rgb(71, 70, 78) solid;
     border-width: 0 1px;
     font-size: 16px;
     font-weight: bold;
@@ -367,12 +368,11 @@ footer small {
 .home-nav {
     display: flex;
     justify-content: space-around;
-    height: 220px;
+    height: fit-content;
     background-color: rgb(0, 15, 0);
-    border-top: #0a0 solid 1px;
-    border-bottom: #0a0 solid 1px;
-    padding: 30px 0px;
-    margin-bottom: 25px;
+    border: #0a0 solid;
+    border-width: 1px 0;
+    padding: 30px 0;
 }
 
 .home-nav .discord-button {
@@ -383,7 +383,6 @@ footer small {
     width: 280px;
     font-size: 2.4em;
     font-family: 'Soopafresh', 'Verdana';
-    padding: 0 10px;
 }
 
 .home-nav .promo {
@@ -394,14 +393,10 @@ footer small {
 
 .home-nav .promo-container {
     display: flex;
-    flex: 1;
-    align-items: stretch;
 }
 
 .home-nav .promo-container aside {
     background-color: rgb(72, 63, 82);
-    border: white solid 2px;
-    border-style: none;
     border-radius: 3px;
     font-weight: bold;
     font-size: 1.5em;
@@ -411,8 +406,6 @@ footer small {
 }
 
 .home-nav .promo-image {
-    border: white solid 2px;
-    border-style: none;
     border-radius: 5px;
     background-color: #0a0;
     height: 150px;
@@ -440,31 +433,53 @@ footer small {
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
     font-size: 2.2rem;
     padding: 20px 40px;
-    margin: 20px auto 40px;
+    margin: 20px auto;
     border-bottom: 1px solid #0a0;
     border-radius: 12px;
     max-width: 600px;
     opacity: 0.95;
-    cursor: default;
     user-select: none;
 }
 
-.container {
+.home-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 40px;
     justify-content: center;
-    padding: 0 10px 40px;
+    gap: 40px;
+    padding: 60px 40px;
     max-width: 1400px;
-    margin: 0 auto;
 }
+
+.home-container main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    background: rgb(15, 22, 15);
+    min-height: 600px;
+    width: 720px;
+    max-width: 100%;
+    border: 3px solid rgba(132, 192, 132, 0.3);
+    border-radius: 5px;
+    box-shadow: 0 0 30px 5px rgba(0, 102, 9, 0.6) inset;
+}
+
+.home-container main h2 {
+    color: rgb(87, 255, 87);
+    font: 3rem lighter;
+    font-family: "Soopafresh", sans-serif;
+    text-align: center;
+    padding: 15px;
+    border: #0a0 solid 3px;
+    box-shadow: 0 0 10px 0 #0a0;
+    text-shadow: 0 0 40px #0a0;
+}
+
  /* Sidebars */
 .sidebar {
     background: rgb(15, 31, 20);
     width: 260px;
+    height: fit-content;
     border: 1px solid rgba(0, 100, 0, 0.3);
     border-radius: 2px;
-    height: fit-content;
 }
 
 .sidebar h2 {
@@ -478,45 +493,14 @@ footer small {
 
 .sidebar li {
     list-style: none;
+    color:rgb(224, 255, 224);
     margin: 10px 0;
-    color:rgb(224, 255, 224)
 }
 
 .sidebar ul {
     border-bottom: 1px solid #0a0;
     padding: 10px 20px;
     margin: auto;
-}
-
-/* Main Content */
-main {
-    background: rgb(15, 22, 15);
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    position: relative;
-    min-height: 600px;
-    width: 720px;
-    max-width: 100%;
-    border: 3px solid rgba(132, 192, 132, 0.3);
-    border-radius: 5px;
-    box-shadow: 0 0 30px 5px rgba(0, 102, 9, 0.6) inset;
-}
-
-main h2 {
-    font-family: "Soopafresh", sans-serif;
-    font-size: 3rem;
-    font-weight: 100;
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 15px 15px;
-    border-left: 3px;
-    border-right: 3px;
-    border-style: solid;
-    border-color: #0a0;
-    box-shadow: 0 0 10px 0 #0a0;
-    text-shadow: 0 0 40px #0a0;
-    color: rgb(87, 255, 87);
 }
 
 /* News Feed */
@@ -570,22 +554,54 @@ main h2 {
     margin-top: 20px;
 }
 
-/* Fabu Image */
-.fabu-container {
-    margin-top: auto;
+.show-more {
+    color: rgb(116, 177, 121);
+    font-size: 1.2em;
     text-align: center;
-    padding-bottom: 40px;
+    margin: auto;
+    padding: 5px;
 }
 
-/* Fabu Image */
-#fabu_img {
+@keyframes bounceImage {
+    0% {
+        transform: scale(1);
+    }
+    9% {
+        transform: scale(1.11);
+    }
+    29% {
+        transform: scale(0.94);
+    }
+    48% {
+        transform: scale(1.03);
+    }
+    67% {
+        transform: scale(0.99);
+    }
+    85% {
+        transform: scale(1.001);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.fabu-link {
+    height: 110px;
     width: 110px;
-    border-style: solid;
-    border-color: #0a0;
+    margin: 40px auto;
+}
+
+.fabu-link > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: #0a0 solid 3px;
     border-radius: 20px;
-    border-width: 3px;
-    transition: transform 0.1s ease;
-    cursor: pointer;
+}
+
+.bounce {
+    animation: bounceImage 0.5s ease-out forwards;
 }
 
 /* ====================== BLOG EDITOR ====================== */
@@ -779,14 +795,90 @@ main h2 {
 
 /* ====================== LIBRARY ====================== */
 
+.library {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    list-style: none;
+    padding: 20px 0;
+}
+
 .product-list-item {
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(rgba(100, 255, 196, 0.2), transparent);
     background-color: black;
     width: 100%;
     height: 220px;
-    border: #0a0 solid 2px;
-    border-radius: 5px;
-    padding: 10px;
+    border: #0a0 double 10px;
+    border-style: double double solid;
+    box-shadow: 0;
+    border-radius: 30px;
     margin: 2px 0;
+    cursor: pointer;
+    z-index: 0;
+    transition: 0.1s transform ease, 0.5s box-shadow ease, 0.5s z-index ease;
+}
+
+.product-list-item:hover {
+    box-shadow: 0 0 50px 0 rgba(0, 200, 0, 0.5);
+    transform: scale(1.03);
+    z-index: 1;
+}
+
+.product-list-item > span {
+    display: flex;
+    color: rgb(255, 255, 255);
+    width: 100%;
+    font-size: 3.5em;
+    letter-spacing: 0.22em;
+    align-items: end;
+    text-align: start;
+    padding: 20px 30px;
+}
+
+.product-list-item > .vignette {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    box-shadow: inset 0 0 40px 5px black;
+    inset: 0;
+    z-index: 1;
+}
+
+.product-list-item > .background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("../Resources/Images/Gallery/Ahaha_Sure_Full.png");
+    background-position: left 40% bottom 75%;
+    opacity: 0.1;
+    inset: 0;
+    transition: 0.3s opacity ease, 0.1s transform ease, 1s background-position ease;
+}
+
+.product-list-item:hover > .background {
+    background-position: left 45% bottom 75%;
+    transform: scale(1.1);
+    opacity: 0.4;
+}
+
+.product-list-item > .sheen {
+    position: absolute;
+    height: 300%;
+    width: 100%;
+    background: linear-gradient(rgba(154, 100, 255, 0.3), transparent);
+    left: 50%;
+    transform: rotate(45deg);
+}
+
+.product-list-item > .sheen-top {
+    position: absolute;
+    height: 40%;
+    width: 100%;
+    background: linear-gradient(transparent, rgba(202, 202, 202, 0.2));
+    inset: 0;
 }
 
 /* ====================== LIBRARY ====================== */

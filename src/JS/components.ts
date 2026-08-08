@@ -13,6 +13,14 @@ class NavItem {
 
 export const buildComponents = async () => {
     const body = document.body;
+
+    // Create parallax for the background
+    const html = document.getElementsByTagName('html')[0];
+    const parallaxStrength = 0.9;
+    document.addEventListener('scroll', () => {
+        html.style.backgroundPositionY = `${(window.scrollY * parallaxStrength).toPrecision()}px`;
+    });
+
     body.insertBefore(createHeader(), body.firstChild);
     body.insertBefore(await createNavigation(), body.firstChild);
     body.appendChild(createFooter());
@@ -187,7 +195,6 @@ const createNavigation = async () => {
 
         return createDropdown([accountInfo, accountSettings, logout]);
     }
-
 
     const rightGroups = { 
         accountNodes: [

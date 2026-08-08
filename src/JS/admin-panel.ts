@@ -6,7 +6,7 @@ class FillConfig {
     headerText: string;
     viewLink: string;
     editLink: string;
-    deleteURL : string
+    deleteURL: string;
 
     constructor(headerText: string, viewLink: string, editLink: string, deleteURL: string) {
         this.headerText = headerText;
@@ -15,6 +15,15 @@ class FillConfig {
         this.deleteURL = deleteURL;
     }
 }
+
+// NOTE: 
+// editBody: {
+//     table: 'products',
+//     id: undefined,
+//     columns: {
+        
+//     }
+// }
 
 const getTableItems = async (url: string) => {
     const items = [];
@@ -35,22 +44,27 @@ const getTableItems = async (url: string) => {
 
 const confirmDelete = async (tableName: string, item: any, deleteURL: string) => {
     if (!confirm(`Delete ${item.name} from ${tableName}?`)) {
-        return;   
+        return;
     }
 
     try {
-        const res = await fetch(deleteURL, {
-            method: 'POST',
-            body: JSON.stringify({ id: item.id }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-
+        const url = `${API_URL}/${deleteURL}/${item.id}`;
+        alert(url);
+        const res = await fetch(url, { method: 'DELETE' });
+        
         if (!res.ok) {
             throw new Error(`Error code: ${res.status}`);
         }
+
+        window.location.reload();
     } catch (e) {
-        console.error(`Failed to delete ${item}:`, e);
+        alert(`Failed to delete ${item.name}: ${e}`);
     }
+}
+
+const openExternalEditor = (editorURL: string, item: any) => {
+    sessionStorage.setItem('temp-edit-item', JSON.parse(item));
+    window.location.href = editorURL;
 }
 
 const buildSection = async (url: string, config: FillConfig) => {
@@ -96,7 +110,9 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
-        editHyperlink.href = editLink;
+        if (editLink !== '#') {
+            editHyperlink.addEventListener('click', () => openExternalEditor(editLink, item));
+        }
 
         const deleteHyperlink = document.createElement('a');
         deleteHyperlink.textContent = 'Delete';
@@ -138,30 +154,30 @@ const buildSections = async () => {
     const results = await Promise.allSettled([
         buildSection('api/products', {
             headerText: 'Products',
-            viewLink: '#',
+            viewLink: 'product_viewer.html',
             editLink: '#',
-            deleteURL: '#'
+            deleteURL: 'api/product'
         }),
 
         buildSection('api/gallery', {
             headerText: 'Gallery',
-            viewLink: '#',
+            viewLink: 'gallery.html',
             editLink: '#',
-            deleteURL: '#'
+            deleteURL: 'api/gallery'
         }),
 
         buildSection('api/portfolio', {
             headerText: 'Portfolio Items',
-            viewLink: '#',
+            viewLink: 'portfolio.html',
             editLink: '#',
-            deleteURL: '#'
+            deleteURL: 'api/portfolio'
         }),
 
         buildSection('api/blogs', {
             headerText: 'Blog Posts',
-            viewLink: '#',
-            editLink: '#',
-            deleteURL: '#'
+            viewLink: 'blog_viewer.html',
+            editLink: 'blog_editor.html',
+            deleteURL: 'api/blog'
         })
     ]);
 
