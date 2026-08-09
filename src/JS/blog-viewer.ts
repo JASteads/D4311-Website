@@ -1,19 +1,33 @@
 import { API_URL } from './config';
-import { DEV_URL } from './config';
+import { safeLink } from './site-nav';
 
-class Blog {
+export class Blog {
     id: number;
     title: string;
     author: string;
     body: string;
     created_at: string;
+    cover_link: string
+    hook: string
 
-    constructor(id: number, title: string, author: string, body: string, created_at: string) {
-        this.id = id;
-        this.title = title;
-        this.author = author;
-        this.body = body;
-        this.created_at = created_at;
+    constructor(b?: Blog) {
+        if (b) {
+            this.id = b.id;
+            this.title = b.title;
+            this.author = b.author;
+            this.body = b.body;
+            this.created_at = b.created_at;
+            this.cover_link = b.cover_link;
+            this.hook = b.hook;
+        } else {
+            this.id = -1;
+            this.title = '';
+            this.author = '';
+            this.body = '';
+            this.created_at = Date.now().toLocaleString();
+            this.cover_link = '';
+            this.hook = '';
+        }
     }
 }
 
@@ -22,13 +36,15 @@ class Blog {
  */
 export const showBlog = async () => {
     const params = new URLSearchParams(window.location.search);
-    let paramsID: number | null = params.get('id') as number | null;
+    const id = params.get('id');
+
+    if (!id) {
+        console.error('No ID was provided in the URL');
+        return;
+    }
 
     try {
-        // Validate ID parameter
-        if (!paramsID) {
-            throw new Error('No blog ID provided in URL');
-        }
+        const paramsID = parseInt(id);
 
         // Try grabbing from cache
         const cached = localStorage.getItem('currentBlog');
@@ -50,8 +66,7 @@ export const showBlog = async () => {
 
         generateBlogFull(blog);
     } catch (e) {
-        window.location.href = `${DEV_URL}/load_fail.html`;
-        return;
+        window.location.href = await safeLink('load_fail.html');
     }
 }
 
@@ -66,7 +81,7 @@ export const showRecentBlogs = async (parent: HTMLElement | null, amount: number
 
     const blogs: Blog[] = await getRecentBlogs(amount);
 
-    blogs.forEach(b => parent.appendChild(generateBlogPreview(b)));
+    blogs.forEach(async b => parent.appendChild(await generateBlogPreview(b)));
 }
 
 /**
@@ -232,7 +247,7 @@ const escapeHTML = (unsafe: string): string => {
 /**
  * Generates a string-formatted date from a valid timestamp.
  */
-const formatBlogDate = (timestamp: string): string => {
+export const formatBlogDate = (timestamp: string): string => {
     const date = new Date(timestamp);
 
     if (isNaN(date.getTime())) return "Invalid date";
@@ -261,7 +276,7 @@ const getDaySuffix = (day: number): string => {
 /**
  * Returns the blog post from the database containing the given id, if possible.
  */
-const getBlog = async (id: number): Promise<any> => {
+const getBlog = async (id: number) => {
     try {
         const res = await fetch(`${API_URL}/api/blog/${id}`);
 
@@ -274,17 +289,17 @@ const getBlog = async (id: number): Promise<any> => {
     }
     catch (e) {
         console.error("Something went wrong:", e);
-        return {};
+        return new Blog();
     }
 }
 
 /**
  * Returns n blog entries from the main database (n === 0 for all blogs).
  */
-const getRecentBlogs = async (n: number | null = null): Promise<any[]> => {
+const getRecentBlogs = async (n: number | null = null) => {
     try {
         const url = n && n > 0 
-            ? `${API_URL}/api/blog?limit=${n}` 
+            ? `${API_URL}/api/blogs?limit=${n}` 
             : `${API_URL}/api/blogs`;
 
         const res = await fetch(url);
@@ -302,7 +317,7 @@ const getRecentBlogs = async (n: number | null = null): Promise<any[]> => {
 /**
  * Takes a blog and presents it in the desired format.
  */
-const generateBlogPreview = (blog : Blog): HTMLElement => {
+const generateBlogPreview = async (blog: Blog) => {
 
     if (!blog) return document.createElement('li');
 
@@ -314,7 +329,7 @@ const generateBlogPreview = (blog : Blog): HTMLElement => {
 
     title.textContent = blog.title;
 
-    link.href = `${DEV_URL}/blog_viewer.html?id=${blog.id}`;
+    link.href = await safeLink(`blog_viewer.html?id=${blog.id}`);
     link.appendChild(title);
 
     meta.className = 'date';
@@ -331,15 +346,15 @@ const generateBlogPreview = (blog : Blog): HTMLElement => {
 /**
  * Takes a blog and presents it in the desired format.
  */
-const generateBlogFull = (blog : Blog) => {
+const generateBlogFull = (blog: Blog) => {
     if (!blog) {
         alert('Failed to load blog.');
         return;
     }
 
-    const title: HTMLElement | null = document.getElementById('blog-title');
-    const meta: HTMLElement | null = document.getElementById('blog-meta');
-    const body: HTMLElement | null  = document.getElementById('blog-body');
+    const title = document.getElementById('blog-title');
+    const meta = document.getElementById('blog-meta');
+    const body = document.getElementById('blog-body');
     
     if (title != null && meta != null && body != null) {
         title.textContent = blog.title;

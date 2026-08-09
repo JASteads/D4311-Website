@@ -9,6 +9,7 @@ const input = {
     blogViewer: './src/blog_viewer.html',
     blogEditor: './src/blog_editor.html',
     productViewer: './src/product_viewer.html',
+    news: './src/news.html',
     library: './src/library.html',
     gallery: './src/gallery.html',
     portfolio: './src/portfolio.html',

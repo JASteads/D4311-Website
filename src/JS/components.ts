@@ -69,9 +69,6 @@ const createFooter = (): HTMLElement => {
 }
 
 const createDropdown = (childNodes: Node[]) => {
-    if (childNodes.length === 0) {
-
-    }
     const dropdown = document.createElement('div');
     dropdown.className = 'dropdown';
 
@@ -83,7 +80,7 @@ const createDropdown = (childNodes: Node[]) => {
 const getNavSections = () => {
     return {
         middle: [
-            { name: 'News',   link: 'blog_history'},
+            { name: 'News',   link: 'news'},
             { name: 'Library', link: 'library'},
             { name: 'Gallery', link: 'gallery' },
             { name: 'Portfolio', link: 'portfolio'}
@@ -114,43 +111,39 @@ const createButtonContainer = (nodes: Node[]) => {
 }
 
 const tryAdminNodes = async () => {
-    const result: Node[] = [];
+    const nodes: HTMLElement[] = [];
 
     try {
         const dropDownHTML = await requestAdminAccess(`${API_URL}/api/get_admin_nav`);
 
         if (dropDownHTML) {
-            const adminNodes: Node[] = [];
-            console.log('Found admin elements!');
             document.body.insertAdjacentHTML('beforeend', dropDownHTML);
 
-            const panelButton = document.getElementById('admin-panel-button');
-            const portalButton = document.getElementById('admin-portal-button');
+            const prepareAdminButton = async (id: string, url: string) => {
+                const button = document.getElementById(id);
 
-            const linkPrefix = 'http://localhost:5173'; // TODO : Correct this
+                button?.addEventListener('click', () => window.location.href = url);
 
-            if (panelButton) {
-                panelButton.addEventListener('click', () => {
-                    window.location.href = `${linkPrefix}/admin_panel.html`;
-                });
-                adminNodes.push(panelButton);
+                return button;
             }
 
-            if (portalButton) {
-                portalButton.addEventListener('click', () => {
-                    window.location.href = `${linkPrefix}/upload.html`;
-                })
-                adminNodes.push(portalButton);
-            }
+            const adminNodes = await Promise.all([
+                prepareAdminButton('admin-panel-button', './admin_panel.html'),
+                prepareAdminButton('admin-portal-button', './upload.html')
+            ]);
 
-            result.push(createNavButton({ name: 'Admin', link: '#' }));
-            result.push(createDropdown(adminNodes));
+            console.log(adminNodes);
+
+            nodes.push(
+                createNavButton({ name: 'Admin', link: '#' }), 
+                createDropdown(adminNodes.filter(b => b !== null))
+            );
         }
     } catch (e) {
         console.error('No good:', e);
     }
 
-    return result;
+    return nodes;
 }
 
 const createNavigation = async () => {
@@ -203,7 +196,7 @@ const createNavigation = async () => {
         ],
         adminNodes: [ ...(await tryAdminNodes()) ]
     };
-    const rightContainers: Node[] = [ createButtonContainer(rightGroups.accountNodes)! ];
+    const rightContainers = [ createButtonContainer(rightGroups.accountNodes)! ];
 
     if (rightGroups.adminNodes.length > 0) {
         const adminContainer = (createButtonContainer(rightGroups.adminNodes));

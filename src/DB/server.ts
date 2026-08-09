@@ -84,8 +84,8 @@ app.post('/api/get_admin_nav', async (req, res) => {
     const session = getSession(req);
 
     if (authenticate(session)) {
-        const panelButtonStr = ' <button id="admin-panel-button" onclick="goAdminPanel()">Admin Panel</button>';
-        const portalButtonStr = ' <button id="admin-portal-button" onclick="goUploadPortal()">Upload Portal</button>';
+        const panelButtonStr = ' <button id="admin-panel-button">Admin Panel</button>';
+        const portalButtonStr = ' <button id="admin-portal-button">Upload Portal</button>';
         const html = panelButtonStr.concat(portalButtonStr);
 
         return res.send(html);
@@ -111,12 +111,9 @@ app.get('/api/product/:id', async (req, res) => {
 
         const result = await pool.query(`
             SELECT 
-                id,
-                title, 
-                description, 
-                release_date, 
+                id, title, description, hook, release_date, 
                 COALESCE(splash_art_link, $2) AS splash_art_link,
-                txn_link
+                library_doll_link, icon_link, txn_link
             FROM products
             WHERE id = $1
         `, [id, genericSplashLink]);
@@ -251,22 +248,28 @@ app.delete('/api/blog/:id', async (req, res) => {
 // Get blog entries - defaults to ALL if no limit or id is given
 app.get('/api/blogs', async (req, res) => {
     try {
-        const { limit } = req.query;
+        const { limit, game_id } = req.query;
         const params = [];
 
         let queryText = `
-            SELECT id, title, author, body, created_at, game_id
+            SELECT id, title, author, body, created_at, game_id, cover_link, hook
             FROM blogs
             ORDER BY created_at DESC
         `;
+        let queryCount = 0;
 
         // Only add LIMIT if user specifically asks for it
-        if (limit !== undefined) {
+        if (limit) {
             const upperRecentLimit = 15;
 
-            const safeLimit = Math.min(Math.max(parseInt(limit as string) || 10, 1), upperRecentLimit);
-            queryText += ` LIMIT $1`;
+            const safeLimit = Math.min(Math.max(parseInt(limit as string) || 10), upperRecentLimit);
+            queryText += ` LIMIT $${++queryCount}`;
             params.push(safeLimit);
+        }
+
+        if (game_id) {
+            queryText += ` WHERE game_id = $${++queryCount}`;
+            params.push(game_id);
         }
 
         const result = await pool.query(queryText, params);
@@ -517,11 +520,11 @@ const updateItem = async (tableName: string, id: number, columns: any) => {
             const queryParams = [];
 
             for (const column of columns) {
-                query += `${column.name} = ${++count}, `;
+                query += `${column.name} = $${++count}, `;
                 queryParams.push(column.value);
             }
             queryParams.push(id);
-            query += `WHERE id = ${++count}`;
+            query += `WHERE id = $${++count}`;
 
             await pool.query(`${query} RETURNING *`, queryParams);
 
@@ -574,11 +577,13 @@ const initialiazeDatabase = async () => {
                     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                     title TEXT UNIQUE,
                     description TEXT,
+                    hook TEXT,
                     release_date TIMESTAMP,
                     splash_art_link TEXT,
                     library_doll_link TEXT,
                     icon_link TEXT,
-                    txn_link TEXT
+                    txn_link TEXT,
+                    is_locked BOOLEAN
                 );`
         },
         {

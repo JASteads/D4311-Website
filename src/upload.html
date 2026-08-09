@@ -40,10 +40,10 @@
         <section class="submission-details">
             <div class="product-writer" id="product-writer">
                 <h2>Publish a Product</h2>
-                <label for="product-title-field" class="field-label">Title</label>
+                <div for="product-title-field" class="field-label">Title</div>
                 <div class="title-field" id="product-title-field" contenteditable="true"></div>
 
-                <label for="product-description-field" class="field-label">Description</label>
+                <div for="product-description-field" class="field-label">Description</div>
                 <div class="description-field" id="product-description-field" contenteditable="true"></div>
 
                 <button id="product-upload-button">Upload</button>
@@ -69,20 +69,20 @@
             </div>
 
             <div class="upload-container" id="gallery-uploader">
-                <label for="upload-preview" class="upload-preview-label"><b>Image Upload</b></label>
+                <p class="upload-preview-label"><b>Image Upload</b></p>
                 <div class="upload-preview" id="upload-preview"></div>
 
                 <button class="browse-button" id="browse-button">Browse</button>
                 
-                <label for="category-select" class="category-select-label">Category:</label>
+                <span class="category-select-label">Category:</span>
                 <select id="category-select">
                     <option value="">None</option>
                 </select>
 
-                <label for="title-field" class="title-field-label">Title</label>
+                <p class="title-field-label">Title</p>
                 <div class="title-field" id="gallery-title-field" contenteditable="true"></div>
 
-                <label for="description-field" class="description-field-label">Description</label>
+                <p class="description-field-label">Description</p>
                 <div class="description-field" id="gallery-description-field" contenteditable="true"></div>
 
                 <button id="upload-button">Upload</button>
@@ -93,32 +93,32 @@
                 <h2>Submit a Portfolio Item</h2>
                 <ul>
                     <li>
-                        <label for="portfolio-title-field">Title</label>
-                        <div id="portfolio-title-field" contenteditable="true"></div>
+                        <p>Title</p>
+                        <div class="field" id="portfolio-title-field" contenteditable="true"></div>
                     </li>
                     <li>
-                        <label for="portfolio-langapi-field">Languages / APIs</label>
-                        <div id="portfolio-langapi-field" contenteditable="true"></div>
+                        <p>Languages / APIs</p>
+                        <div class="field" id="portfolio-langapi-field" contenteditable="true"></div>
                     </li>
                 </ul>
                 <ul>
                     <li>
-                        <label for="portfolio-project-link-field">Project Link</label>
+                        <p>Project Link</p>
                         <div id="portfolio-project-link-field" contenteditable="true"></div>
                     </li>
                 </ul>
                 <ul>
                     <li>
-                        <label for="portfolio-image-link-field">Image Link</label>
+                        <p>Image Link</p>
                         <div id="portfolio-image-link-field" contenteditable="true"></div>
                     </li>
                     <li>
-                        <label for="portfolio-date-field">Date</label>
+                        <p>Date</p>
                         <div id="portfolio-date-field" contenteditable="true"></div>
                     </li>
                 </ul>
 
-                <label for="portfolio-description-field" class="description-field-label">Description</label>
+                <p class="description-field-label">Description</p>
                 <div class="portfolio-description-field" contenteditable="true"></div>
 
                 <button id="portfolio-upload-button">Upload</button>
