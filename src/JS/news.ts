@@ -32,7 +32,7 @@ const generateListItem = async (b: Blog) => {
     img.src = b.cover_link || '';
     img.alt = b.title;
 
-    // Category slot (using author since the API doesn't ship a category field)
+    // TODO: Switch with appropriate category
     const category = document.createElement('small');
     category.className = 'category';
     category.textContent = b.author || 'News';
@@ -56,12 +56,10 @@ const generateListItem = async (b: Blog) => {
     const listItem = document.createElement('li');
     listItem.append(img, meta, title, preview);
 
-    // Click-through to a viewer page (same spirit as the product list)
     const hyperlink = await safeLink(`blog_viewer.html?id=${b.id}`);
     listItem.addEventListener('click', () => {
         window.location.href = hyperlink;
     });
-    listItem.style.cursor = 'pointer';
 
     return listItem;
 };

@@ -254,9 +254,15 @@ app.get('/api/blogs', async (req, res) => {
         let queryText = `
             SELECT id, title, author, body, created_at, game_id, cover_link, hook
             FROM blogs
-            ORDER BY created_at DESC
         `;
         let queryCount = 0;
+
+        if (game_id) {
+            queryText += ` WHERE game_id = $${++queryCount}`;
+            params.push(parseInt(game_id as string));
+        }
+
+        queryText += ' ORDER BY created_at DESC';
 
         // Only add LIMIT if user specifically asks for it
         if (limit) {
@@ -265,11 +271,6 @@ app.get('/api/blogs', async (req, res) => {
             const safeLimit = Math.min(Math.max(parseInt(limit as string) || 10), upperRecentLimit);
             queryText += ` LIMIT $${++queryCount}`;
             params.push(safeLimit);
-        }
-
-        if (game_id) {
-            queryText += ` WHERE game_id = $${++queryCount}`;
-            params.push(game_id);
         }
 
         const result = await pool.query(queryText, params);

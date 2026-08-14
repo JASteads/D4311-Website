@@ -1,7 +1,38 @@
 import { buildComponents } from "./components";
-import { Product } from "./product";
 import { API_URL } from "./config";
 import { safeLink } from "./site-nav";
+import type { Product } from "./product";
+
+const product = ['id', 'title', 'hook', 'splash_art_link'];
+const visuals = ['background', 'sheen', 'sheen-top', 'vignette'].map(name => { 
+    const obj: any = { tag: 'div', className: name }
+
+    if (name === 'background') {
+        obj.backgroundImage = product[3];
+        obj.requires = 'product';
+    }
+
+    return obj;
+});
+
+const template = {
+    'library': {
+        function: 'list', requires: 'product',
+        args: [{ 
+            tag: 'button', className: 'product-list-item',
+            function: 'click', requires: 'product',
+            args: { 
+                action: 'link', baseURL: 'product_viewer.html',
+                queryParams: product[0], requires: product[0] 
+            },
+            children: [
+                ...visuals,
+                { tag: 'span', className: 'title', textContent: product[1] },
+                { tag: 'span', className: 'hook', textContent: product[2] }
+            ]
+        }]
+    }
+}
 
 const fillLibrary = async () => {
     const library = document.getElementById('library');

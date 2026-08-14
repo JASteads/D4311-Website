@@ -1,7 +1,7 @@
 import { buildComponents } from "./components.ts";
 import { API_URL } from "./config.ts";
 import { GalleryUploader } from "./gallery-uploader.ts";
-import { GalleryItem } from "./gallery-item.ts";
+import type { GalleryItem } from "./gallery-item.ts";
 
 class Section {
     section: HTMLElement;

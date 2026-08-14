@@ -132,8 +132,6 @@ const tryAdminNodes = async () => {
                 prepareAdminButton('admin-portal-button', './upload.html')
             ]);
 
-            console.log(adminNodes);
-
             nodes.push(
                 createNavButton({ name: 'Admin', link: '#' }), 
                 createDropdown(adminNodes.filter(b => b !== null))
