@@ -289,6 +289,12 @@ footer small {
     color:rgb(0, 223, 0);
 }
 
+/* ====================== ADMIN EDITOR ====================== */
+
+.editor-container {
+    padding: 40px;
+}
+
 /* ====================== LOGIN ====================== */
 
 .login-container {

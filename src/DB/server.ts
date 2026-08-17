@@ -225,8 +225,8 @@ app.post('/api/blog', async (req, res) => {
 
 app.put('/api/blog', async (req, res) => {
     try {
-        const { id, columns } = req.body;
-        const result = await updateItem('blogs', id, columns);
+        const { id, title, bodyText } = req.body;
+        const result = await updateItem('blogs', id, { title, bodyText });
 
         res.json(result);
     } catch (e: any) {
@@ -311,7 +311,7 @@ app.post('/api/portfolio', async (req, res) => {
     }
 });
 
-app.delete('/api/blog/:id', async (req, res) => {
+app.delete('/api/portfolio/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await removeItem('portfolio_items', id);
@@ -527,6 +527,9 @@ const updateItem = async (tableName: string, id: number, columns: any) => {
             queryParams.push(id);
             query += `WHERE id = $${++count}`;
 
+            console.log(query);
+            console.log(queryParams);
+            
             await pool.query(`${query} RETURNING *`, queryParams);
 
             return { message: `${tableName} #${id} has been updated.` };

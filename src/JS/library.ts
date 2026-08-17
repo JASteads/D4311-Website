@@ -3,6 +3,10 @@ import { API_URL } from "./config";
 import { safeLink } from "./site-nav";
 import type { Product } from "./product";
 
+// TODO : Replace "common" scripts with these templates
+/*
+import { buildScripts, DataRequest } from "./page-builder"
+
 const product = ['id', 'title', 'hook', 'splash_art_link'];
 const visuals = ['background', 'sheen', 'sheen-top', 'vignette'].map(name => { 
     const obj: any = { tag: 'div', className: name }
@@ -23,7 +27,7 @@ const template = {
             function: 'click', requires: 'product',
             args: { 
                 action: 'link', baseURL: 'product_viewer.html',
-                queryParams: product[0], requires: product[0] 
+                queryParams: [product[0]], requires: product[0] 
             },
             children: [
                 ...visuals,
@@ -33,6 +37,7 @@ const template = {
         }]
     }
 }
+*/
 
 const fillLibrary = async () => {
     const library = document.getElementById('library');
@@ -76,10 +81,10 @@ const generateListItem = async (p: Product) => {
     hook.textContent = p.hook;
     
     const hyperlink = await safeLink(`product_viewer.html?id=${p.id}`);
-    const button = document.createElement('button');
+    const button = document.createElement('a');
     button.className = 'product-list-item';
     button.append(...visuals, title, hook);
-    button.addEventListener('click', () => { window.location.href = hyperlink; });
+    button.href = hyperlink;
     
     const listItem = document.createElement('li');
     listItem.appendChild(button);

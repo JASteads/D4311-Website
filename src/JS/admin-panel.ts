@@ -1,17 +1,18 @@
 import { API_URL } from "./config";
 import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
+import { safeLink } from "./site-nav";
 
 class FillConfig {
     headerText: string;
     viewLink: string;
-    editLink: string;
+    editor: string;
     deleteURL: string;
 
-    constructor(headerText: string, viewLink: string, editLink: string, deleteURL: string) {
+    constructor(headerText: string, viewLink: string, editor: string, deleteURL: string) {
         this.headerText = headerText;
         this.viewLink = viewLink;
-        this.editLink = editLink;
+        this.editor = editor;
         this.deleteURL = deleteURL;
     }
 }
@@ -62,9 +63,8 @@ const confirmDelete = async (tableName: string, item: any, deleteURL: string) =>
     }
 }
 
-const openExternalEditor = (editorURL: string, item: any) => {
-    sessionStorage.setItem('temp-edit-item', JSON.parse(item));
-    window.location.href = editorURL;
+const prepareEditor = async (item: any, editorURL: string) => {
+    return 
 }
 
 const buildSection = async (url: string, config: FillConfig) => {
@@ -76,7 +76,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
     const section = document.createElement('section');
 
-    const generateListItem = (item: any) => {
+    const generateListItem = async (item: any) => {
         const title = document.createElement('p');
         title.textContent = item.title;
 
@@ -102,7 +102,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         const options = document.createElement('div');
         options.className = 'options';
 
-        const { headerText, viewLink, editLink, deleteURL } = config;
+        const { headerText, viewLink, editor, deleteURL } = config;
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
@@ -110,9 +110,12 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
-        if (editLink !== '#') {
-            editHyperlink.addEventListener('click', () => openExternalEditor(editLink, item));
-        }
+        editHyperlink.href = await safeLink('admin_editor.html');
+        editHyperlink.addEventListener('click', async () => {
+            sessionStorage.setItem('edit-item', JSON.stringify({ item: item, editor: editor }));
+            editHyperlink.href = await safeLink(`admin_editor.html?id=${item.id}`);
+            editHyperlink.click();
+        });
 
         const deleteHyperlink = document.createElement('a');
         deleteHyperlink.textContent = 'Delete';
@@ -127,7 +130,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         return listItem;
     }
 
-    const listElements = items.map(i => generateListItem(i));
+    const listElements = await Promise.all(items.map(i => generateListItem(i)));
     const list = document.createElement('ul');
     list.append(...listElements);
 
@@ -155,28 +158,28 @@ const buildSections = async () => {
         buildSection('api/products', {
             headerText: 'Products',
             viewLink: 'product_viewer.html',
-            editLink: '#',
+            editor: 'library',
             deleteURL: 'api/product'
         }),
 
         buildSection('api/gallery', {
             headerText: 'Gallery',
             viewLink: 'gallery.html',
-            editLink: '#',
+            editor: 'gallery',
             deleteURL: 'api/gallery'
         }),
 
         buildSection('api/portfolio', {
             headerText: 'Portfolio Items',
             viewLink: 'portfolio.html',
-            editLink: '#',
+            editor: 'portfolio',
             deleteURL: 'api/portfolio'
         }),
 
         buildSection('api/blogs', {
             headerText: 'Blog Posts',
             viewLink: 'blog_viewer.html',
-            editLink: 'blog_editor.html',
+            editor: 'blog',
             deleteURL: 'api/blog'
         })
     ]);

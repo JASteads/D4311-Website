@@ -1,4 +1,7 @@
 import { formatBlogDate } from "./blog-viewer";
+import { safeLink } from "./site-nav";
+
+// NOTE: THIS MODULE IS CURRENTLY A WORK-IN-PROGRESS. Use with caution.
 
 export class Config {
     requires: string;
@@ -33,17 +36,6 @@ class DataPayload {
 
 const has = (val: any) => val !== undefined;
 
-const getDaySuffix = (day: number): string => {
-    if (day > 3 && day < 21) return 'th';
-
-    switch(day % 10) {
-        case 1: return 'st';
-        case 2: return 'nd';
-        case 3: return 'rd';
-        default: return 'th';
-    }
-}
-
 const formatDate = (timestamp: string, dateFormat: string) => {
     if (dateFormat === undefined) {
         return formatBlogDate(timestamp); // Default format
@@ -59,9 +51,8 @@ const formatDate = (timestamp: string, dateFormat: string) => {
 
     if (dateFormat === 'GR-U') {
         const result = `${month}.${day}.${year}`;
-        const whitespace = new Array(13 - result.length).join(' ');
         
-        return whitespace.concat(result);
+        return result.padStart(13, ' '); // 13 = uniform length
     }
 }
 
@@ -91,19 +82,51 @@ export const requestData = async (url: string, ...params: string[]) => {
     }
 }
 
+const scriptButton = async (button: HTMLButtonElement, config: Config, ...data: DataPayload[]) => {
+    if (!has(config.args) || !has(config.args.action)) {
+        console.error('scriptButton(): Invalid args provided');
+        return;
+    }
+
+    const item = data[0];
+    console.log(item);
+    console.log(config);
+
+    if (config.args.action === 'link') {
+        const params: any[] = config.args.queryParams || [];
+        let query: string = params.reduce((p, i) => {
+            let partial = (i > 0) ? '&' : '';
+
+            partial += `${p}=${'value'}`; // TODO: Define 'value' using payload
+
+            return partial;
+        });
+
+        if (query !== '') {
+            query = '?' + query;
+        }
+
+        const hyperlink = await safeLink(`product_viewer.html${query}`);
+
+        button.addEventListener('click', () => { window.location.href = hyperlink; });
+    }
+}
+
 const buildList = (list: HTMLUListElement, config: Config, ...data: DataPayload[]) => {
     if (!list) {
         console.error('buildList(): Valid list not found');
         return;
     }
+
+    // Ignore if the data is empty
+    if (data.length === 1 && !data[0]) {
+        return;
+    }
     
     const generateListItem = (payload: DataPayload) => {
         const li = document.createElement('li');
-        
-        console.log('Payload:', payload);
 
         for (const node of config.args) {
-            console.log(`Node:`, node);
             const element = generate(node, '', payload);
 
             if (element) {
@@ -126,6 +149,10 @@ const functions: {
 } = {
     'list': (element: HTMLElement, config: Config, ...data: DataPayload[]) => {
         buildList(element as HTMLUListElement, config, ...data)
+    },
+
+    'click': async (element: HTMLElement, config: Config, ...data: DataPayload[]) => {
+        await scriptButton(element as HTMLButtonElement, config, ...data);
     }
 };
 
@@ -156,7 +183,6 @@ const defineElement = (element: HTMLElement, node: any, payloadData: any) => {
 
     if (has(node.function)) {
         const config: Config = { requires: node.requires, args: node.args };
-
         functions[node.function](element, config, payloadData);
     }
 }
@@ -164,14 +190,12 @@ const defineElement = (element: HTMLElement, node: any, payloadData: any) => {
 const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElement | null => {
     const element: HTMLElement = document.getElementById(id) || document.createElement(node.tag);
 
-    if (has(id)) {
-        element.id = id;
-    }
-
     if (!element) {
         console.error('Invalid tag during element creation:', node.tag);
         return null;
     }
+
+    element.id = has(node.id) ? node.id : id;
 
     let data; // Null by default
 
@@ -180,10 +204,14 @@ const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElemen
     }
 
     defineElement(element, node, data);
+    document.body.appendChild(element);
 
     // Add child nodes if any
     if (has(node.children)) {
-        const children = node.children.map((n: any) => generate(n, '', ...requests));
+        const children = node.children.map((n: any) => {
+            const id = has(n.id) ? n.id : '';
+            return generate(n, id, ...requests)
+        });
         element.append(...children);
     }
 
@@ -194,7 +222,13 @@ export const buildScripts = async (template: any, ...requests: DataRequest[]) =>
     // Grab all server requests at the start so everything is ready. Remove the bad results
     const requestResults: DataPayload[] = (await Promise.all(
         requests.map(async req => {
-            const result = await requestData(req.requestURL, ...req.requestParams);
+            let result = await requestData(req.requestURL, ...req.requestParams);
+
+            // Nullify empty arrays
+            if (Array.isArray(result) && result.length === 0) {
+                result = null;
+            }
+            
             return result ? { name: req.name, payload: result } : null;
         }))
     ).filter((item) => item !== null);
