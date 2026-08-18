@@ -21,7 +21,7 @@ let categories: string[];
 
 let gallerySelect: HTMLSelectElement;
 let emptyGalleryMessage: HTMLElement | null;
-let uploader: GalleryUploader;
+const uploader = new GalleryUploader(false);
 
 // =================== GALLERY LOADING ===================
 
@@ -160,7 +160,7 @@ const getGalleryItems = async (category?: string): Promise<any[]> => {
 // =================== SETUP ===================
 
 // Special version of the GalleryUploader updateCategories() for efficiency
-const updateCategories = async (uploader: GalleryUploader) => {
+const updateCategories = async () => {
     // Disable filters until prepared
     gallerySelect.disabled = true; 
     uploader.setSelectDisabled(true);
@@ -224,7 +224,6 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
 
 document.addEventListener("DOMContentLoaded", () => {
     buildComponents();
-    uploader = new GalleryUploader(false);
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');
     if (emptyGalleryMessage) {
@@ -234,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gallerySelect = document.getElementById('gallery-select') as HTMLSelectElement;
     if (gallerySelect) {
         gallerySelect.addEventListener('change', () => loadGallery(gallerySelect.value));
-        updateCategories(uploader);
+        updateCategories();
     }
 
     const openUploadButton = document.getElementById('upload-text');

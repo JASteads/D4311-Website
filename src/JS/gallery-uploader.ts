@@ -1,25 +1,28 @@
-import { API_URL, DEV_URL } from "./config";
-import { basicAdminAccessRequest } from "./permissions";
+import { API_URL } from "./config";
 import { GalleryItem } from "./gallery-item";
-import { Product } from "./product";
+import { ImageUploader } from "./image-uploader";
+import type { Product } from "./product";
 
-export class GalleryUploader {
+export class GalleryUploader extends ImageUploader {
     private readonly categorySelect: HTMLSelectElement;
-    private pendingUpload: File | null;
 
     constructor(populateSelf: boolean) {
+        super(
+            `${API_URL}/api/gallery`,
+            '/Resources/Images/Gallery',
+            'gallery.html', true
+        );
         this.categorySelect = document.getElementById('category-select') as HTMLSelectElement;
-        this.pendingUpload = null;
 
         if (populateSelf) {
             this.updateCategories();
         }
 
         const browseButton = document.getElementById('browse-button');
-        browseButton?.addEventListener('click', this.browseImages);
+        browseButton?.addEventListener('click', this.browse);
 
-        const uploadButton = document.getElementById('upload-button') as HTMLButtonElement;
-        uploadButton?.addEventListener('click', this.uploadImage);
+        const uploadButton = document.getElementById('upload-button');
+        uploadButton?.addEventListener('click', async () => this.upload(await this.generateGalleryItem()));
     }
 
     public setSelectDisabled = (isDisabled: boolean) => {
@@ -28,7 +31,7 @@ export class GalleryUploader {
         }
     }
 
-    public addCategory = async (category: string) => {
+    public addCategory = (category: string) => {
         if (!this.categorySelect) {
             console.error('No category select to add to.');
             return;
@@ -40,8 +43,6 @@ export class GalleryUploader {
         nextOpt.textContent = category;
         this.categorySelect.add(nextOpt);
     }
-
-    public clearPendingUpload = () => this.pendingUpload = null;
 
     private updateCategories = async () => {
         if (!this.categorySelect) {
@@ -70,177 +71,6 @@ export class GalleryUploader {
         } catch (e) {
             console.error(e);
         }
-    }
-
-    private browseImages = () => {
-        let input: (HTMLInputElement | null) = document.createElement('input');
-        input.type = 'file';
-    
-        const handleBrowse = (e: Event) => {
-            const removeInput = () => {
-                input?.removeEventListener('change', handleBrowse);
-                input = null;
-            }
-    
-            const target = e.target as HTMLInputElement;
-            if (!target.files) {
-                console.error("No files selected");
-                removeInput();
-                return;
-            }
-    
-            if (target.files[0].type !== 'image/png') {
-                alert('File must be a PNG');
-                removeInput();
-                return;
-            }
-    
-            const preview = document.getElementById('upload-preview');
-            if (!preview) {
-                console.error("Preview is missing");
-                removeInput();
-                return;
-            }
-    
-            // Neatly fix long file names in the preview
-            this.pendingUpload = target.files[0];
-            const charLimit = 23; // Just a number that fits the most neatly in the box
-            let previewName = this.pendingUpload.name;
-            if (previewName.length > charLimit) {
-                previewName = previewName.substring(0, charLimit).concat('...');
-            }
-            preview.textContent = previewName;
-            removeInput();
-        }
-    
-        input.addEventListener('change', handleBrowse);
-        input.click();
-    }
-    
-    private uploadImage = async () => {
-        if (await basicAdminAccessRequest() === 'false') {
-            console.warn('Access denied');
-            return;
-        }
-        
-        if (!this.pendingUpload) {
-            console.warn(`No file has been prepared to upload`);
-            return;
-        }
-    
-        // Prepare and attempt uploading new item
-        const newItem = await this.generateGalleryItem();
-        const container = encodeURIComponent(JSON.stringify(newItem));
-
-        // Prepare thumbnail
-        let thumbnail: Blob;
-        try {
-            thumbnail = await this.generateThumbnail();
-        } catch (e) {
-            console.error(e);
-            return;
-        }
-        
-        const thumbnailFile = new File(
-            [thumbnail],
-            encodeURIComponent(`preview_${this.pendingUpload.name}`),
-            { type: thumbnail.type });
-
-        console.log('Item:', newItem);
-        console.log('Encoded Container:', container);
-        
-        try {
-            // ------------- FULL IMAGE UPLOAD -------------
-
-            const res = await fetch(`${API_URL}/api/gallery/upload?container=${container}`, {
-                method: 'POST',
-                body: this.pendingUpload,
-                headers: {
-                    'Content-Type': this.pendingUpload.type || 'application/octet-stream',
-                    'X-File-Name': encodeURIComponent(this.pendingUpload.name),
-                    'Path': '/Resources/Images/Gallery'
-                }
-            });
-    
-            if (!res.ok) {
-                console.error('Upload failed..');
-                throw new Error(`HTTP Error: ${res.status}`);
-            }
-
-            // ------------- THUMBNAIL UPLOAD -------------
-
-            // NOTE : If uploading thumbnails begins to create issues, 
-            //        consider creating an image repair module
-            const resThumbnail = await fetch(
-                `${API_URL}/api/gallery/upload?thumbnail=true`, {
-                    method: 'POST',
-                    body: thumbnailFile,
-                    headers: {
-                        'Content-Type': this.pendingUpload.type || 'application/octet-stream',
-                        'X-File-Name': thumbnailFile.name,
-                        'Path': '/Resources/Images/Gallery'
-                    }
-                }
-            );
-
-            if (!resThumbnail.ok) {
-                console.error('Thumbnail upload failed..');
-                throw new Error(`HTTP Error: ${resThumbnail.status}`);
-            }
-    
-            alert('File uploaded to gallery successful');
-
-            this.clearPendingUpload();
-
-            // Redirect or refresh
-            const galleryURL = `${DEV_URL}/gallery.html`;
-
-            if (window.location.href !== galleryURL) {
-                window.location.replace(galleryURL);
-                window.open(galleryURL);
-            } else {
-                window.location.reload();
-            }
-        } catch (e) {
-            alert(`File upload failed: ${e}`);
-            this.clearPendingUpload();
-        }
-    }
-
-    private generateThumbnail = async (): Promise<Blob> => {
-        // We know this won't be null by the time it's called
-        const bitmap = await createImageBitmap(this.pendingUpload!);
-        const maxSize = 400;
-        const imageQuality = 0.85; // From a scale of 0 to 1
-
-        // Fix image resolution to thumbnail-sized values
-        let { width, height } = bitmap;
-        if (width > height) {
-            height = Math.round(height * (maxSize / width));
-            width = maxSize;
-        } else if (height > maxSize) {
-            width = Math.round(width * (maxSize / height));
-            height = maxSize;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-
-        // Prepare conversion
-        const context = canvas.getContext('2d')!;
-        context.drawImage(bitmap, 0, 0, width, height);
-        bitmap.close();
-
-        return new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error('Thumbnail generation failed..'));
-                }
-            }, 'image/png', imageQuality); // Consider webp if loading times become an issue
-        });
     }
 
     private generateGalleryItem = async () =>  {

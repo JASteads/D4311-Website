@@ -1,14 +1,13 @@
 import { Editor } from "./editor";
+import { ImageUploader } from "./image-uploader";
 
 export class ProductWriter extends Editor {
     private titleField: HTMLElement | null = null;
     private descriptionField: HTMLElement | null = null;
-    private dateField: HTMLElement | null = null;
     private splashArtLinkField: HTMLElement | null = null;
-    private txnLinkField: HTMLElement | null = null;
     private hookField: HTMLElement | null = null;
     
-    constructor(isUpdate: boolean = false) {
+    constructor(isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
@@ -39,6 +38,10 @@ export class ProductWriter extends Editor {
                 { tag: 'div', classList: 'title-field', id: 'product-title-field' },
                 { tag: 'div', classList: 'field-label', textContent: 'Hook' },
                 { tag: 'div', classList: 'title-field', id: 'product-hook-field' },
+                { tag: 'div', classList: 'image-upload', id: 'splash-image-upload', children: [
+                    { tag: 'span', id: 'splash-file', textContent: 'File name ...' },
+                    { tag: 'button', id: 'splash-button', textContent: 'Upload' }
+                ]},
                 { tag: 'div', classList: 'field-label', textContent: 'Description' },
                 { tag: 'div', classList: 'description-field', id: 'product-description-field' },
                 { tag: 'button', id: 'product-upload-button', textContent: 'Upload' }
@@ -64,14 +67,16 @@ export class ProductWriter extends Editor {
         this.editor = document.getElementById('product-writer');
         this.titleField = document.getElementById('product-title-field');
         this.descriptionField = document.getElementById('product-description-field');
-        this.dateField = document.getElementById('product-date-field');
         this.splashArtLinkField = document.getElementById('product-splash-field');
-        this.txnLinkField = document.getElementById('product-txn-field');
         this.hookField = document.getElementById('product-hook-field');
     }
 
     protected init = () => {
-        const uploadButton = document.getElementById('product-upload-button');
-        uploadButton?.addEventListener('click', this.publish);
+        const publishButton = document.getElementById('product-upload-button');
+        publishButton?.addEventListener('click', this.publish);
+
+        this.titleField!.contentEditable = 'true';
+        this.descriptionField!.contentEditable = 'true';
+        this.hookField!.contentEditable = 'true';
     }
 }
