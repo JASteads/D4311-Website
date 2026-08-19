@@ -64,7 +64,7 @@ const confirmDelete = async (tableName: string, item: any, deleteURL: string) =>
 }
 
 const prepareEditor = async (item: any, editorURL: string) => {
-    return 
+    return;
 }
 
 const buildSection = async (url: string, config: FillConfig) => {
@@ -149,7 +149,7 @@ const buildSections = async () => {
         return;
     }
 
-    if (await basicAdminAccessRequest() === 'false') {
+    if (!await basicAdminAccessRequest()) {
         console.warn('Access denied');
         return;
     }

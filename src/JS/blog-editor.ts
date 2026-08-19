@@ -52,33 +52,25 @@ export class BlogEditor extends Editor {
 
     protected getTableName = () => 'blog';
 
-    protected getPutBody = () => {
-        const titleElement = document.getElementById('blog-title');
-        const bodyElement = document.getElementById('editor-content');
-
-        if (!titleElement || !bodyElement) {
-            console.error('Blog title or body element not found');
-            return;
-        }
-
-        const title = titleElement.textContent.trim();
-        const body = bodyElement.textContent.trim();
-
-        let id = new URLSearchParams(window.location.search).get('id');
-        if (!id) {
-                console.error('No ID specified for update');
-                return;
-        }
-
-        return { id: parseInt(id), title, body };
-    }
-
     protected getPostBody = () => {
         const placeholderAuthor = 'Lemon'; // Replace later with local storage
         const title = document.getElementById('blog-title')?.textContent.trim() || '';
         const body = document.getElementById('editor-content')?.textContent.trim() || '';
 
         return { title, placeholderAuthor, body };
+    }
+
+    protected getPutBody = () => {
+        const title = document.getElementById('blog-title')?.textContent.trim() || 'Untitled';
+        const body = document.getElementById('editor-content')?.textContent.trim() || '';        
+        const id = new URLSearchParams(window.location.search).get('id');
+
+        if (!id) {
+            console.error('No ID specified for update');
+            return;
+        }
+
+        return { id: parseInt(id), title, body };
     }
 
     protected locateElements = () => {

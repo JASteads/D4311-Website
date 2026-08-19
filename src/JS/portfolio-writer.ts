@@ -24,7 +24,7 @@ export class PortfolioWriter {
     }
 
     private publish = async () => {
-        if (await basicAdminAccessRequest() === 'false') {
+        if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return;
         }

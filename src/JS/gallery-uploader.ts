@@ -2,6 +2,7 @@ import { API_URL } from "./config";
 import { GalleryItem } from "./gallery-item";
 import { ImageUploader } from "./image-uploader";
 import type { Product } from "./product";
+import { safeLink } from "./site-nav";
 
 export class GalleryUploader extends ImageUploader {
     private readonly categorySelect: HTMLSelectElement;
@@ -18,11 +19,23 @@ export class GalleryUploader extends ImageUploader {
             this.updateCategories();
         }
 
-        const browseButton = document.getElementById('browse-button');
-        browseButton?.addEventListener('click', this.browse);
+        const uploadPreview = document.getElementById('upload-preview');
+        if (uploadPreview) {
+            const browseButton = document.getElementById('browse-button');
+            browseButton?.addEventListener('click', () => this.browse(uploadPreview));
+        }
 
         const uploadButton = document.getElementById('upload-button');
-        uploadButton?.addEventListener('click', async () => this.upload(await this.generateGalleryItem()));
+        uploadButton?.addEventListener('click', async () => {
+            if (await this.upload(await this.generateGalleryItem())) {
+                
+            const safeRedirectURL = await safeLink(this.redirectURL);
+            if (window.location.href !== safeRedirectURL) {
+                window.location.href = safeRedirectURL;
+            } else {
+                window.location.reload();
+            }
+        }});
     }
 
     public setSelectDisabled = (isDisabled: boolean) => {
@@ -66,8 +79,6 @@ export class GalleryUploader extends ImageUploader {
     
             // Re-enable filter only on success
             this.categorySelect.disabled = false;
-    
-            console.log("Categories updated");
         } catch (e) {
             console.error(e);
         }

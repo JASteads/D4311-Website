@@ -1,23 +1,22 @@
+import { API_URL } from "./config";
 import { basicAdminAccessRequest } from "./permissions";
-import { safeLink } from "./site-nav";
 
 export class ImageUploader {
-    private uploadURL = '';
-    private uploadPath = '';
-    private redirectURL = '';
+    private uploadType;
     private includeThumbnail = false;
     private pendingUpload: File | null = null;
 
-    constructor(uploadURL = '', uploadPath = '', redirectURL = '', includeThumbnail = false) {
-        this.uploadURL = uploadURL;
-        this.uploadPath = uploadPath;
-        this.redirectURL = redirectURL;
+    constructor(uploadType = '', includeThumbnail = false) {
+        // ex. spLaSH --> Splash
+        this.uploadType = (uploadType.length >= 2) ? 
+            uploadType[0].toUpperCase() + uploadType.substring(1).toLowerCase() :
+            'Misc';
         this.includeThumbnail = includeThumbnail;
     }
 
     clearPendingUpload = () => this.pendingUpload = null;
     
-    protected browse = () => {
+    browse = (preview: HTMLElement) => {
         const input = document.createElement('input');
         input.type = 'file';
     
@@ -38,7 +37,6 @@ export class ImageUploader {
                 !handleError(target.files![0].type === 'image/png', 'File must be a PNG')
             ) return;
 
-            const preview = document.getElementById('upload-preview');
             handleError(!(!preview), 'Preview is missing');
     
             // Neatly fix long file names in the preview
@@ -57,31 +55,39 @@ export class ImageUploader {
         input.click();
     }
     
-    protected upload = async (content: any) => {
-        if (await basicAdminAccessRequest() === 'false') {
+    upload = async (content: any) => {
+        if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
-            return;
+            return false;
         }
         
         if (!this.pendingUpload) {
             console.warn(`No file has been prepared to upload`);
-            return;
+            return false;
         }
     
         // Prepare and attempt uploading new item
         const newItem = content;
         const container = encodeURIComponent(JSON.stringify(newItem));
-        
+
+        // TODO : Remove container functionality, make it specific to GalleryUploader
+        //        NOTE : Server likely requires similar simplification. A separate image uploading feature
+        //               will be used
+
+        const oldURL = `${'this.uploadURL'}?container=${container}`; // <-- REMOVE THIS LATER
+        const root = `${API_URL}/api/image`;
+
         try {
             // ------------- FULL IMAGE UPLOAD -------------
 
-            const res = await fetch(`${this.uploadURL}?container=${container}`, {
+            // Will now use the image API route that uploads specific types
+            const res = await fetch(root, {
                 method: 'POST',
                 body: this.pendingUpload,
                 headers: {
                     'Content-Type': this.pendingUpload.type || 'application/octet-stream',
                     'X-File-Name': encodeURIComponent(this.pendingUpload.name),
-                    'Path': this.uploadPath
+                    'Path': `/Resources/Images/${this.uploadType}`
                 }
             });
     
@@ -112,13 +118,13 @@ export class ImageUploader {
                     // NOTE : If uploading thumbnails begins to create issues, 
                 //        consider creating an image repair module
                     const resThumbnail = await fetch(
-                        `${this.uploadURL}?thumbnail=true`, {
+                        `${root}?thumbnail=true`, {
                             method: 'POST',
                             body: thumbnailFile,
                             headers: {
                                 'Content-Type': this.pendingUpload.type || 'application/octet-stream',
                                 'X-File-Name': thumbnailFile.name,
-                                'Path': '/Resources/Images/Gallery'
+                                'Path': `/Resources/Images/${this.uploadType}`
                             }
                         }
                     );
@@ -133,19 +139,13 @@ export class ImageUploader {
             }
             
             alert('File uploaded successfully');
-            this.clearPendingUpload();
-            
-            // Redirect or refresh
-            const safeRedirectURL = await safeLink(this.redirectURL);
-            if (window.location.href !== safeRedirectURL) {
-                window.location.href = safeRedirectURL;
-            } else {
-                window.location.reload();
-            }
         } catch (e) {
             alert(`File upload failed: ${e}`);
-            this.clearPendingUpload();
+            return false;
         }
+        this.clearPendingUpload();
+
+        return true;
     }
 
     private generateThumbnail = async () => {

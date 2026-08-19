@@ -52,8 +52,8 @@ const openEditor = async () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
     buildComponents();
-    if (await basicAdminAccessRequest() !== 'true') {
-        console.log('Access deined.');
+    if (!await basicAdminAccessRequest()) {
+        console.warn('Access deined.');
         return;
     }
     await openEditor();

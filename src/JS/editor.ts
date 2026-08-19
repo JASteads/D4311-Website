@@ -39,7 +39,7 @@ export abstract class Editor {
 
     protected publish = async () => {
         console.log('Publish');
-        if (await basicAdminAccessRequest() === 'false') {
+        if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return;
         }

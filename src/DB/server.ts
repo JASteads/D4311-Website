@@ -132,12 +132,12 @@ app.get('/api/product/:id', async (req, res) => {
 
 app.post('/api/product', async (req, res) => {
     try {
-        const { title, description, splash_art_link, txn_link } = req.body;
+        const { title, hook, description, splash_art } = req.body;
         const result = await pool.query(`
-            INSERT INTO products (title, description, release_date, splash_art_link, txn_link)
+            INSERT INTO products (title, hook, description, release_date, splash_art_link)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
-        `, [title, description, new Date(Date.now()).toISOString(), splash_art_link, txn_link]);
+        `, [title, hook, description, new Date(Date.now()).toISOString(), splash_art]);
         res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });

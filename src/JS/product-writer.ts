@@ -1,10 +1,11 @@
+import { API_URL } from "./config";
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
 
 export class ProductWriter extends Editor {
     private titleField: HTMLElement | null = null;
     private descriptionField: HTMLElement | null = null;
-    private splashArtLinkField: HTMLElement | null = null;
+    private splashArtField: HTMLElement | null = null;
     private hookField: HTMLElement | null = null;
     
     constructor(isUpdate = false) {
@@ -40,7 +41,7 @@ export class ProductWriter extends Editor {
                 { tag: 'div', classList: 'title-field', id: 'product-hook-field' },
                 { tag: 'div', classList: 'image-upload', id: 'splash-image-upload', children: [
                     { tag: 'span', id: 'splash-file', textContent: 'File name ...' },
-                    { tag: 'button', id: 'splash-button', textContent: 'Upload' }
+                    { tag: 'button', id: 'splash-button', textContent: 'Browse' }
                 ]},
                 { tag: 'div', classList: 'field-label', textContent: 'Description' },
                 { tag: 'div', classList: 'description-field', id: 'product-description-field' },
@@ -54,29 +55,61 @@ export class ProductWriter extends Editor {
     protected getTableName = () => 'product';
 
     protected getPostBody = () => {
-        // TODO : Complete building the post body
-        return {};
+        const title = this.titleField?.textContent.trim();
+        const hook = this.hookField?.textContent.trim();
+        const description = this.descriptionField?.textContent.trim();
+        const splashArt = this.splashArtField?.textContent;
+        return { title, hook, description, splashArt };
     }
 
     protected getPutBody = () => {
-        // TODO : Complete building the put body
-        return {};
+        const title = this.titleField?.textContent.trim() || '';
+        const hook = this.hookField?.textContent.trim() || '';
+        const description = this.descriptionField?.textContent.trim() || '';
+        const splashArt = this.splashArtField?.textContent || '';
+        const id = new URLSearchParams(window.location.search).get('id');
+
+        if (!id) {
+            console.error('No ID specified for update');
+            return;
+        }
+
+        return { id: parseInt(id), title, hook, description, splash_art_link: splashArt };
     }
 
     protected locateElements = () => {
         this.editor = document.getElementById('product-writer');
         this.titleField = document.getElementById('product-title-field');
-        this.descriptionField = document.getElementById('product-description-field');
-        this.splashArtLinkField = document.getElementById('product-splash-field');
         this.hookField = document.getElementById('product-hook-field');
+        this.descriptionField = document.getElementById('product-description-field');
+        this.splashArtField = document.getElementById('product-splash-field');
     }
 
     protected init = () => {
+        const uploader = new ImageUploader(`${API_URL}/api/image?type=splash`, '/Resources/Images/Products', '', false);
+        
+        const splashFile = document.getElementById('splash-file');
+        if (splashFile) {
+            const browseButton = document.getElementById('splash-button');
+            browseButton?.addEventListener('click', () => uploader.browse(splashFile));
+        }
+        
         const publishButton = document.getElementById('product-upload-button');
-        publishButton?.addEventListener('click', this.publish);
+        publishButton?.addEventListener('click', async () => {
+            await uploader.upload();
+            this.publish();
+        });
 
-        this.titleField!.contentEditable = 'true';
-        this.descriptionField!.contentEditable = 'true';
-        this.hookField!.contentEditable = 'true';
+        if (this.titleField) {
+            this.titleField.contentEditable = 'true';
+        }
+
+        if (this.descriptionField) {
+            this.descriptionField.contentEditable = 'true';
+        }
+
+        if (this.hookField) {
+            this.hookField.contentEditable = 'true';
+        }
     }
 }
