@@ -68,7 +68,7 @@
                 <button id="publish-button">Publish</button>
             </div>
 
-            <div class="upload-container" id="gallery-uploader">
+            <div class="upload-container" id="gallery-editor">
                 <p class="upload-preview-label"><b>Image Upload</b></p>
                 <div class="upload-preview" id="upload-preview"></div>
 
@@ -89,41 +89,36 @@
                 <button id="close-button">Close</button>
             </div>
 
-            <div class="portfolio-writer" id="portfolio-writer">
+            <div class="portfolio-editor" id="portfolio-writer">
                 <h2>Submit a Portfolio Item</h2>
                 <ul>
-                    <li>
+                    <li class="title">
                         <p>Title</p>
-                        <div class="field" id="portfolio-title-field" contenteditable="true"></div>
+                        <div id="portfolio-title-field" contenteditable="true"></div>
                     </li>
-                    <li>
+                    <li class="lang-api">
                         <p>Languages / APIs</p>
-                        <div class="field" id="portfolio-langapi-field" contenteditable="true"></div>
+                        <div id="portfolio-langapi-field" contenteditable="true"></div>
                     </li>
-                </ul>
-                <ul>
-                    <li>
+                    <li class="project-link">
                         <p>Project Link</p>
                         <div id="portfolio-project-link-field" contenteditable="true"></div>
                     </li>
-                </ul>
-                <ul>
-                    <li>
+                    <li class="image-link">
                         <p>Image Link</p>
                         <div id="portfolio-image-link-field" contenteditable="true"></div>
                     </li>
-                    <li>
+                    <li class="date">
                         <p>Date</p>
                         <div id="portfolio-date-field" contenteditable="true"></div>
                     </li>
+                    <li class="desc">
+                        <p>Description</p>
+                        <div id="portfolio-description-field" contenteditable="true"></div>
+                    </li>
                 </ul>
-
-                <p class="description-field-label">Description</p>
-                <div class="portfolio-description-field" contenteditable="true"></div>
-
                 <button id="portfolio-upload-button">Upload</button>
             </div>
-
         </section>
     </div>
     

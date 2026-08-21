@@ -1,6 +1,6 @@
 import { buildComponents } from "./components.ts";
 import { API_URL } from "./config.ts";
-import { GalleryUploader } from "./gallery-uploader.ts";
+import { GalleryEditor } from "./gallery-editor.ts";
 import type { GalleryItem } from "./gallery-item.ts";
 
 class Section {
@@ -21,7 +21,7 @@ let categories: string[];
 
 let gallerySelect: HTMLSelectElement;
 let emptyGalleryMessage: HTMLElement | null;
-const uploader = new GalleryUploader(false);
+const editor = new GalleryEditor();
 
 // =================== GALLERY LOADING ===================
 
@@ -163,7 +163,7 @@ const getGalleryItems = async (category?: string): Promise<any[]> => {
 const updateCategories = async () => {
     // Disable filters until prepared
     gallerySelect.disabled = true; 
-    uploader.setSelectDisabled(true);
+    editor.setSelectDisabled(true);
 
     try {
         const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
@@ -182,12 +182,12 @@ const updateCategories = async () => {
 
             gallerySelect.add(nextOptGallery);
 
-            uploader.addCategory(c);
+            editor.addCategory(c);
         });
 
         // Re-enable filters only on success
         gallerySelect.disabled = false;
-        uploader.setSelectDisabled(false);
+        editor.setSelectDisabled(false);
 
         console.log("Categories updated");
     } catch (e) {
@@ -196,18 +196,18 @@ const updateCategories = async () => {
 }
 
 const setUploadMenuVisibility = (isVisible: boolean) => {
-    const uploadContainer = document.getElementById('upload-container');
+    const container = editor.getContainer();
 
-    if (!uploadContainer) {
+    if (!container) {
         console.error('No upload menu connected to this button');
         return;
     }
     
     // Allow initial toggle button to also close the container if already open
-    if (isVisible && uploadContainer.style.display === 'none') {
-        uploadContainer.style.display = 'block';
+    if (isVisible && container.style.display === 'none') {
+        container.style.display = 'block';
     } else {
-        uploadContainer.style.display = 'none';
+        container.style.display = 'none';
 
         // Reset the preview text
         const preview = document.getElementById('upload-preview');
@@ -218,7 +218,7 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
         }
 
         // Remove the pending upload so we can start over
-        uploader.clearPendingUpload();
+        editor.uploader.clearPendingUpload();
     }
 }
 

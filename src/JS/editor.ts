@@ -7,7 +7,7 @@ export abstract class Editor {
     protected editor: HTMLElement | null = null;
     protected isUpdate: boolean;
 
-    constructor(isUpdate: boolean = false) {
+    constructor(isUpdate = false) {
         this.isUpdate = isUpdate;
     }
 

@@ -743,54 +743,51 @@ footer small {
 
 /* ====================== PORTFOLIO UPLOADER ====================== */
 
-.portfolio-writer {
+.portfolio-editor ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "aa ab"  /* Title / Lang API */
+        "ba ba"  /* Project Link     */
+        "ca cb"  /* Img   / Date     */
+        "da da"; /* Description      */
+    column-gap: 20px;
+    row-gap: 10px;
     width: 720px;
     max-width: 100%;
-    display: block;
 }
 
-.portfolio-writer h2 {
+.portfolio-editor h2 {
     margin-bottom: 10px;
 }
 
-.portfolio-writer ul {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
+.portfolio-editor p {
+    padding-bottom: 5px;
 }
 
-.portfolio-writer ul li {
-    flex: 1;
-    padding-right: 20px;
-    min-width: 300px;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.portfolio-writer ul li label {
-    margin-bottom: 5px;
-}
-
-.portfolio-writer ul div {
+.portfolio-editor div {
     background-color: white;
     height: 24px;
-    width: 100%;
     color:black;
     border-radius: 1px;
+    padding: 3px;
     font-size: 0.8em;
     text-align: left center;
     overflow-inline: scroll;
     scrollbar-width: none;
     text-wrap: nowrap;
-    padding: 3px;
-    margin: 5px 0 10px;
 }
 
-.portfolio-description-field {
+.portfolio-editor .title { grid-area: aa; }
+.portfolio-editor .lang-api { grid-area: ab; }
+.portfolio-editor .project-link { grid-area: ba; }
+.portfolio-editor .image-link { grid-area: ca; }
+.portfolio-editor .date { grid-area: cb; }
+.portfolio-editor .desc { grid-area: da; }
+
+.portfolio-editor .desc > div {
     background-color: white;
     height: 180px;
-    width: 600px;
-    max-width: 100%;
     overflow-y: auto;
     color: black;
     font-size: 0.8em;

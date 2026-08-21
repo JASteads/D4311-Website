@@ -1,21 +1,101 @@
-import { API_URL } from "./config";
-import { basicAdminAccessRequest } from "./permissions";
+import { Editor } from "./editor";
 
-export class PortfolioWriter {
-    titleField: HTMLElement | null;
-    langAPIField: HTMLElement | null;
-    projectLinkField: HTMLElement | null;
-    imageLinkField: HTMLElement | null;
-    dateField: HTMLElement | null;
-    descriptionField: HTMLElement | null;
+export class PortfolioWriter extends Editor {
+    private titleField: HTMLElement | null = null;
+    private langAPIField: HTMLElement | null = null;
+    private projectLinkField: HTMLElement | null = null;
+    private imageLinkField: HTMLElement | null = null;
+    private dateField: HTMLElement | null = null;
+    private descriptionField: HTMLElement | null = null;
 
-    constructor() {
+    constructor(isUpdate = false) {
+        super(isUpdate);
+        this.locateElements();
+
+        if (this.editor) {
+            this.init();
+        }
+    }
+
+    setContent(...content: any) {
+        
+    }
+
+    protected getTemplate = () => {
+        return {
+            'portfolio-writer': { tag: 'div', classList: 'portfolio-editor', children: [
+                { tag: 'h2', textContent: 'Submit a Portfolio Item'},
+                { tag: 'ul', children: [
+                    { tag: 'li', classList: 'title', children: [
+                        { tag: 'p', textContent: 'Title' },
+                        { tag: 'div', classList: 'portfolio-title-field' }
+                    ]},
+                    { tag: 'li', classList: 'lang-api', children: [
+                        { tag: 'p', textContent: 'Languages / APIs' },
+                        { tag: 'div', classList: 'portfolio-langapi-field' }
+                    ]},
+                    { tag: 'li', classList: 'project-link', children: [
+                        { tag: 'p', textContent: 'Project Link' },
+                        { tag: 'div', classList: 'portfolio-project-link-field' }
+                    ]},
+                    { tag: 'li', classList: 'image-link', children: [
+                        { tag: 'p', textContent: 'Image Link' },
+                        { tag: 'div', classList: 'portfolio-image-link-field' }
+                    ]},
+                    { tag: 'li', classList: 'date', children: [
+                        { tag: 'p', textContent: 'Date' },
+                        { tag: 'div', classList: 'portfolio-date-field' }
+                    ]},
+                    { tag: 'li', classList: 'desc', children: [
+                        { tag: 'p', textContent: 'Description' },
+                        { tag: 'div', classList: 'portfolio-description-field' }
+                    ]},
+                ]},
+                { tag: 'button', id: 'portfolio-upload-button', textContent: 'Upload' }
+            ]}
+        };
+    }
+
+    protected locateElements() {
+        this.editor = document.getElementById('portfolio-writer');
         this.titleField = document.getElementById('portfolio-title-field');
         this.langAPIField = document.getElementById('portfolio-langapi-field');
         this.projectLinkField = document.getElementById('portfolio-project-link-field');
         this.imageLinkField = document.getElementById('portfolio-image-link-field');
         this.dateField = document.getElementById('portfolio-date-field');
         this.descriptionField = document.getElementById('portfolio-desription-field');
+    }
+
+    protected getPostBody = () => this.getContent();
+
+    protected getPutBody = () => {
+        const { title, type, langAPI, date, description, imageLink, projectLink } = this.getContent();
+        const id = new URLSearchParams(window.location.search).get('id');
+
+        if (!id) {
+            console.error('No ID specified for update');
+            return;
+        }
+
+        return { id, title, type, langAPI, date, description, imageLink, projectLink }
+    };
+
+    protected getTableName = () => 'portfolio';
+
+    protected getViewerURL = () => 'portfolio.html';
+
+    protected init = () => {
+        if (this.titleField) this.titleField.contentEditable = 'true';
+
+        if (this.langAPIField) this.langAPIField.contentEditable = 'true';
+
+        if (this.projectLinkField) this.projectLinkField.contentEditable = 'true';
+
+        if (this.imageLinkField) this.imageLinkField.contentEditable = 'true';
+
+        if (this.dateField) this.dateField.contentEditable = 'true';
+
+        if (this.descriptionField) this.descriptionField.contentEditable = 'true';
 
         const uploadButton = document.getElementById('portfolio-upload-button');
         if (uploadButton) {
@@ -23,37 +103,15 @@ export class PortfolioWriter {
         }
     }
 
-    private publish = async () => {
-        if (!await basicAdminAccessRequest()) {
-            console.warn('Access denied');
-            return;
-        }
-        
-        const record = {
+    protected getContent = () => {
+        return {
             title: this.titleField?.textContent || 'Untitled',
             type: this.getProjectLinkType(),
-            langAPI: this.langAPIField?.textContent || null,
+            langAPI: this.langAPIField?.textContent || '',
             date: this.dateField?.textContent || Date.now().toLocaleString(),
-            description: this.descriptionField?.textContent || null,
-            imageLink: this.imageLinkField?.textContent || null,
-            projectLink: this.projectLinkField?.textContent || null
-        };
-        
-        try {
-            const result = await fetch(`${API_URL}/api/portfolio`, {
-                method: 'POST',
-                body: JSON.stringify(record),
-                headers: { "Content-Type": "application/json" }
-            });
-
-            if (!result.ok) {
-                throw new Error(`HTTP Error: ${result.status}`);
-            }
-            console.log('Successfully uploaded', record.title, 'to the server');
-
-            return result.json();
-        } catch (e) {
-            console.error('Something went wrong with the portfolio upload...', e);
+            description: this.descriptionField?.textContent || '',
+            imageLink: this.imageLinkField?.textContent || '',
+            projectLink: this.projectLinkField?.textContent || ''
         }
     }
 

@@ -5,7 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import crypto from 'crypto';
-import { Pool, type QueryResult } from 'pg';
+import { Pool } from 'pg';
 import type { Response as ExpressResponse } from 'express';
 import { fileURLToPath } from 'url';
  
@@ -100,6 +100,62 @@ app.get('/api/redirect', async (req, res) => {
     const { file } = req.query;
     
     return safeRedirect(res, file as string);
+});
+
+app.post('api/image', async (req, res) => {
+    const { type, container, thumbnail } = req.query;
+
+    console.log('Type:', type);
+    console.log('Container:', container);
+
+    const { tempPath, tempName, stream } = prepareTemp();
+    
+    req.pipe(stream);
+
+    // Setup by making sure characters are legal for download
+    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
+    const realPath = path.join(SRC_DIR, req.headers['path'] as string);
+    const finalPath = path.join(realPath, realName);
+
+    console.log('Final path:', finalPath);
+
+    console.log('Real Name:', realName);
+    console.log('Real Path:', realPath);
+
+    if (!fs.existsSync(path.dirname(realPath))) {
+        fs.mkdirSync(path.dirname(realPath), { recursive: true });
+    }
+
+    stream.on('finish', async () => {
+        try {
+            // Move the temp file into its permanent location
+            console.log('Moving temp file from:', path.join(tempPath, tempName));
+            console.log('..to:', finalPath);
+            
+            try {
+                await fs.promises.rename(path.join(tempPath, tempName), finalPath);
+                console.log('File moved');
+            } catch (e: any) {
+                console.error(e);
+            }
+            
+            const response: any = {
+                message: `${(thumbnail) ? 'Thumbnail' : 'Image'} downloaded to gallery`,
+                savedAs: thumbnail ? `preview_${realName}` : realName
+            };
+
+            res.status(200).json(response);
+        } catch (e: any) {
+            console.error('Image download failed');
+            res.status(500).json(e);
+        }
+    });
+    
+    // Error handling
+    stream.on('error', () => {
+        console.error('Something went wrong with the download..');
+        res.status(500).json('Image download failed');
+    });
 });
 
 // =========== PRODUCT ROUTES ===========
@@ -361,104 +417,35 @@ app.get('/api/gallery', async (req, res) => {
 
 // For uploading pics to the gallery
 app.post('/api/gallery', async (req, res) => {
-    const { container, thumbnail } = req.query;
-    const { tempPath, tempName, stream } = prepareTemp();
-    
-    req.pipe(stream);
+    const { container } = req.query;
+    const containerItems = JSON.parse(decodeURIComponent(container as string));
+    console.log('Container:', containerItems);
 
-    // Setup by making sure characters are legal for download
-    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
-    const realPath = path.join(SRC_DIR, req.headers['path'] as string);
-    const finalPath = path.join(realPath, realName);
+    const items = { 
+        title: containerItems.item.title, 
+        gameID: containerItems.id, 
+        caption: containerItems.item.caption,
+        
+        dateCreated: containerItems.item.date_created 
+    };
+    console.log('Items prepared:', items);
 
-    console.log('Final path:', finalPath);
-
-    const addGalleryEntry = async (): Promise<QueryResult> => {
-        // Adding item to database
-        const containerItems = JSON.parse(decodeURIComponent(container as string));
-        console.log('Container:', containerItems);
-
-        const items = { 
-            title: containerItems.item.title, 
-            gameID: containerItems.id, 
-            caption: containerItems.item.caption,
-            dateCreated: containerItems.item.date_created 
-        };
-        console.log('Items prepared:', items);
-
-        return new Promise((resolve, reject) => {
-            try {
-                // Insert into DB
-                const result = pool.query(`
-                    INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                    RETURNING *
-                `, [items.title, items.gameID, items.caption, `preview_${realName}`, realName, items.dateCreated]);
-                
-                resolve(result);
-            } catch (e: any) {
-                reject(e);
-            }
+    try {
+        // Insert into DB
+        const result = await pool.query(`
+            INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `, [items.title, items.gameID, items.caption, `preview_${'FIX_TITLE'}`, 'FIX_TITLE', items.dateCreated]);
+        
+        res.json(result.rows[0]);
+    } catch (e: any) {
+        console.error('Database upload failed..', e);
+        res.status(500).json({
+            error: 'Failed to add gallery record to the database',
+            details: e.message
         });
     }
-
-    console.log('Real Name:', realName);
-    console.log('Real Path:', realPath);
-
-    if (!fs.existsSync(path.dirname(realPath))) {
-        fs.mkdirSync(path.dirname(realPath), { recursive: true });
-    }
-
-    stream.on('finish', async () => {
-        try {
-            // Move the temp file into its permanent location
-            console.log('Moving temp file from:', path.join(tempPath, tempName));
-            console.log('..to:', finalPath);
-            
-            let queryResult: QueryResult | null = null;
-
-            // Only update DB when adding a full image
-            if (container) {
-                console.log('Container found. Updating database..');
-                try {
-                    queryResult = await addGalleryEntry();    
-                } catch (e: any) {
-                    console.error('Database upload failed..', e);
-                    return res.status(500).json({
-                        error: 'Failed to add gallery record to the database',
-                        details: e.message
-                    });
-                }
-            }
-            
-            try {
-                await fs.promises.rename(path.join(tempPath, tempName), finalPath);
-                console.log('File moved');
-            } catch (e: any) {
-                console.error(e);
-            }
-            
-            const response: any = {
-                message: `${(thumbnail) ? 'Thumbnail' : 'Image'} downloaded to gallery`,
-                savedAs: thumbnail ? `preview_${realName}` : realName
-            };
-
-            if (queryResult) {
-                response.object = queryResult.rows[0];
-            }
-
-            res.status(200).json(response);
-        } catch (e: any) {
-            console.error('Image download failed');
-            res.status(500).json(e);
-        }
-    });
-    
-    // Error handling
-    stream.on('error', () => {
-        console.error('Something went wrong with the download..');
-        res.status(500).json('Image download failed');
-    });
 });
 
 app.delete('/api/gallery/:id', async (req, res) => {

@@ -1,50 +1,79 @@
 import { API_URL } from "./config";
+import { Editor } from "./editor";
 import { GalleryItem } from "./gallery-item";
 import { ImageUploader } from "./image-uploader";
 import type { Product } from "./product";
-import { safeLink } from "./site-nav";
 
-export class GalleryUploader extends ImageUploader {
-    private readonly categorySelect: HTMLSelectElement;
+export class GalleryEditor extends Editor {
+    uploader = new ImageUploader('gallery, true');
+    private categorySelect: HTMLSelectElement | null = null;
 
-    constructor(populateSelf: boolean) {
-        super(
-            `${API_URL}/api/gallery`,
-            '/Resources/Images/Gallery',
-            'gallery.html', true
-        );
-        this.categorySelect = document.getElementById('category-select') as HTMLSelectElement;
+    constructor(isUpdate = false) {
+        super(isUpdate);
+        this.locateElements();
 
-        if (populateSelf) {
-            this.updateCategories();
+        if (this.editor) {
+            this.init();
         }
+    }
 
+    setContent() {
+
+    }
+
+    protected getTemplate() {
+        return {
+            'gallery-editor': { tag: 'div', classList: 'upload-container', children: [
+                { tag: 'p', classList: 'upload-preview-label', children: [
+                    { tag: 'b', textContent: 'Image Upload' }
+                ]},
+                { tag: 'div', classList: 'upload-preview', id: 'upload-preview' },
+                { tag: 'button', classList: 'browse-button', id: 'browse-button', textContent: 'Browse' },
+                { tag: 'span', classList: 'category-select-label', textContent: 'Category:' },
+                { tag: 'select', id: 'category-select', children: [
+                    { tag: 'option', textContent: 'None' }
+                ]},
+                { tag: 'p', classList: 'title-field-label', textContent: 'Title' },
+                { tag: 'div', classList: 'title-field', id: 'gallery-title-field' },
+                { tag: 'p', classList: 'description-field-label', textContent: 'Title' },
+                { tag: 'div', classList: 'description-field', id: 'gallery-description-field' },
+                { tag: 'button', id: 'upload-button', textContent: 'Upload' },
+                { tag: 'button', id: 'close-button', textContent: 'Close' }
+            ]}
+        };
+    }
+
+    protected getPostBody = () => this.generateGalleryItem();
+
+    protected getPutBody = () => this.generateGalleryItem();
+
+    protected getViewerURL = () => 'gallery.html';
+
+    protected getTableName = () => 'gallery';
+
+    protected locateElements() {
+        this.editor = document.getElementById('gallery-editor');
+        this.categorySelect = document.getElementById('category-select') as HTMLSelectElement;
+    }
+
+    protected init() {
         const uploadPreview = document.getElementById('upload-preview');
         if (uploadPreview) {
             const browseButton = document.getElementById('browse-button');
-            browseButton?.addEventListener('click', () => this.browse(uploadPreview));
+            browseButton?.addEventListener('click', () => this.uploader.browse(uploadPreview));
         }
 
-        const uploadButton = document.getElementById('upload-button');
-        uploadButton?.addEventListener('click', async () => {
-            if (await this.upload(await this.generateGalleryItem())) {
-                
-            const safeRedirectURL = await safeLink(this.redirectURL);
-            if (window.location.href !== safeRedirectURL) {
-                window.location.href = safeRedirectURL;
-            } else {
-                window.location.reload();
-            }
-        }});
+        document.getElementById('upload-button')?.addEventListener('click', async () => this.publish());
+        this.updateCategories();
     }
 
-    public setSelectDisabled = (isDisabled: boolean) => {
+    public setSelectDisabled(isDisabled: boolean) {
         if (this.categorySelect) {
             this.categorySelect.disabled = isDisabled;
         }
     }
 
-    public addCategory = (category: string) => {
+    public addCategory(category: string) {
         if (!this.categorySelect) {
             console.error('No category select to add to.');
             return;
@@ -85,6 +114,10 @@ export class GalleryUploader extends ImageUploader {
     }
 
     private generateGalleryItem = async () =>  {
+        if(!await this.uploader.upload()) {
+            console.error('Failed to upload image to Gallery');
+        }
+
         const title = document.getElementById('gallery-title-field');
         const category = document.getElementById('category-select') as HTMLSelectElement;
         const caption = document.getElementById('gallery-description-field');
@@ -94,12 +127,12 @@ export class GalleryUploader extends ImageUploader {
         return {
             item: new GalleryItem(
                 title ? title.textContent : 'Untitled',
-                category ? category.value : 'Other',
+                category ? category.value : 'Misc',
                 caption ? caption.textContent : '',
                 '', // Thumbnail link not used, may change
                 '', // Image link not used, may change
                 new Date(Date.now())),
-            id: gameID 
+            id: gameID
         };
     }
 

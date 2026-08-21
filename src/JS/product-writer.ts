@@ -1,4 +1,3 @@
-import { API_URL } from "./config";
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
 
@@ -54,19 +53,10 @@ export class ProductWriter extends Editor {
 
     protected getTableName = () => 'product';
 
-    protected getPostBody = () => {
-        const title = this.titleField?.textContent.trim();
-        const hook = this.hookField?.textContent.trim();
-        const description = this.descriptionField?.textContent.trim();
-        const splashArt = this.splashArtField?.textContent;
-        return { title, hook, description, splashArt };
-    }
+    protected getPostBody = () => this.getContent();
 
     protected getPutBody = () => {
-        const title = this.titleField?.textContent.trim() || '';
-        const hook = this.hookField?.textContent.trim() || '';
-        const description = this.descriptionField?.textContent.trim() || '';
-        const splashArt = this.splashArtField?.textContent || '';
+        const { title, hook, description, splashArt } = this.getContent();
         const id = new URLSearchParams(window.location.search).get('id');
 
         if (!id) {
@@ -86,7 +76,7 @@ export class ProductWriter extends Editor {
     }
 
     protected init = () => {
-        const uploader = new ImageUploader(`${API_URL}/api/image?type=splash`, '/Resources/Images/Products', '', false);
+        const uploader = new ImageUploader('splash');
         
         const splashFile = document.getElementById('splash-file');
         if (splashFile) {
@@ -96,8 +86,9 @@ export class ProductWriter extends Editor {
         
         const publishButton = document.getElementById('product-upload-button');
         publishButton?.addEventListener('click', async () => {
-            await uploader.upload();
-            this.publish();
+            if (await uploader.upload()) {
+                this.publish();
+            }
         });
 
         if (this.titleField) {
@@ -111,5 +102,14 @@ export class ProductWriter extends Editor {
         if (this.hookField) {
             this.hookField.contentEditable = 'true';
         }
+    }
+
+    private getContent = () => {
+        return {
+            title: this.titleField?.textContent.trim() || '',
+            hook: this.hookField?.textContent.trim() || '',
+            description: this.descriptionField?.textContent.trim() || '',
+            splashArt: this.splashArtField?.textContent || ''
+        };
     }
 }

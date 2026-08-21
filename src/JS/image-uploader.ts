@@ -7,6 +7,8 @@ export class ImageUploader {
     private pendingUpload: File | null = null;
 
     constructor(uploadType = '', includeThumbnail = false) {
+        uploadType = encodeURIComponent(uploadType);
+
         // ex. spLaSH --> Splash
         this.uploadType = (uploadType.length >= 2) ? 
             uploadType[0].toUpperCase() + uploadType.substring(1).toLowerCase() :
@@ -29,19 +31,20 @@ export class ImageUploader {
                 return con;
             }
     
-            const target = e.target as HTMLInputElement;
+            const files = (e.target as HTMLInputElement).files;
 
             // Handle errors
             if ( 
-                !handleError(!(!target.files), 'No files selected') ||
-                !handleError(target.files![0].type === 'image/png', 'File must be a PNG')
+                !handleError(!(!files), 'No files selected') ||
+                !handleError(
+                    files![0].type === 'image/png' || files![0].type === 'image/jpeg',
+                    'File must be a PNG')
             ) return;
-
             handleError(!(!preview), 'Preview is missing');
-    
+
+            this.pendingUpload = files![0];
+
             // Neatly fix long file names in the preview
-            this.pendingUpload = target.files![0];
-            
             const charLimit = 23; // Just a number that fits the most neatly in the box
             let previewName = this.pendingUpload.name;
             if (previewName.length > charLimit) {
@@ -55,7 +58,7 @@ export class ImageUploader {
         input.click();
     }
     
-    upload = async (content: any) => {
+    upload = async () => {
         if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return false;
@@ -65,86 +68,55 @@ export class ImageUploader {
             console.warn(`No file has been prepared to upload`);
             return false;
         }
-    
-        // Prepare and attempt uploading new item
-        const newItem = content;
-        const container = encodeURIComponent(JSON.stringify(newItem));
 
-        // TODO : Remove container functionality, make it specific to GalleryUploader
-        //        NOTE : Server likely requires similar simplification. A separate image uploading feature
-        //               will be used
-
-        const oldURL = `${'this.uploadURL'}?container=${container}`; // <-- REMOVE THIS LATER
         const root = `${API_URL}/api/image`;
-
+        
+        // ------------- FULL IMAGE UPLOAD -------------
         try {
-            // ------------- FULL IMAGE UPLOAD -------------
-
-            // Will now use the image API route that uploads specific types
             const res = await fetch(root, {
                 method: 'POST',
-                body: this.pendingUpload,
-                headers: {
-                    'Content-Type': this.pendingUpload.type || 'application/octet-stream',
-                    'X-File-Name': encodeURIComponent(this.pendingUpload.name),
-                    'Path': `/Resources/Images/${this.uploadType}`
-                }
+                body: JSON.stringify({ image: this.pendingUpload, type: this.uploadType }),
+                headers: { 'Content-Type': this.pendingUpload.type || 'application/octet-stream' }
             });
     
             if (!res.ok) {
                 console.error('Upload failed..');
                 throw new Error(`HTTP Error: ${res.status}`);
             }
-
-            // ------------- THUMBNAIL UPLOAD -------------
-
-            if (this.includeThumbnail) {
-                // Prepare thumbnail
-                let thumbnail: Blob;
-                try {
-                    thumbnail = await this.generateThumbnail();
-                } catch (e) {
-                    console.error(e);
-                    return;
-                }
-                
-                const thumbnailFile = new File(
-                    [thumbnail],
-                    encodeURIComponent(`preview_${this.pendingUpload.name}`),
-                    { type: thumbnail.type }
-                );
-
-                try {
-                    // NOTE : If uploading thumbnails begins to create issues, 
-                //        consider creating an image repair module
-                    const resThumbnail = await fetch(
-                        `${root}?thumbnail=true`, {
-                            method: 'POST',
-                            body: thumbnailFile,
-                            headers: {
-                                'Content-Type': this.pendingUpload.type || 'application/octet-stream',
-                                'X-File-Name': thumbnailFile.name,
-                                'Path': `/Resources/Images/${this.uploadType}`
-                            }
-                        }
-                    );
-
-                    if (!resThumbnail.ok) {
-                        console.error('Thumbnail upload failed..');
-                        throw new Error(`HTTP Error: ${resThumbnail.status}`);
-                    }
-                } catch (e) {
-                    alert(`Thumbnail upload failed: ${e}`);
-                }
-            }
-            
-            alert('File uploaded successfully');
         } catch (e) {
             alert(`File upload failed: ${e}`);
             return false;
         }
-        this.clearPendingUpload();
 
+        // ------------- THUMBNAIL UPLOAD -------------
+        if (!this.includeThumbnail) {
+            alert('File uploaded successfully');
+            this.clearPendingUpload();
+            return true;
+        }
+
+        try {
+            const thumbnail = await this.generateThumbnail();
+            const thumbnailFile = new File([thumbnail],
+                encodeURIComponent(`preview_${this.pendingUpload.name}`),
+                { type: thumbnail.type }
+            );
+
+            const res = await fetch(`${root}?thumbnail=true`, {
+                method: 'POST',
+                body: JSON.stringify({ image: thumbnailFile, type: this.uploadType }),
+                headers: { 'Content-Type': this.pendingUpload.type || 'application/octet-stream' }
+            });
+
+            if (!res.ok) {
+                throw new Error(`HTTP Error: ${res.status}`);
+            }
+        } catch (e) {
+            console.error('Thumbnail upload failed:', e);
+            return false;
+        }
+        
+        alert('Files uploaded successfully');
         return true;
     }
 
