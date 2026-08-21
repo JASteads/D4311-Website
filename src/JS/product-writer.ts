@@ -35,15 +35,15 @@ export class ProductWriter extends Editor {
             'product-writer': { tag: 'div', classList: 'product-writer', children: [
                 { tag: 'h2', textContent: 'Product Details' },
                 { tag: 'div', classList: 'field-label', textContent: 'Title' },
-                { tag: 'div', classList: 'title-field', id: 'product-title-field' },
+                { tag: 'div', classList: 'title-field', id: 'product-title-field', edit: true },
                 { tag: 'div', classList: 'field-label', textContent: 'Hook' },
-                { tag: 'div', classList: 'title-field', id: 'product-hook-field' },
+                { tag: 'div', classList: 'title-field', id: 'product-hook-field', edit: true },
                 { tag: 'div', classList: 'image-upload', id: 'splash-image-upload', children: [
                     { tag: 'span', id: 'splash-file', textContent: 'File name ...' },
                     { tag: 'button', id: 'splash-button', textContent: 'Browse' }
                 ]},
                 { tag: 'div', classList: 'field-label', textContent: 'Description' },
-                { tag: 'div', classList: 'description-field', id: 'product-description-field' },
+                { tag: 'div', classList: 'description-field', id: 'product-description-field', edit: true },
                 { tag: 'button', id: 'product-upload-button', textContent: 'Upload' }
             ]}
         };
@@ -90,18 +90,6 @@ export class ProductWriter extends Editor {
                 this.publish();
             }
         });
-
-        if (this.titleField) {
-            this.titleField.contentEditable = 'true';
-        }
-
-        if (this.descriptionField) {
-            this.descriptionField.contentEditable = 'true';
-        }
-
-        if (this.hookField) {
-            this.hookField.contentEditable = 'true';
-        }
     }
 
     private getContent = () => {

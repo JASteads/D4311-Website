@@ -28,11 +28,11 @@ export class PortfolioWriter extends Editor {
                 { tag: 'ul', children: [
                     { tag: 'li', classList: 'title', children: [
                         { tag: 'p', textContent: 'Title' },
-                        { tag: 'div', classList: 'portfolio-title-field' }
+                        { tag: 'div', classList: 'portfolio-title-field', edit: true }
                     ]},
                     { tag: 'li', classList: 'lang-api', children: [
                         { tag: 'p', textContent: 'Languages / APIs' },
-                        { tag: 'div', classList: 'portfolio-langapi-field' }
+                        { tag: 'div', classList: 'portfolio-langapi-field', edit: true }
                     ]},
                     { tag: 'li', classList: 'project-link', children: [
                         { tag: 'p', textContent: 'Project Link' },
@@ -40,15 +40,15 @@ export class PortfolioWriter extends Editor {
                     ]},
                     { tag: 'li', classList: 'image-link', children: [
                         { tag: 'p', textContent: 'Image Link' },
-                        { tag: 'div', classList: 'portfolio-image-link-field' }
+                        { tag: 'div', classList: 'portfolio-image-link-field', edit: true }
                     ]},
                     { tag: 'li', classList: 'date', children: [
                         { tag: 'p', textContent: 'Date' },
-                        { tag: 'div', classList: 'portfolio-date-field' }
+                        { tag: 'div', classList: 'portfolio-date-field', edit: true }
                     ]},
                     { tag: 'li', classList: 'desc', children: [
                         { tag: 'p', textContent: 'Description' },
-                        { tag: 'div', classList: 'portfolio-description-field' }
+                        { tag: 'div', classList: 'portfolio-description-field', edit: true }
                     ]},
                 ]},
                 { tag: 'button', id: 'portfolio-upload-button', textContent: 'Upload' }
@@ -85,18 +85,6 @@ export class PortfolioWriter extends Editor {
     protected getViewerURL = () => 'portfolio.html';
 
     protected init = () => {
-        if (this.titleField) this.titleField.contentEditable = 'true';
-
-        if (this.langAPIField) this.langAPIField.contentEditable = 'true';
-
-        if (this.projectLinkField) this.projectLinkField.contentEditable = 'true';
-
-        if (this.imageLinkField) this.imageLinkField.contentEditable = 'true';
-
-        if (this.dateField) this.dateField.contentEditable = 'true';
-
-        if (this.descriptionField) this.descriptionField.contentEditable = 'true';
-
         const uploadButton = document.getElementById('portfolio-upload-button');
         if (uploadButton) {
             uploadButton.addEventListener('click', this.publish);

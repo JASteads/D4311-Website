@@ -181,6 +181,10 @@ const defineElement = (element: HTMLElement, node: any, payloadData: any) => {
         (element as HTMLAnchorElement).href = node.href;
     }
 
+    if (has(node.edit)) {
+        element.contentEditable = node.edit;
+    }
+
     if (has(node.function)) {
         const config: Config = { requires: node.requires, args: node.args };
         functions[node.function](element, config, payloadData);

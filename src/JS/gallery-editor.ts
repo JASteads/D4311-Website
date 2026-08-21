@@ -34,9 +34,9 @@ export class GalleryEditor extends Editor {
                     { tag: 'option', textContent: 'None' }
                 ]},
                 { tag: 'p', classList: 'title-field-label', textContent: 'Title' },
-                { tag: 'div', classList: 'title-field', id: 'gallery-title-field' },
-                { tag: 'p', classList: 'description-field-label', textContent: 'Title' },
-                { tag: 'div', classList: 'description-field', id: 'gallery-description-field' },
+                { tag: 'div', classList: 'title-field', id: 'gallery-title-field', edit: true },
+                { tag: 'p', classList: 'description-field-label', textContent: 'Description' },
+                { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
                 { tag: 'button', id: 'upload-button', textContent: 'Upload' },
                 { tag: 'button', id: 'close-button', textContent: 'Close' }
             ]}
