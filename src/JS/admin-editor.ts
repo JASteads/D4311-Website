@@ -17,7 +17,8 @@ const load: {[key: string]: (item: any) => Promise<HTMLElement> } = {
     'library': (item: any) => loadEditor(new ProductWriter(true),
         item.title, item.description, item.hook, item.date_created, item.splash_art_link),
 
-    'gallery': (item: any) => loadEditor(new GalleryEditor(true)),
+    'gallery': (item: any) => loadEditor(new GalleryEditor(true),
+        item.title, item.caption, item.game_id, item.image_link),
 
     'portfolio': async (item: any) => loadEditor(new PortfolioWriter(true)),
 

@@ -17,15 +17,6 @@ class FillConfig {
     }
 }
 
-// NOTE: 
-// editBody: {
-//     table: 'products',
-//     id: undefined,
-//     columns: {
-        
-//     }
-// }
-
 const getTableItems = async (url: string) => {
     const items = [];
     try {
@@ -61,10 +52,6 @@ const confirmDelete = async (tableName: string, item: any, deleteURL: string) =>
     } catch (e) {
         alert(`Failed to delete ${item.name}: ${e}`);
     }
-}
-
-const prepareEditor = async (item: any, editorURL: string) => {
-    return;
 }
 
 const buildSection = async (url: string, config: FillConfig) => {
@@ -113,7 +100,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         editHyperlink.href = await safeLink('admin_editor.html');
         editHyperlink.addEventListener('click', async () => {
             sessionStorage.setItem('edit-item', JSON.stringify({ item: item, editor: editor }));
-            editHyperlink.href = await safeLink(`admin_editor.html?id=${item.id}`);
+            editHyperlink.href = await safeLink(`admin_editor.html`);
             editHyperlink.click();
         });
 

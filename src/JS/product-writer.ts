@@ -1,33 +1,21 @@
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
 
+const keys = { title: 'title', desc: 'desc', hook: 'hook', splash: 'splash' };
+
 export class ProductWriter extends Editor {
-    private titleField: HTMLElement | null = null;
-    private descriptionField: HTMLElement | null = null;
-    private splashArtField: HTMLElement | null = null;
-    private hookField: HTMLElement | null = null;
-    
     constructor(isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.editor) {
-            this.init();
-        }
+        if (this.getContainer()) { this.init(); }
     }
 
-    setContent = (title: string, description: string, hook: string, date: string, splashArtLink: string) => {
-        if (this.titleField) {
-            this.titleField.textContent = title;
-        }
-
-        if (this.descriptionField) {
-            this.descriptionField.textContent = description;
-        }
-
-        if (this.hookField) {
-            this.hookField.textContent = hook;
-        }
+    setContent = (title: string, description: string, hook: string, splashArtLink: string) => {
+        this.setText(this.getEl(keys.title), title);
+        this.setText(this.getEl(keys.desc), description);
+        this.setText(this.getEl(keys.hook), hook);
+        this.setText(this.getEl(keys.splash), splashArtLink);
     }
 
     protected getTemplate = () => {
@@ -67,13 +55,13 @@ export class ProductWriter extends Editor {
         return { id: parseInt(id), title, hook, description, splash_art_link: splashArt };
     }
 
-    protected locateElements = () => {
-        this.editor = document.getElementById('product-writer');
-        this.titleField = document.getElementById('product-title-field');
-        this.hookField = document.getElementById('product-hook-field');
-        this.descriptionField = document.getElementById('product-description-field');
-        this.splashArtField = document.getElementById('product-splash-field');
-    }
+    protected locateElements = () => this.locate(
+        { key: 'editor',    id: 'product-writer'            },
+        { key: keys.title,  id: 'product-title-field'       },
+        { key: keys.hook,   id: 'product-hook-field'        },
+        { key: keys.desc,   id: 'product-description-field' },
+        { key: keys.splash, id: 'product-splash-field'      }
+    );
 
     protected init = () => {
         const uploader = new ImageUploader('splash');
@@ -94,10 +82,10 @@ export class ProductWriter extends Editor {
 
     private getContent = () => {
         return {
-            title: this.titleField?.textContent.trim() || '',
-            hook: this.hookField?.textContent.trim() || '',
-            description: this.descriptionField?.textContent.trim() || '',
-            splashArt: this.splashArtField?.textContent || ''
+            title: this.getEl(keys.title)?.textContent.trim() || '',
+            hook: this.getEl(keys.hook)?.textContent.trim() || '',
+            description: this.getEl(keys.desc)?.textContent.trim() || '',
+            splashArt: this.getEl(keys.splash)?.textContent || ''
         };
     }
 }

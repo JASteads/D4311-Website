@@ -388,13 +388,9 @@ app.get('/api/gallery', async (req, res) => {
 
         let query = `
             SELECT
-                g.title,
-                g.game_id,
+                g.id, g.title, g.game_id,
                 p.title AS category,
-                g.caption,
-                g.thumbnail_link,
-                g.image_link,
-                g.created_at
+                g.caption, g.thumbnail_link, g.image_link, g.created_at
             FROM gallery_items g
             LEFT JOIN products p
               ON g.game_id = p.id
@@ -410,6 +406,30 @@ app.get('/api/gallery', async (req, res) => {
 
         const result = await pool.query(query, requestParams);
         res.json(result.rows);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('api/gallery/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT
+                g.id, g.title, g.game_id,
+                p.title AS category,
+                g.caption, g.thumbnail_link, g.image_link, g.created_at
+            FROM gallery_items g
+            LEFT JOIN products p
+              ON g.game_id = p.id
+            WHERE g.id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Gallery item not found' });
+        }
+
+        res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -446,6 +466,10 @@ app.post('/api/gallery', async (req, res) => {
             details: e.message
         });
     }
+});
+
+app.put('/api/gallery', async (req, res) => {
+
 });
 
 app.delete('/api/gallery/:id', async (req, res) => {

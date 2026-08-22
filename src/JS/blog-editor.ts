@@ -1,36 +1,25 @@
 import { Editor } from './editor';
 
-export class BlogEditor extends Editor {
-    private editorBody: HTMLElement | null = null;
-    private editorContent: HTMLElement | null = null;
-    private editorPlaceholder: HTMLElement | null = null;
+const keys = { body: 'body', content: 'content', placeholder: 'placeholder' };
 
+export class BlogEditor extends Editor {
     constructor(isUpdate: boolean = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.editor) {
-            this.init();
-        }
+        if (this.getContainer()) { this.init(); }
     }
 
     setContent = (title: string, body: string) => {
-        const titleField = document.getElementById('blog-title');
-        if (titleField) {
-            titleField.textContent = title;
-        }
-
-        const bodyField = document.getElementById('editor-content');
-        if (bodyField) {
-            bodyField.textContent = body;
-        }
+        this.setText(document.getElementById('blog-title'), title);
+        this.setText(this.getEl(keys.content), body);
     }
 
     protected getTemplate = () => { 
         return {
             'blog-editor': { tag: 'div', classList: 'blog-editor', children: [
                 { tag: 'span', id: 'title-label', classList: 'title-label', textContent: 'Title' },
-                { tag: 'div', id: 'blog-title', classList: 'blog-title' },
+                { tag: 'div', id: 'blog-title', classList: 'blog-title', edit: true },
                 { tag: 'div', id: 'buttons', children: [
                     { tag: 'button', id: 'bold-button', textContent: 'Bold' },
                     { tag: 'button', id: 'em-button', textContent: 'Italics' },
@@ -40,7 +29,7 @@ export class BlogEditor extends Editor {
                     { tag: 'button', id: 'size-button', textContent: 'Size' },
                 ]},
                 { tag: 'div', id: 'editor-body', classList: 'blog-editor-body', children: [
-                    { tag: 'span', id: 'editor-content', classList: 'blog-editor-content' },
+                    { tag: 'span', id: 'editor-content', classList: 'blog-editor-content', edit: true },
                     { tag: 'span', id: 'editor-placeholder', classList: 'blog-editor-placeholder' }
                 ]},
                 { tag: 'button', id: 'publish-button', textContent: 'Update' }
@@ -73,36 +62,27 @@ export class BlogEditor extends Editor {
         return { id: parseInt(id), title, body };
     }
 
-    protected locateElements = () => {
-        this.editor = document.getElementById('blog-editor');
-        this.editorBody = document.getElementById('editor-body');
-        this.editorContent = document.getElementById('editor-content');
-        this.editorPlaceholder = document.getElementById('editor-placeholder');
-    }
-
+    protected locateElements = () => this.locate(
+        { key: 'editor',         id: 'blog-editor'        },
+        { key: keys.body,        id: 'editor-body'        },
+        { key: keys.content,     id: 'editor-content'     },
+        { key: keys.placeholder, id: 'editor-placeholder' }
+    );
+    
     protected init = () => {
-        if (!this.editor) {
+        if (!this.getContainer()) {
             console.error('Editor does not exist on this page. Create it first');
             return;
         }
 
-        const titleField = document.getElementById('blog-title');
-        if (titleField) {
-            titleField.contentEditable = 'true';
-        }
-
-        if (this.editorContent) {
-            this.editorContent.contentEditable = 'true';
-        }
-
-        // Initialize editor body
-        if (this.editorBody) {
-            this.editorBody.addEventListener('click', () => this.editorContent?.focus());
-            this.editorBody.addEventListener('input', this.updatePlaceholder);
-            this.editorBody.addEventListener('keyup', this.updatePlaceholder);
-            this.editorBody.addEventListener('focus', this.updatePlaceholder);
-            this.editorBody.addEventListener('blur', this.updatePlaceholder);
-            this.editorBody.addEventListener('paste', (e: ClipboardEvent) => this.fixPaste(e));
+        const body = this.getEl(keys.body);
+        if (body) {
+            body.addEventListener('click', () => body.focus());
+            body.addEventListener('input', this.updatePlaceholder);
+            body.addEventListener('keyup', this.updatePlaceholder);
+            body.addEventListener('focus', this.updatePlaceholder);
+            body.addEventListener('blur', this.updatePlaceholder);
+            body.addEventListener('paste', (e: ClipboardEvent) => this.fixPaste(e));
         }
 
         this.updatePlaceholder();
@@ -131,7 +111,7 @@ export class BlogEditor extends Editor {
             const selection = window.getSelection();
 
             // Make sure only the text editor is being modified
-            if (!selection || !this.editorBody?.contains(selection.anchorNode)) return;
+            if (!selection || !this.getEl(keys.body)?.contains(selection.anchorNode)) return;
 
             console.log('Selection area found');
             
@@ -159,10 +139,11 @@ export class BlogEditor extends Editor {
     }
 
     private updatePlaceholder = () => {
-        const isEmpty = this.editorContent?.textContent.trim() === '';
+        const isEmpty = this.getEl(keys.body)?.textContent.trim() === '';
+        const placeholder = this.getEl(keys.placeholder);
 
-        if (this.editorPlaceholder) {
-            this.editorPlaceholder.style.display = isEmpty ? 'inline' : 'none';
+        if (placeholder) {
+            placeholder.style.display = isEmpty ? 'inline' : 'none';
         }
     }
 
@@ -178,7 +159,7 @@ export class BlogEditor extends Editor {
 
         const range = selection.getRangeAt(0);
 
-        if (!range || !this.editorContent?.contains(range.commonAncestorContainer)) return;
+        if (!range || !this.getEl(keys.content)?.contains(range.commonAncestorContainer)) return;
 
         const plainText = e.clipboardData.getData('text/plain');
         const textNode = document.createTextNode(plainText);

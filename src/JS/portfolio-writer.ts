@@ -1,24 +1,26 @@
 import { Editor } from "./editor";
 
-export class PortfolioWriter extends Editor {
-    private titleField: HTMLElement | null = null;
-    private langAPIField: HTMLElement | null = null;
-    private projectLinkField: HTMLElement | null = null;
-    private imageLinkField: HTMLElement | null = null;
-    private dateField: HTMLElement | null = null;
-    private descriptionField: HTMLElement | null = null;
+const keys = { 
+    title: 'title', langapi: 'langAPI', project: 'project', 
+    image: 'image', date: 'date', desc: 'desc' 
+};
 
+export class PortfolioWriter extends Editor {
     constructor(isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.editor) {
-            this.init();
-        }
+        if (this.getContainer()) { this.init(); }
     }
 
-    setContent(...content: any) {
-        
+    setContent(title: string, langAPIs: string, projectLink: string,
+        imageLink: string, date: string, desc: string) {
+        this.setText(this.getEl(keys.title), title);
+        this.setText(this.getEl(keys.langapi), langAPIs);
+        this.setText(this.getEl(keys.project), projectLink);
+        this.setText(this.getEl(keys.image), imageLink);
+        this.setText(this.getEl(keys.date), date);
+        this.setText(this.getEl(keys.desc), desc);
     }
 
     protected getTemplate = () => {
@@ -36,7 +38,7 @@ export class PortfolioWriter extends Editor {
                     ]},
                     { tag: 'li', classList: 'project-link', children: [
                         { tag: 'p', textContent: 'Project Link' },
-                        { tag: 'div', classList: 'portfolio-project-link-field' }
+                        { tag: 'div', classList: 'portfolio-project-link-field', edit: true }
                     ]},
                     { tag: 'li', classList: 'image-link', children: [
                         { tag: 'p', textContent: 'Image Link' },
@@ -56,15 +58,15 @@ export class PortfolioWriter extends Editor {
         };
     }
 
-    protected locateElements() {
-        this.editor = document.getElementById('portfolio-writer');
-        this.titleField = document.getElementById('portfolio-title-field');
-        this.langAPIField = document.getElementById('portfolio-langapi-field');
-        this.projectLinkField = document.getElementById('portfolio-project-link-field');
-        this.imageLinkField = document.getElementById('portfolio-image-link-field');
-        this.dateField = document.getElementById('portfolio-date-field');
-        this.descriptionField = document.getElementById('portfolio-desription-field');
-    }
+    protected locateElements = () => this.locate(
+        { key: 'editor',     id: 'portfolio-writer'             },
+        { key: keys.title,   id: 'portfolio-title-field'        },
+        { key: keys.langapi, id: 'portfolio-langapi-field'      },
+        { key: keys.project, id: 'portfolio-project-link-field' },
+        { key: keys.image,   id: 'portfolio-image-link-field'   },
+        { key: keys.date,    id: 'portfolio-date-field'         },
+        { key: keys.desc,    id: 'portfolio-desription-field'   }
+    );
 
     protected getPostBody = () => this.getContent();
 
@@ -93,18 +95,18 @@ export class PortfolioWriter extends Editor {
 
     protected getContent = () => {
         return {
-            title: this.titleField?.textContent || 'Untitled',
+            title: this.getEl(keys.title)?.textContent || 'Untitled',
             type: this.getProjectLinkType(),
-            langAPI: this.langAPIField?.textContent || '',
-            date: this.dateField?.textContent || Date.now().toLocaleString(),
-            description: this.descriptionField?.textContent || '',
-            imageLink: this.imageLinkField?.textContent || '',
-            projectLink: this.projectLinkField?.textContent || ''
+            langAPI: this.getEl(keys.langapi)?.textContent || '',
+            date: this.getEl(keys.date)?.textContent || Date.now().toLocaleString(),
+            description: this.getEl(keys.desc)?.textContent || '',
+            imageLink: this.getEl(keys.image)?.textContent || '',
+            projectLink: this.getEl(keys.project)?.textContent || ''
         }
     }
 
     private getProjectLinkType = (): string => {
-        let projectLink = this.projectLinkField?.nodeValue;
+        let projectLink = this.getEl(keys.project)?.nodeValue;
 
         if (!projectLink) {
             return '';

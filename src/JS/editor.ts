@@ -4,11 +4,12 @@ import { basicAdminAccessRequest } from "./permissions";
 import { safeLink } from "./site-nav";
 
 export abstract class Editor {
-    protected editor: HTMLElement | null = null;
     protected isUpdate: boolean;
+    private elements: Map<string, HTMLElement | null> = new Map();
 
     constructor(isUpdate = false) {
         this.isUpdate = isUpdate;
+        this.elements.set('editor', null);
     }
 
     abstract setContent(...content: any): void;
@@ -22,23 +23,36 @@ export abstract class Editor {
 
     private getID = () => new URLSearchParams(window.location.search).get('id');
 
-    getContainer = () => this.editor;
+    getContainer = () => this.getEl('editor');
     
     generateEditor = async () => {
-        if (this.editor) {
+        if (this.getContainer()) {
             console.warn('Editor already exists');
-            return this.editor;
+            return this.getContainer();
         }
         await buildScripts(this.getTemplate());
-
         this.locateElements();
-        this.init();
+        
+        const editor = this.elements.get('editor')!;
+        const defaultDisplay = editor.style.display;
 
-        return this.editor!;
+        // Hide editor while preparing contents
+        editor.style.display = 'none';
+        await this.init();
+        editor.style.display = defaultDisplay;
+
+        return editor;
     };
 
+    protected setText(element: HTMLElement | null, text: string) { if (element) element.textContent = text; }
+
+    protected locate = (...items: { key: string; id: string; }[]) => { 
+        items.forEach(i => this.elements.set(i.key, document.getElementById(i.id)));
+    }
+
+    protected getEl = (key: string) => this.elements.get(key) || null;
+
     protected publish = async () => {
-        console.log('Publish');
         if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return;

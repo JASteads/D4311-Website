@@ -5,20 +5,23 @@ import { ImageUploader } from "./image-uploader";
 import type { Product } from "./product";
 
 export class GalleryEditor extends Editor {
-    uploader = new ImageUploader('gallery, true');
+    uploader = new ImageUploader('gallery', true);
     private categorySelect: HTMLSelectElement | null = null;
 
     constructor(isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.editor) {
-            this.init();
-        }
+        if (this.getContainer()) { this.init(); }
     }
 
-    setContent() {
-
+    setContent(title: string, caption: string, gameID: number, fileName: string) {
+        this.setText(document.getElementById('gallery-title-field'), title);
+        this.setText(document.getElementById('gallery-description-field'), caption);
+        this.setText(document.getElementById('upload-preview'), fileName);
+        if (this.categorySelect) {
+            this.categorySelect.selectedIndex = gameID - 1;
+        }
     }
 
     protected getTemplate() {
@@ -30,12 +33,10 @@ export class GalleryEditor extends Editor {
                 { tag: 'div', classList: 'upload-preview', id: 'upload-preview' },
                 { tag: 'button', classList: 'browse-button', id: 'browse-button', textContent: 'Browse' },
                 { tag: 'span', classList: 'category-select-label', textContent: 'Category:' },
-                { tag: 'select', id: 'category-select', children: [
-                    { tag: 'option', textContent: 'None' }
-                ]},
+                { tag: 'select', id: 'category-select'},
                 { tag: 'p', classList: 'title-field-label', textContent: 'Title' },
                 { tag: 'div', classList: 'title-field', id: 'gallery-title-field', edit: true },
-                { tag: 'p', classList: 'description-field-label', textContent: 'Description' },
+                { tag: 'p', classList: 'description-field-label', textContent: 'Caption' },
                 { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
                 { tag: 'button', id: 'upload-button', textContent: 'Upload' },
                 { tag: 'button', id: 'close-button', textContent: 'Close' }
@@ -51,20 +52,22 @@ export class GalleryEditor extends Editor {
 
     protected getTableName = () => 'gallery';
 
-    protected locateElements() {
-        this.editor = document.getElementById('gallery-editor');
-        this.categorySelect = document.getElementById('category-select') as HTMLSelectElement;
-    }
+    protected locateElements = () => this.locate(
+        { key: 'editor', id :'gallery-editor'  },
+        { key: 'select', id: 'category-select' }
+    )
 
-    protected init() {
+    protected init = async () => {
         const uploadPreview = document.getElementById('upload-preview');
         if (uploadPreview) {
             const browseButton = document.getElementById('browse-button');
             browseButton?.addEventListener('click', () => this.uploader.browse(uploadPreview));
         }
 
+        this.categorySelect = this.getEl('select') as HTMLSelectElement;
+
         document.getElementById('upload-button')?.addEventListener('click', async () => this.publish());
-        this.updateCategories();
+        await this.updateCategories();
     }
 
     public setSelectDisabled(isDisabled: boolean) {
@@ -83,7 +86,7 @@ export class GalleryEditor extends Editor {
 
         nextOpt.value = category;
         nextOpt.textContent = category;
-        this.categorySelect.add(nextOpt);
+        this.categorySelect.options.add(nextOpt);
     }
 
     private updateCategories = async () => {
@@ -119,16 +122,14 @@ export class GalleryEditor extends Editor {
         }
 
         const title = document.getElementById('gallery-title-field');
-        const category = document.getElementById('category-select') as HTMLSelectElement;
         const caption = document.getElementById('gallery-description-field');
+        const gameID = await this.getGameID(this.categorySelect?.value);
 
-        const gameID = await this.getGameID(category?.value) as Number;
-    
         return {
             item: new GalleryItem(
-                title ? title.textContent : 'Untitled',
-                category ? category.value : 'Misc',
-                caption ? caption.textContent : '',
+                title?.textContent || 'Untitled',
+                this.categorySelect?.value || 'Misc',
+                caption?.textContent || '',
                 '', // Thumbnail link not used, may change
                 '', // Image link not used, may change
                 new Date(Date.now())),
@@ -136,7 +137,7 @@ export class GalleryEditor extends Editor {
         };
     }
 
-    private getGameID = async (category: string) => {
+    private getGameID = async (category: string | undefined) => {
         const categoryOther = 1;
 
         if (!category) {
@@ -159,7 +160,6 @@ export class GalleryEditor extends Editor {
             }
 
             return target.id;
-
         } catch (e) {
             console.error('Failed to get a game ID..', e);
             return categoryOther;
