@@ -13,16 +13,17 @@ const loadEditor = async (editor: Editor, ...content: any) => {
     return container;
 }
 
-const load: {[key: string]: (item: any) => Promise<HTMLElement> } = {
-    'library': (item: any) => loadEditor(new ProductWriter(true),
+const load: {[key: string]: (item: any) => Promise<HTMLElement | null> } = {
+    'library': async (item: any) => await loadEditor(new ProductWriter(true),
         item.title, item.description, item.hook, item.date_created, item.splash_art_link),
 
-    'gallery': (item: any) => loadEditor(new GalleryEditor(true),
+    'gallery': async (item: any) => await loadEditor(new GalleryEditor(true),
         item.title, item.caption, item.game_id, item.image_link),
 
-    'portfolio': async (item: any) => loadEditor(new PortfolioWriter(true)),
+    'portfolio': async (item: any) => await loadEditor(new PortfolioWriter(true),
+        item.title, item.lang_api, item.project_link, item.image_link, item.date, item.description),
 
-    'blog': async (item: any) => loadEditor(new BlogEditor(true),
+    'blog': async (item: any) => await loadEditor(new BlogEditor(true),
         item.title, item.body)
 };
 
@@ -35,15 +36,15 @@ const openEditor = async () => {
 
     const data = JSON.parse(dataString);
     const editorName = data.editor;
-
     if (editorName === undefined) {
         console.error('edit-item found, but editor value is undefined');
         return;
     }
 
     const editor = await load[editorName](data.item);
-
-    document.getElementById('editor-container')?.appendChild(editor);
+    if (editor) {
+        document.getElementById('editor-container')?.appendChild(editor);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -5,7 +5,7 @@ import { ImageUploader } from "./image-uploader";
 import type { Product } from "./product";
 
 export class GalleryEditor extends Editor {
-    uploader = new ImageUploader('gallery', true);
+    private uploader = new ImageUploader('gallery', true);
     private categorySelect: HTMLSelectElement | null = null;
 
     constructor(isUpdate = false) {
@@ -23,6 +23,9 @@ export class GalleryEditor extends Editor {
             this.categorySelect.selectedIndex = gameID - 1;
         }
     }
+
+    protected getViewerURL = () => 'gallery.html';
+    protected getTableName = () => 'gallery';
 
     protected getTemplate() {
         return {
@@ -44,13 +47,19 @@ export class GalleryEditor extends Editor {
         };
     }
 
-    protected getPostBody = () => this.generateGalleryItem();
+    protected getColumns = async () => {
+        const fileName = this.uploader.getFileName() || '_';
+        const item = await this.generateGalleryItem();
+        const data = item.data;
 
-    protected getPutBody = () => this.generateGalleryItem();
-
-    protected getViewerURL = () => 'gallery.html';
-
-    protected getTableName = () => 'gallery';
+        return { columns: {
+            title: data.title,
+            caption: data.caption,
+            date_created: data.date_created,
+            image_link: fileName,
+            thumbnail_link: `preview_${fileName}`
+        }};
+    }
 
     protected locateElements = () => this.locate(
         { key: 'editor', id :'gallery-editor'  },
@@ -66,9 +75,11 @@ export class GalleryEditor extends Editor {
 
         this.categorySelect = this.getEl('select') as HTMLSelectElement;
 
-        document.getElementById('upload-button')?.addEventListener('click', async () => this.publish());
+        document.getElementById('upload-button')?.addEventListener('click', async () => await this.publish());
         await this.updateCategories();
     }
+
+    // =================== EDITOR-SPECIFIC FUNCTIONS ===================
 
     public setSelectDisabled(isDisabled: boolean) {
         if (this.categorySelect) {
@@ -126,14 +137,14 @@ export class GalleryEditor extends Editor {
         const gameID = await this.getGameID(this.categorySelect?.value);
 
         return {
-            item: new GalleryItem(
+            data: new GalleryItem(
                 title?.textContent || 'Untitled',
                 this.categorySelect?.value || 'Misc',
                 caption?.textContent || '',
                 '', // Thumbnail link not used, may change
                 '', // Image link not used, may change
                 new Date(Date.now())),
-            id: gameID
+            gameID: gameID
         };
     }
 

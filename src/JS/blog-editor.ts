@@ -1,6 +1,6 @@
 import { Editor } from './editor';
 
-const keys = { body: 'body', content: 'content', placeholder: 'placeholder' };
+const keys = { body: 'body', content: 'content', placeholder: 'placeholder' } as const;
 
 export class BlogEditor extends Editor {
     constructor(isUpdate: boolean = false) {
@@ -33,33 +33,18 @@ export class BlogEditor extends Editor {
                     { tag: 'span', id: 'editor-placeholder', classList: 'blog-editor-placeholder' }
                 ]},
                 { tag: 'button', id: 'publish-button', textContent: 'Update' }
-            ]}
-        }
+        ]}}
     }
 
     protected getViewerURL = () => 'blog_viewer.html';
-
     protected getTableName = () => 'blog';
 
-    protected getPostBody = () => {
-        const placeholderAuthor = 'Lemon'; // Replace later with local storage
-        const title = document.getElementById('blog-title')?.textContent.trim() || '';
-        const body = document.getElementById('editor-content')?.textContent.trim() || '';
-
-        return { title, placeholderAuthor, body };
-    }
-
-    protected getPutBody = () => {
-        const title = document.getElementById('blog-title')?.textContent.trim() || 'Untitled';
-        const body = document.getElementById('editor-content')?.textContent.trim() || '';        
-        const id = new URLSearchParams(window.location.search).get('id');
-
-        if (!id) {
-            console.error('No ID specified for update');
-            return;
-        }
-
-        return { id: parseInt(id), title, body };
+    protected getColumns = async () => {
+        return { columns: {
+            title: document.getElementById('blog-title')?.textContent.trim() || 'Untitled', 
+            body: document.getElementById('editor-content')?.textContent.trim() || '',
+            author: 'Lemon' // Replace later with local storage
+        }};
     }
 
     protected locateElements = () => this.locate(
@@ -70,11 +55,6 @@ export class BlogEditor extends Editor {
     );
     
     protected init = () => {
-        if (!this.getContainer()) {
-            console.error('Editor does not exist on this page. Create it first');
-            return;
-        }
-
         const body = this.getEl(keys.body);
         if (body) {
             body.addEventListener('click', () => body.focus());
@@ -112,8 +92,6 @@ export class BlogEditor extends Editor {
 
             // Make sure only the text editor is being modified
             if (!selection || !this.getEl(keys.body)?.contains(selection.anchorNode)) return;
-
-            console.log('Selection area found');
             
             // Properties setup
             const range = selection.getRangeAt(0);

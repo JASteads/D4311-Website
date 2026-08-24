@@ -17,11 +17,10 @@ export abstract class Editor {
     protected abstract locateElements(): void;
     protected abstract getTemplate(): any;
     protected abstract getTableName(): string;
-    protected abstract getPostBody(): any;
-    protected abstract getPutBody(): any;
     protected abstract getViewerURL(): string;
+    protected abstract getColumns(): Promise<{ columns: Record<string, string>}>;
 
-    private getID = () => new URLSearchParams(window.location.search).get('id');
+    protected getID = () => new URLSearchParams(window.location.search).get('id') || '-1';
 
     getContainer = () => this.getEl('editor');
     
@@ -57,16 +56,18 @@ export abstract class Editor {
             console.warn('Access denied');
             return;
         }
+        await (this.isUpdate ? this.put : this.post)();
+        
+        // Redirect to viewing page
+        window.location.href = await safeLink(`${this.getViewerURL()}?id=${this.getID()}`);
+    }
 
-        let id = this.getID();
+    private getPostBody = async () => await this.getColumns();
+
+    private getPutBody = async () => {
+        const { columns } = await this.getColumns();
         
-        if (this.isUpdate) {
-            await this.put();
-        } else {
-            id = (await this.post()).id;
-        }
-        
-        window.location.href = await safeLink(`${this.getViewerURL()}?id=${id}`);
+        return { id: this.getID(), columns };
     }
 
     private post = async () => {
@@ -74,7 +75,7 @@ export abstract class Editor {
             const res = await fetch(`${API_URL}/api/${this.getTableName()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.getPostBody())
+                body: JSON.stringify(await this.getPostBody())
             });
 
             if (!res.ok) throw new Error('Failed to create blog post');
@@ -93,7 +94,7 @@ export abstract class Editor {
             const res = await fetch(`${API_URL}/api/${this.getTableName()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.getPutBody())
+                body: JSON.stringify(await this.getPutBody())
             });
 
             if (!res.ok) {

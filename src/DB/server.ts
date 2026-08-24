@@ -103,22 +103,18 @@ app.get('/api/redirect', async (req, res) => {
 });
 
 app.post('api/image', async (req, res) => {
-    const { type, container, thumbnail } = req.query;
-
-    console.log('Type:', type);
-    console.log('Container:', container);
-
+    const { isThumbnail } = req.query;
+    const { image, type }: { image: File; type: string } = req.body;
     const { tempPath, tempName, stream } = prepareTemp();
-    
+
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
-    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
-    const realPath = path.join(SRC_DIR, req.headers['path'] as string);
+    const realName = decodeURIComponent(image.name);
+    const realPath = path.join(SRC_DIR, `Resources/Images/${type}`);
     const finalPath = path.join(realPath, realName);
 
     console.log('Final path:', finalPath);
-
     console.log('Real Name:', realName);
     console.log('Real Path:', realPath);
 
@@ -131,17 +127,13 @@ app.post('api/image', async (req, res) => {
             // Move the temp file into its permanent location
             console.log('Moving temp file from:', path.join(tempPath, tempName));
             console.log('..to:', finalPath);
+
+            await fs.promises.rename(path.join(tempPath, tempName), finalPath);
+            console.log('File moved');
             
-            try {
-                await fs.promises.rename(path.join(tempPath, tempName), finalPath);
-                console.log('File moved');
-            } catch (e: any) {
-                console.error(e);
-            }
-            
-            const response: any = {
-                message: `${(thumbnail) ? 'Thumbnail' : 'Image'} downloaded to gallery`,
-                savedAs: thumbnail ? `preview_${realName}` : realName
+            const response = {
+                message: `${(isThumbnail ? 'Thumbnail' : 'Image')} downloaded to gallery`,
+                savedAs: isThumbnail ? `preview_${realName}` : realName
             };
 
             res.status(200).json(response);
@@ -151,7 +143,6 @@ app.post('api/image', async (req, res) => {
         }
     });
     
-    // Error handling
     stream.on('error', () => {
         console.error('Something went wrong with the download..');
         res.status(500).json('Image download failed');
@@ -200,15 +191,16 @@ app.post('/api/product', async (req, res) => {
     }
 });
 
-app.put('api/product', async (req, res) => {
+app.put('/api/product', async (req, res) => {
+    const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+
     try {
-        const { id, columns } = req.body;
-        const result = await updateItem('products', id, columns);
-        res.json(result);
+        res.json(await basicPut('products', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
+
 
 app.delete('api/product/:id', async (req, res) => {
     try {
@@ -266,13 +258,7 @@ app.get('/api/blog/:id', async (req, res) => {
 // Add blog entry
 app.post('/api/blog', async (req, res) => {
     try {
-        const { title, author, bodyText } = req.body;
-        const result = await pool.query(`
-            INSERT INTO blogs (title, author, body)
-            VALUES ($1, $2, $3)
-            RETURNING *
-            `, [title, author, bodyText]);
-            
+        const result = await basicPost('blogs', req.body);
         res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -281,10 +267,9 @@ app.post('/api/blog', async (req, res) => {
 
 app.put('/api/blog', async (req, res) => {
     try {
-        const { id, title, bodyText } = req.body;
-        const result = await updateItem('blogs', id, { title, bodyText });
+        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
 
-        res.json(result);
+        res.json(await basicPut('blogs', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -339,7 +324,6 @@ app.get('/api/blogs', async (req, res) => {
 
 // =========== PORTFOLIO ROUTES ===========
 
-// Get portfolio items
 app.get('/api/portfolio', async (_, res) => {
     try {
         const result = await pool.query(`
@@ -352,16 +336,19 @@ app.get('/api/portfolio', async (_, res) => {
     }
 });
 
-// Simple portfolio item upload
 app.post('/api/portfolio', async (req, res) => {
     try {
-        const { title, type, lang_api, date, description, image_link, project_link } = req.body;
-        const result = await pool.query(`
-            INSERT INTO portfolio_items (title, type, lang_api, date, description, image_link, project_link)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
-        `, [title, type, lang_api, date, description, image_link, project_link]);
+        const result = await basicPost('portfolio_items', req.body);
         res.json(result.rows[0]);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/portfolio', async (req, res) => {
+    try {
+        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+        res.json(await basicPut('portfolio_items', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -370,9 +357,7 @@ app.post('/api/portfolio', async (req, res) => {
 app.delete('/api/portfolio/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await removeItem('portfolio_items', id);
-
-        res.json(result);
+        res.json(await removeItem('portfolio_items', id));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -437,39 +422,21 @@ app.get('api/gallery/:id', async (req, res) => {
 
 // For uploading pics to the gallery
 app.post('/api/gallery', async (req, res) => {
-    const { container } = req.query;
-    const containerItems = JSON.parse(decodeURIComponent(container as string));
-    console.log('Container:', containerItems);
-
-    const items = { 
-        title: containerItems.item.title, 
-        gameID: containerItems.id, 
-        caption: containerItems.item.caption,
-        
-        dateCreated: containerItems.item.date_created 
-    };
-    console.log('Items prepared:', items);
-
     try {
-        // Insert into DB
-        const result = await pool.query(`
-            INSERT INTO gallery_items (title, game_id, caption, thumbnail_link, image_link, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        `, [items.title, items.gameID, items.caption, `preview_${'FIX_TITLE'}`, 'FIX_TITLE', items.dateCreated]);
-        
+        const result = await basicPost('gallery_items', req.body);
         res.json(result.rows[0]);
     } catch (e: any) {
-        console.error('Database upload failed..', e);
-        res.status(500).json({
-            error: 'Failed to add gallery record to the database',
-            details: e.message
-        });
-    }
+        res.status(500).json({ error: e.message });
+    }6
 });
 
 app.put('/api/gallery', async (req, res) => {
-
+    try {
+        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+        res.json(await basicPut('gallery_items', id, columns));
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.delete('/api/gallery/:id', async (req, res) => {
@@ -518,35 +485,38 @@ const prepareTemp = () => {
         fs.mkdirSync(tempPath, { recursive: true });
     }
 
-    return { 
-        tempPath: tempPath, 
-        tempName: tempName, 
+    return { tempPath: tempPath, tempName: tempName, 
         stream: fs.createWriteStream(path.join(tempPath, tempName)) 
     };
 }
 
-const updateItem = async (tableName: string, id: number, columns: any) => {
-    try {
-            let count = 0; // Tally for each param added
-            let query = `UPDATE ${tableName} SET `;
-            const queryParams = [];
+const basicPost = async (tableName: string, columns: Record<string, string>) => {
+    const keys = Object.keys(columns);
+    const values = Object.values(columns);
 
-            for (const column of columns) {
-                query += `${column.name} = $${++count}, `;
-                queryParams.push(column.value);
-            }
-            queryParams.push(id);
-            query += `WHERE id = $${++count}`;
+    return await pool.query(`
+        INSERT INTO ${tableName} (${keys.join(', ')})
+        VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})
+        RETURNING *
+    `, values);
+}
 
-            console.log(query);
-            console.log(queryParams);
-            
-            await pool.query(`${query} RETURNING *`, queryParams);
+const basicPut = async (tableName: string, id: string, ...columns: Record<string, string>[]) => {
+    const setClauses: string[] = [];
+    const queryParams: any[] = [];
 
-            return { message: `${tableName} #${id} has been updated.` };
-    } catch (e: any) {
-        return { error: e.message };
+    for (const [column, value] of Object.entries(columns)) {
+        setClauses.push(`${column} = $${queryParams.length + 1}`);
+        queryParams.push(value);
     }
+    queryParams.push(id);
+
+    await pool.query(`
+        UPDATE ${tableName} SET ${setClauses.join(', ')}
+        WHERE id = $${queryParams.length + 1} RETURNING *`, queryParams
+    );
+
+    console.log(`${tableName} #${id} has been updated.`);
 }
 
 const removeItem = async (tableName: string, targetID: string) => {

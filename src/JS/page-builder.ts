@@ -222,7 +222,7 @@ const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElemen
     return element;
 } 
 
-export const buildScripts = async (template: any, hideOnLoad = false, ...requests: DataRequest[]) => {
+export const buildScripts = async (template: any, ...requests: DataRequest[]) => {
     // Grab all server requests at the start so everything is ready. Remove the bad results
     const requestResults: DataPayload[] = (await Promise.all(
         requests.map(async req => {

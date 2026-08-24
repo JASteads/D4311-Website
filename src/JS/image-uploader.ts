@@ -16,9 +16,11 @@ export class ImageUploader {
         this.includeThumbnail = includeThumbnail;
     }
 
+    getFileName = () => this.pendingUpload?.name;
+
     clearPendingUpload = () => this.pendingUpload = null;
     
-    browse = (preview: HTMLElement) => {
+    browse = (preview: HTMLElement | null) => {
         const input = document.createElement('input');
         input.type = 'file';
     
@@ -32,25 +34,31 @@ export class ImageUploader {
             }
     
             const files = (e.target as HTMLInputElement).files;
+            if (!files) {
+                console.error('File not found');
+                return;
+            }
+            const target = files[0];
 
             // Handle errors
-            if ( 
-                !handleError(!(!files), 'No files selected') ||
-                !handleError(
-                    files![0].type === 'image/png' || files![0].type === 'image/jpeg',
-                    'File must be a PNG')
-            ) return;
-            handleError(!(!preview), 'Preview is missing');
+            const allGood = !handleError(
+                target.type === 'image/png' || target.type === 'image/jpeg',
+                'File must be a PNG');
+            if (!allGood) return;
 
-            this.pendingUpload = files![0];
+            this.pendingUpload = target;
 
             // Neatly fix long file names in the preview
-            const charLimit = 23; // Just a number that fits the most neatly in the box
-            let previewName = this.pendingUpload.name;
-            if (previewName.length > charLimit) {
-                previewName = previewName.substring(0, charLimit).concat('...');
+            if (preview) {
+                const charLimit = 23; // Just a number that fits the most neatly in the box
+                let previewName = this.pendingUpload.name;
+                if (previewName.length > charLimit) {
+                    previewName = previewName.substring(0, charLimit).concat('...');
+                }
+                
+                preview.textContent = previewName;
             }
-            preview!.textContent = previewName;
+            
             input.removeEventListener('change', handleBrowse);
         }
     
@@ -70,7 +78,7 @@ export class ImageUploader {
         }
 
         const root = `${API_URL}/api/image`;
-        
+
         // ------------- FULL IMAGE UPLOAD -------------
         try {
             const res = await fetch(root, {
@@ -102,10 +110,10 @@ export class ImageUploader {
                 { type: thumbnail.type }
             );
 
-            const res = await fetch(`${root}?thumbnail=true`, {
+            const res = await fetch(`${root}?isThumbnail=true`, {
                 method: 'POST',
                 body: JSON.stringify({ image: thumbnailFile, type: this.uploadType }),
-                headers: { 'Content-Type': this.pendingUpload.type || 'application/octet-stream' }
+                headers: { 'Content-Type': thumbnailFile.type || 'application/octet-stream' }
             });
 
             if (!res.ok) {

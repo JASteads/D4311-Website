@@ -732,7 +732,7 @@ footer small {
     margin-bottom: 5px;
 }
 
-.description-field {
+.gallery-container .description-field {
     background-color: white;
     height: 180px;
     width: 600px;
@@ -776,6 +776,10 @@ footer small {
     overflow-inline: scroll;
     scrollbar-width: none;
     text-wrap: nowrap;
+}
+
+.portfolio-editor .description-field {
+    text-wrap: wrap;
 }
 
 .portfolio-editor .title { grid-area: aa; }

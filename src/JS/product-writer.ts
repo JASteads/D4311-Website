@@ -1,7 +1,7 @@
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
 
-const keys = { title: 'title', desc: 'desc', hook: 'hook', splash: 'splash' };
+const keys = { title: 'title', desc: 'desc', hook: 'hook', splash: 'splash' } as const;
 
 export class ProductWriter extends Editor {
     constructor(isUpdate = false) {
@@ -38,21 +38,15 @@ export class ProductWriter extends Editor {
     }
 
     protected getViewerURL = () => 'product_viewer.html';
-
     protected getTableName = () => 'product';
 
-    protected getPostBody = () => this.getContent();
-
-    protected getPutBody = () => {
-        const { title, hook, description, splashArt } = this.getContent();
-        const id = new URLSearchParams(window.location.search).get('id');
-
-        if (!id) {
-            console.error('No ID specified for update');
-            return;
-        }
-
-        return { id: parseInt(id), title, hook, description, splash_art_link: splashArt };
+    protected getColumns = async () => {
+        return { columns: {
+            title: this.getEl(keys.title)?.textContent.trim() || '',
+            hook: this.getEl(keys.hook)?.textContent.trim() || '',
+            description: this.getEl(keys.desc)?.textContent.trim() || '',
+            splashArt: this.getEl(keys.splash)?.textContent || ''
+        }};
     }
 
     protected locateElements = () => this.locate(
@@ -74,18 +68,10 @@ export class ProductWriter extends Editor {
         
         const publishButton = document.getElementById('product-upload-button');
         publishButton?.addEventListener('click', async () => {
-            if (await uploader.upload()) {
-                this.publish();
-            }
+            const imgMsg = await uploader.upload() ? 'Image uploaded successfully' : 'Image upload failed';
+            
+            alert(imgMsg);
+            await this.publish()
         });
-    }
-
-    private getContent = () => {
-        return {
-            title: this.getEl(keys.title)?.textContent.trim() || '',
-            hook: this.getEl(keys.hook)?.textContent.trim() || '',
-            description: this.getEl(keys.desc)?.textContent.trim() || '',
-            splashArt: this.getEl(keys.splash)?.textContent || ''
-        };
     }
 }
