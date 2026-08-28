@@ -4,10 +4,11 @@ import { ImageUploader } from "./image-uploader";
 const keys = { title: 'title', desc: 'desc', hook: 'hook', splash: 'splash' } as const;
 
 export class ProductWriter extends Editor {
+    private uploader = new ImageUploader('splash');
+
     constructor(isUpdate = false) {
         super(isUpdate);
         this.locateElements();
-
         if (this.getContainer()) { this.init(); }
     }
 
@@ -19,22 +20,20 @@ export class ProductWriter extends Editor {
     }
 
     protected getTemplate = () => {
-        return {
-            'product-writer': { tag: 'div', classList: 'product-writer', children: [
-                { tag: 'h2', textContent: 'Product Details' },
-                { tag: 'div', classList: 'field-label', textContent: 'Title' },
-                { tag: 'div', classList: 'title-field', id: 'product-title-field', edit: true },
-                { tag: 'div', classList: 'field-label', textContent: 'Hook' },
-                { tag: 'div', classList: 'title-field', id: 'product-hook-field', edit: true },
-                { tag: 'div', classList: 'image-upload', id: 'splash-image-upload', children: [
-                    { tag: 'span', id: 'splash-file', textContent: 'File name ...' },
-                    { tag: 'button', id: 'splash-button', textContent: 'Browse' }
-                ]},
-                { tag: 'div', classList: 'field-label', textContent: 'Description' },
-                { tag: 'div', classList: 'description-field', id: 'product-description-field', edit: true },
-                { tag: 'button', id: 'product-upload-button', textContent: 'Upload' }
-            ]}
-        };
+        return { 'product-writer': { tag: 'div', classList: 'product-writer', children: [
+            { tag: 'h2', textContent: 'Product Details' },
+            { tag: 'div', classList: 'field-label', textContent: 'Title' },
+            { tag: 'div', classList: 'title-field', id: 'product-title-field', edit: true },
+            { tag: 'div', classList: 'field-label', textContent: 'Hook' },
+            { tag: 'div', classList: 'title-field', id: 'product-hook-field', edit: true },
+            { tag: 'div', classList: 'image-upload', id: 'splash-image-upload', children: [
+                { tag: 'span', id: 'splash-file', textContent: 'File name ...' },
+                { tag: 'button', id: 'splash-button', textContent: 'Browse' }
+            ]},
+            { tag: 'div', classList: 'field-label', textContent: 'Description' },
+            { tag: 'div', classList: 'description-field', id: 'product-description-field', edit: true },
+            { tag: 'button', id: 'product-upload-button', textContent: 'Upload' },
+        ]}};
     }
 
     protected getViewerURL = () => 'product_viewer.html';
@@ -44,8 +43,7 @@ export class ProductWriter extends Editor {
         return { columns: {
             title: this.getEl(keys.title)?.textContent.trim() || '',
             hook: this.getEl(keys.hook)?.textContent.trim() || '',
-            description: this.getEl(keys.desc)?.textContent.trim() || '',
-            splashArt: this.getEl(keys.splash)?.textContent || ''
+            description: this.getEl(keys.desc)?.textContent.trim() || ''
         }};
     }
 
@@ -54,24 +52,29 @@ export class ProductWriter extends Editor {
         { key: keys.title,  id: 'product-title-field'       },
         { key: keys.hook,   id: 'product-hook-field'        },
         { key: keys.desc,   id: 'product-description-field' },
-        { key: keys.splash, id: 'product-splash-field'      }
+        { key: keys.splash, id: 'splash-name'               }
     );
 
     protected init = () => {
-        const uploader = new ImageUploader('splash');
-        
-        const splashFile = document.getElementById('splash-file');
-        if (splashFile) {
+        const splashPreview = document.getElementById('splash-file');
+        if (splashPreview) {
             const browseButton = document.getElementById('splash-button');
-            browseButton?.addEventListener('click', () => uploader.browse(splashFile));
+            browseButton?.addEventListener('click', () => this.uploader.browse(splashPreview));
         }
         
-        const publishButton = document.getElementById('product-upload-button');
-        publishButton?.addEventListener('click', async () => {
-            const imgMsg = await uploader.upload() ? 'Image uploaded successfully' : 'Image upload failed';
-            
-            alert(imgMsg);
-            await this.publish()
+        document.getElementById('product-upload-button')?.addEventListener('click', async () => {
+            if (!this.uploader.isReady()) {
+                if (!this.isUpdate) {
+                    alert('An image is required to upload this item');
+                    return;
+                }
+            } else {
+                const imgMsg = await this.uploader.upload(this.getID()) ? 
+                    'Image uploaded successfully' : 'Image upload failed';
+                
+                alert(imgMsg);
+            }
+            this.publish();
         });
     }
 }

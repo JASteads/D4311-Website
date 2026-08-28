@@ -15,10 +15,9 @@ export class GalleryEditor extends Editor {
         if (this.getContainer()) { this.init(); }
     }
 
-    setContent(title: string, caption: string, gameID: number, fileName: string) {
+    setContent(title: string, caption: string, gameID: number) {
         this.setText(document.getElementById('gallery-title-field'), title);
         this.setText(document.getElementById('gallery-description-field'), caption);
-        this.setText(document.getElementById('upload-preview'), fileName);
         if (this.categorySelect) {
             this.categorySelect.selectedIndex = gameID - 1;
         }
@@ -28,36 +27,32 @@ export class GalleryEditor extends Editor {
     protected getTableName = () => 'gallery';
 
     protected getTemplate() {
-        return {
-            'gallery-editor': { tag: 'div', classList: 'upload-container', children: [
-                { tag: 'p', classList: 'upload-preview-label', children: [
-                    { tag: 'b', textContent: 'Image Upload' }
-                ]},
-                { tag: 'div', classList: 'upload-preview', id: 'upload-preview' },
-                { tag: 'button', classList: 'browse-button', id: 'browse-button', textContent: 'Browse' },
-                { tag: 'span', classList: 'category-select-label', textContent: 'Category:' },
-                { tag: 'select', id: 'category-select'},
-                { tag: 'p', classList: 'title-field-label', textContent: 'Title' },
-                { tag: 'div', classList: 'title-field', id: 'gallery-title-field', edit: true },
-                { tag: 'p', classList: 'description-field-label', textContent: 'Caption' },
-                { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
-                { tag: 'button', id: 'upload-button', textContent: 'Upload' },
-                { tag: 'button', id: 'close-button', textContent: 'Close' }
-            ]}
-        };
+        return { 'gallery-editor': { tag: 'div', classList: 'upload-container', children: [
+            { tag: 'p', classList: 'upload-preview-label', children: [
+                { tag: 'b', textContent: 'Image Upload' }
+            ]},
+            { tag: 'span', id: 'upload-preview', textContent: 'File Name ...' },
+            { tag: 'button', classList: 'browse-button', id: 'browse-button', textContent: 'Browse' },
+            { tag: 'span', classList: 'category-select-label', textContent: 'Category:' },
+            { tag: 'select', id: 'category-select' },
+            { tag: 'p', classList: 'title-field-label', textContent: 'Title' },
+            { tag: 'div', classList: 'title-field', id: 'gallery-title-field', edit: true },
+            { tag: 'p', classList: 'description-field-label', textContent: 'Caption' },
+            { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
+            { tag: 'button', id: 'upload-button', textContent: 'Upload' },
+            { tag: 'button', id: 'close-button', textContent: 'Close' }
+        ]}};
     }
 
     protected getColumns = async () => {
-        const fileName = this.uploader.getFileName() || '_';
         const item = await this.generateGalleryItem();
         const data = item.data;
 
         return { columns: {
             title: data.title,
             caption: data.caption,
-            date_created: data.date_created,
-            image_link: fileName,
-            thumbnail_link: `preview_${fileName}`
+            created_at: data.date_created,
+            game_id: `${item.gameID}`
         }};
     }
 
@@ -75,19 +70,34 @@ export class GalleryEditor extends Editor {
 
         this.categorySelect = this.getEl('select') as HTMLSelectElement;
 
-        document.getElementById('upload-button')?.addEventListener('click', async () => await this.publish());
+        document.getElementById('upload-button')?.addEventListener('click', async () => {
+            if (!this.uploader.isReady()) {
+                if (!this.isUpdate) {
+                    alert('An image is required to upload this item');
+                    return;
+                }
+            } else {
+                const imgMsg = await this.uploader.upload(this.getID()) ? 
+                    'Image uploaded successfully' : 'Image upload failed';
+                
+                alert(imgMsg);
+            }
+            this.publish();
+        });
         await this.updateCategories();
     }
 
     // =================== EDITOR-SPECIFIC FUNCTIONS ===================
 
-    public setSelectDisabled(isDisabled: boolean) {
+    resetUploader = () => this.uploader.clearPendingUpload();
+
+    setSelectDisabled(isDisabled: boolean) {
         if (this.categorySelect) {
             this.categorySelect.disabled = isDisabled;
         }
     }
 
-    public addCategory(category: string) {
+    addCategory(category: string) {
         if (!this.categorySelect) {
             console.error('No category select to add to.');
             return;
@@ -128,21 +138,16 @@ export class GalleryEditor extends Editor {
     }
 
     private generateGalleryItem = async () =>  {
-        if(!await this.uploader.upload()) {
-            console.error('Failed to upload image to Gallery');
-        }
-
         const title = document.getElementById('gallery-title-field');
         const caption = document.getElementById('gallery-description-field');
         const gameID = await this.getGameID(this.categorySelect?.value);
 
+        console.log('Category Select:', this.categorySelect?.value);
         return {
-            data: new GalleryItem(
+            data: new GalleryItem(this.getID(),
                 title?.textContent || 'Untitled',
                 this.categorySelect?.value || 'Misc',
                 caption?.textContent || '',
-                '', // Thumbnail link not used, may change
-                '', // Image link not used, may change
                 new Date(Date.now())),
             gameID: gameID
         };

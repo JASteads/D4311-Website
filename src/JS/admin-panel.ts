@@ -90,6 +90,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         options.className = 'options';
 
         const { headerText, viewLink, editor, deleteURL } = config;
+        item['editor'] = editor;
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
@@ -99,8 +100,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         editHyperlink.textContent = 'Edit';
         editHyperlink.href = await safeLink('admin_editor.html');
         editHyperlink.addEventListener('click', async () => {
-            sessionStorage.setItem('edit-item', JSON.stringify({ item: item, editor: editor }));
-            editHyperlink.href = await safeLink(`admin_editor.html`);
+            sessionStorage.setItem('edit-item', JSON.stringify(item));
             editHyperlink.click();
         });
 

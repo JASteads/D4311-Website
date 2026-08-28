@@ -3,42 +3,6 @@ import { API_URL } from "./config";
 import { safeLink } from "./site-nav";
 import type { Product } from "./product";
 
-// TODO : Replace "common" scripts with these templates
-/*
-import { buildScripts, DataRequest } from "./page-builder"
-
-const product = ['id', 'title', 'hook', 'splash_art_link'];
-const visuals = ['background', 'sheen', 'sheen-top', 'vignette'].map(name => { 
-    const obj: any = { tag: 'div', className: name }
-
-    if (name === 'background') {
-        obj.backgroundImage = product[3];
-        obj.requires = 'product';
-    }
-
-    return obj;
-});
-
-const template = {
-    'library': {
-        function: 'list', requires: 'product',
-        args: [{ 
-            tag: 'button', className: 'product-list-item',
-            function: 'click', requires: 'product',
-            args: { 
-                action: 'link', baseURL: 'product_viewer.html',
-                queryParams: [product[0]], requires: product[0] 
-            },
-            children: [
-                ...visuals,
-                { tag: 'span', className: 'title', textContent: product[1] },
-                { tag: 'span', className: 'hook', textContent: product[2] }
-            ]
-        }]
-    }
-}
-*/
-
 const fillLibrary = async () => {
     const library = document.getElementById('library');
 
@@ -55,10 +19,10 @@ const fillLibrary = async () => {
         }
 
         const products: Product[] = await result.json(); // Grab products
-        const listItems = await Promise.all(products.map(p => generateListItem(p)));
+        const listItems = await Promise.all(products.map(p => generateListItem(p)).reverse());
         library.append(...listItems); // Add products to library
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 }
 
@@ -70,7 +34,7 @@ const generateListItem = async (p: Product) => {
 
         return element;
     });
-    visuals[0].style.backgroundImage = `url(${p.splash_art_link})`;
+    visuals[0].style.backgroundImage = `url('/Resources/Images/Splash/splash_${p.id}.png')`;
 
     const title = document.createElement('span');
     title.className = 'title';

@@ -102,15 +102,14 @@ app.get('/api/redirect', async (req, res) => {
     return safeRedirect(res, file as string);
 });
 
-app.post('api/image', async (req, res) => {
-    const { isThumbnail } = req.query;
-    const { image, type }: { image: File; type: string } = req.body;
+app.post('/api/image', async (req, res) => {
+    const { type, isThumbnail } = req.query;
     const { tempPath, tempName, stream } = prepareTemp();
 
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
-    const realName = decodeURIComponent(image.name);
+    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
     const realPath = path.join(SRC_DIR, `Resources/Images/${type}`);
     const finalPath = path.join(realPath, realName);
 
@@ -118,8 +117,8 @@ app.post('api/image', async (req, res) => {
     console.log('Real Name:', realName);
     console.log('Real Path:', realPath);
 
-    if (!fs.existsSync(path.dirname(realPath))) {
-        fs.mkdirSync(path.dirname(realPath), { recursive: true });
+    if (!fs.existsSync(realPath)) {
+        fs.mkdirSync(realPath, { recursive: true });
     }
 
     stream.on('finish', async () => {
@@ -131,9 +130,10 @@ app.post('api/image', async (req, res) => {
             await fs.promises.rename(path.join(tempPath, tempName), finalPath);
             console.log('File moved');
             
+            const thumb = !(!isThumbnail) && isThumbnail;
             const response = {
-                message: `${(isThumbnail ? 'Thumbnail' : 'Image')} downloaded to gallery`,
-                savedAs: isThumbnail ? `preview_${realName}` : realName
+                message: `${( thumb ? 'Thumbnail' : 'Image')} downloaded to gallery`,
+                savedAs: thumb ? `preview_${realName}` : realName
             };
 
             res.status(200).json(response);
@@ -157,10 +157,7 @@ app.get('/api/product/:id', async (req, res) => {
         const genericSplashLink = `../Resources/Images/generic_splash.png`; // Fallback image
 
         const result = await pool.query(`
-            SELECT 
-                id, title, description, hook, release_date, 
-                COALESCE(splash_art_link, $2) AS splash_art_link,
-                library_doll_link, icon_link, txn_link
+            SELECT id, title, description, hook, release_date, txn_link
             FROM products
             WHERE id = $1
         `, [id, genericSplashLink]);
@@ -181,7 +178,7 @@ app.post('/api/product', async (req, res) => {
     try {
         const { title, hook, description, splash_art } = req.body;
         const result = await pool.query(`
-            INSERT INTO products (title, hook, description, release_date, splash_art_link)
+            INSERT INTO products (title, hook, description, release_date)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
         `, [title, hook, description, new Date(Date.now()).toISOString(), splash_art]);
@@ -192,9 +189,9 @@ app.post('/api/product', async (req, res) => {
 });
 
 app.put('/api/product', async (req, res) => {
-    const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
-
     try {
+        console.log(req.body);
+        const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         res.json(await basicPut('products', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -267,7 +264,7 @@ app.post('/api/blog', async (req, res) => {
 
 app.put('/api/blog', async (req, res) => {
     try {
-        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+        const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
 
         res.json(await basicPut('blogs', id, columns));
     } catch (e: any) {
@@ -293,7 +290,7 @@ app.get('/api/blogs', async (req, res) => {
         const params = [];
 
         let queryText = `
-            SELECT id, title, author, body, created_at, game_id, cover_link, hook
+            SELECT id, title, author, body, created_at, game_id, hook
             FROM blogs
         `;
         let queryCount = 0;
@@ -303,7 +300,7 @@ app.get('/api/blogs', async (req, res) => {
             params.push(parseInt(game_id as string));
         }
 
-        queryText += ' ORDER BY created_at DESC';
+        queryText += ' ORDER BY id DESC';
 
         // Only add LIMIT if user specifically asks for it
         if (limit) {
@@ -327,8 +324,9 @@ app.get('/api/blogs', async (req, res) => {
 app.get('/api/portfolio', async (_, res) => {
     try {
         const result = await pool.query(`
-            SELECT title, type, lang_api, date, description, image_link, project_link
+            SELECT id, title, lang_api, date, description, project_link
             FROM portfolio_items
+            ORDER BY id DESC
         `);
         res.json(result.rows);
     } catch (e: any) {
@@ -347,7 +345,7 @@ app.post('/api/portfolio', async (req, res) => {
 
 app.put('/api/portfolio', async (req, res) => {
     try {
-        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+        const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         res.json(await basicPut('portfolio_items', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -372,10 +370,7 @@ app.get('/api/gallery', async (req, res) => {
         const requestParams = [];
 
         let query = `
-            SELECT
-                g.id, g.title, g.game_id,
-                p.title AS category,
-                g.caption, g.thumbnail_link, g.image_link, g.created_at
+            SELECT g.id, g.title, g.game_id, p.title AS category, g.caption, g.created_at
             FROM gallery_items g
             LEFT JOIN products p
               ON g.game_id = p.id
@@ -400,10 +395,7 @@ app.get('api/gallery/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query(`
-            SELECT
-                g.id, g.title, g.game_id,
-                p.title AS category,
-                g.caption, g.thumbnail_link, g.image_link, g.created_at
+            SELECT g.id, g.title, g.game_id, p.title AS category, g.caption, g.created_at
             FROM gallery_items g
             LEFT JOIN products p
               ON g.game_id = p.id
@@ -432,7 +424,7 @@ app.post('/api/gallery', async (req, res) => {
 
 app.put('/api/gallery', async (req, res) => {
     try {
-        const { id, columns }: { id: string; columns: Record<string, string> } = req.body;
+        const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         res.json(await basicPut('gallery_items', id, columns));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -501,22 +493,30 @@ const basicPost = async (tableName: string, columns: Record<string, string>) => 
     `, values);
 }
 
-const basicPut = async (tableName: string, id: string, ...columns: Record<string, string>[]) => {
+const basicPut = async (tableName: string, id: number, columns: Record<string, string>) => {
     const setClauses: string[] = [];
     const queryParams: any[] = [];
 
+    console.log(columns);
+    console.log('Columns...');
+
     for (const [column, value] of Object.entries(columns)) {
+        console.log('Column:', column);
+        console.log('Value:', value, '\n');
         setClauses.push(`${column} = $${queryParams.length + 1}`);
         queryParams.push(value);
     }
-    queryParams.push(id);
 
-    await pool.query(`
+    console.log(`
         UPDATE ${tableName} SET ${setClauses.join(', ')}
-        WHERE id = $${queryParams.length + 1} RETURNING *`, queryParams
-    );
+        WHERE id = ${id} RETURNING *
+    `);
+    console.log(queryParams);
 
-    console.log(`${tableName} #${id} has been updated.`);
+    return await pool.query(`
+        UPDATE ${tableName} SET ${setClauses.join(', ')}
+        WHERE id = ${id} RETURNING *`, queryParams
+    );
 }
 
 const removeItem = async (tableName: string, targetID: string) => {
@@ -564,9 +564,6 @@ const initialiazeDatabase = async () => {
                     description TEXT,
                     hook TEXT,
                     release_date TIMESTAMP,
-                    splash_art_link TEXT,
-                    library_doll_link TEXT,
-                    icon_link TEXT,
                     txn_link TEXT,
                     is_locked BOOLEAN
                 );`
@@ -581,7 +578,6 @@ const initialiazeDatabase = async () => {
                     lang_api TEXT,
                     date TEXT,
                     description TEXT,
-                    image_link TEXT,
                     project_link TEXT
                 );`
         },
@@ -593,8 +589,6 @@ const initialiazeDatabase = async () => {
                     title TEXT,
                     game_id INT,
                     caption TEXT,
-                    thumbnail_link TEXT,
-                    image_link TEXT,
                     created_at TIMESTAMP,
                     FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
                 );`

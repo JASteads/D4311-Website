@@ -732,10 +732,10 @@ footer small {
     margin-bottom: 5px;
 }
 
-.gallery-container .description-field {
+.description-field {
     background-color: white;
+    padding: 3px;
     height: 180px;
-    width: 600px;
     max-width: 100%;
     color: black;
     font-size: 0.8em;

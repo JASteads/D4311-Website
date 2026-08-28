@@ -15,13 +15,13 @@ const loadEditor = async (editor: Editor, ...content: any) => {
 
 const load: {[key: string]: (item: any) => Promise<HTMLElement | null> } = {
     'library': async (item: any) => await loadEditor(new ProductWriter(true),
-        item.title, item.description, item.hook, item.date_created, item.splash_art_link),
+        item.title, item.description, item.hook, item.date_created),
 
     'gallery': async (item: any) => await loadEditor(new GalleryEditor(true),
-        item.title, item.caption, item.game_id, item.image_link),
+        item.title, item.caption, item.game_id),
 
     'portfolio': async (item: any) => await loadEditor(new PortfolioWriter(true),
-        item.title, item.lang_api, item.project_link, item.image_link, item.date, item.description),
+        item.title, item.lang_api, item.project_link, item.date, item.description),
 
     'blog': async (item: any) => await loadEditor(new BlogEditor(true),
         item.title, item.body)
@@ -41,7 +41,7 @@ const openEditor = async () => {
         return;
     }
 
-    const editor = await load[editorName](data.item);
+    const editor = await load[editorName](data);
     if (editor) {
         document.getElementById('editor-container')?.appendChild(editor);
     }

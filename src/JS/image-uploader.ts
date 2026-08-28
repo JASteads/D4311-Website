@@ -16,8 +16,7 @@ export class ImageUploader {
         this.includeThumbnail = includeThumbnail;
     }
 
-    getFileName = () => this.pendingUpload?.name;
-
+    isReady = () => !(!this.pendingUpload);
     clearPendingUpload = () => this.pendingUpload = null;
     
     browse = (preview: HTMLElement | null) => {
@@ -41,9 +40,9 @@ export class ImageUploader {
             const target = files[0];
 
             // Handle errors
-            const allGood = !handleError(
+            const allGood = handleError(
                 target.type === 'image/png' || target.type === 'image/jpeg',
-                'File must be a PNG');
+                'File must be a PNG or JPEG');
             if (!allGood) return;
 
             this.pendingUpload = target;
@@ -66,7 +65,7 @@ export class ImageUploader {
         input.click();
     }
     
-    upload = async () => {
+    upload = async (id: number) => {
         if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return false;
@@ -78,13 +77,17 @@ export class ImageUploader {
         }
 
         const root = `${API_URL}/api/image`;
+        const fixedName = encodeURIComponent(`${this.uploadType}_${id}.png`);
 
         // ------------- FULL IMAGE UPLOAD -------------
         try {
-            const res = await fetch(root, {
+            const res = await fetch(`${root}?type=${this.uploadType}`, {
                 method: 'POST',
-                body: JSON.stringify({ image: this.pendingUpload, type: this.uploadType }),
-                headers: { 'Content-Type': this.pendingUpload.type || 'application/octet-stream' }
+                body: this.pendingUpload,
+                headers: { 
+                    'Content-Type': this.pendingUpload.type || 'application/octet-stream',
+                    'X-File-Name': fixedName
+                }
             });
     
             if (!res.ok) {
@@ -99,21 +102,23 @@ export class ImageUploader {
         // ------------- THUMBNAIL UPLOAD -------------
         if (!this.includeThumbnail) {
             alert('File uploaded successfully');
-            this.clearPendingUpload();
             return true;
         }
 
         try {
             const thumbnail = await this.generateThumbnail();
             const thumbnailFile = new File([thumbnail],
-                encodeURIComponent(`preview_${this.pendingUpload.name}`),
+                encodeURIComponent(`preview_${fixedName}`),
                 { type: thumbnail.type }
             );
 
-            const res = await fetch(`${root}?isThumbnail=true`, {
+            const res = await fetch(`${root}?type=${this.uploadType}&isThumbnail=true`, {
                 method: 'POST',
-                body: JSON.stringify({ image: thumbnailFile, type: this.uploadType }),
-                headers: { 'Content-Type': thumbnailFile.type || 'application/octet-stream' }
+                body: thumbnailFile,
+                headers: { 
+                    'Content-Type': thumbnailFile.type || 'application/octet-stream',
+                    'X-File-Name': thumbnailFile.name
+                }
             });
 
             if (!res.ok) {

@@ -20,7 +20,11 @@ export abstract class Editor {
     protected abstract getViewerURL(): string;
     protected abstract getColumns(): Promise<{ columns: Record<string, string>}>;
 
-    protected getID = () => new URLSearchParams(window.location.search).get('id') || '-1';
+    protected getID = () => {
+        const item = window.sessionStorage.getItem('edit-item');
+        const id = item ? JSON.parse(item).id : -1;
+        return parseInt(id);
+    };
 
     getContainer = () => this.getEl('editor');
     
@@ -32,7 +36,12 @@ export abstract class Editor {
         await buildScripts(this.getTemplate());
         this.locateElements();
         
-        const editor = this.elements.get('editor')!;
+        const editor = this.elements.get('editor');
+        if (!editor) {
+            console.log('Failed to find editor');
+            return null;
+        }
+
         const defaultDisplay = editor.style.display;
 
         // Hide editor while preparing contents
@@ -56,10 +65,14 @@ export abstract class Editor {
             console.warn('Access denied');
             return;
         }
-        await (this.isUpdate ? this.put : this.post)();
+        const result = await (this.isUpdate ? this.put : this.post)();
         
-        // Redirect to viewing page
-        window.location.href = await safeLink(`${this.getViewerURL()}?id=${this.getID()}`);
+        // Redirect to viewing page on success
+        if (result) {
+            window.location.href = await safeLink(`${this.getViewerURL()}?id=${this.getID()}`);
+        }
+        
+        
     }
 
     private getPostBody = async () => await this.getColumns();

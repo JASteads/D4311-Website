@@ -114,24 +114,23 @@ const emptyGallery = () => {
 
 // Does not use caption or date yet. This is intended for when full images are rendered on top of the page.
 const generateImageCard = (item: GalleryItem) => {
-    console.log('Generating image card for', item.title);
     const galleryLocation = 'Resources/Images/Gallery/';
-
-    const cardElement = document.createElement('div');
-    cardElement.className = 'gallery-card';
-
-    const image_link = document.createElement('a');
-    image_link.href = galleryLocation.concat(item.image_link);
-    image_link.target = '_blank';
-    cardElement.appendChild(image_link);
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'card-thumbnail';
-    thumbnail.src = galleryLocation.concat(item.thumbnail_link);
+    thumbnail.src = `${galleryLocation}preview_gallery_${item.id}.png`;
     thumbnail.alt = item.title;
     thumbnail.loading = 'lazy';
     thumbnail.decoding = 'async';
-    image_link.appendChild(thumbnail);
+    
+    const imageLink = document.createElement('a');
+    imageLink.href = `${galleryLocation}gallery_${item.id}.png`;
+    imageLink.target = '_blank';
+    imageLink.appendChild(thumbnail);
+
+    const cardElement = document.createElement('div');
+    cardElement.className = 'gallery-card';
+    cardElement.appendChild(imageLink);
 
     return { category: item.category, element: cardElement };
 }
@@ -218,7 +217,7 @@ const setUploadMenuVisibility = (isVisible: boolean) => {
         }
 
         // Remove the pending upload so we can start over
-        editor.uploader.clearPendingUpload();
+        editor.resetUploader();
     }
 }
 
