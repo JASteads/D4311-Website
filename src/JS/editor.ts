@@ -18,16 +18,8 @@ export abstract class Editor {
     protected abstract getTemplate(): any;
     protected abstract getTableName(): string;
     protected abstract getViewerURL(): string;
-    protected abstract getColumns(): Promise<{ columns: Record<string, string>}>;
+    protected abstract getColumns(): Promise<{ columns: Record<string, string> }>;
 
-    protected getID = () => {
-        const item = window.sessionStorage.getItem('edit-item');
-        const id = item ? JSON.parse(item).id : -1;
-        return parseInt(id);
-    };
-
-    getContainer = () => this.getEl('editor');
-    
     generateEditor = async () => {
         if (this.getContainer()) {
             console.warn('Editor already exists');
@@ -52,27 +44,30 @@ export abstract class Editor {
         return editor;
     };
 
+    getContainer = () => this.getEl('editor');
+    protected getEl = (key: string) => this.elements.get(key) || null;
+    protected getID() {
+        const item = window.sessionStorage.getItem('edit-item');
+        const id = item ? JSON.parse(item).id : -1;
+        return parseInt(id);
+    };
+
     protected setText(element: HTMLElement | null, text: string) { if (element) element.textContent = text; }
 
-    protected locate = (...items: { key: string; id: string; }[]) => { 
+    protected locate(...items: { key: string; id: string; }[]) { 
         items.forEach(i => this.elements.set(i.key, document.getElementById(i.id)));
     }
-
-    protected getEl = (key: string) => this.elements.get(key) || null;
 
     protected publish = async () => {
         if (!await basicAdminAccessRequest()) {
             console.warn('Access denied');
             return;
         }
-        const result = await (this.isUpdate ? this.put : this.post)();
-        
+
         // Redirect to viewing page on success
-        if (result) {
+        if (await (this.isUpdate ? this.put : this.post)()) {
             window.location.href = await safeLink(`${this.getViewerURL()}?id=${this.getID()}`);
         }
-        
-        
     }
 
     private getPostBody = async () => await this.getColumns();

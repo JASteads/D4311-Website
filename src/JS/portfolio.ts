@@ -20,7 +20,7 @@ class PortfolioItem {
     }
 }
 
-const getPortfolioItems = async (): Promise<any[]> => {
+const getPortfolioItems = async () => {
     try {
         const res = await fetch(`${API_URL}/api/portfolio`);
 
@@ -42,8 +42,8 @@ const loadPorfolio = async () => {
         console.error("No portfolio items found.");
         return;
     }
-    
-    portfolioItems.forEach(i => generatePortfolioItem(i));
+
+    portfolioItems.forEach((i: any) => generatePortfolioItem(i));
 }
 
 const generatePortfolioItem = (item: PortfolioItem) => {

@@ -39,8 +39,7 @@ export class GalleryEditor extends Editor {
             { tag: 'div', classList: 'title-field', id: 'gallery-title-field', edit: true },
             { tag: 'p', classList: 'description-field-label', textContent: 'Caption' },
             { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
-            { tag: 'button', id: 'upload-button', textContent: 'Upload' },
-            { tag: 'button', id: 'close-button', textContent: 'Close' }
+            { tag: 'button', id: 'upload-button', textContent: 'Upload' }
         ]}};
     }
 
@@ -88,8 +87,6 @@ export class GalleryEditor extends Editor {
     }
 
     // =================== EDITOR-SPECIFIC FUNCTIONS ===================
-
-    resetUploader = () => this.uploader.clearPendingUpload();
 
     setSelectDisabled(isDisabled: boolean) {
         if (this.categorySelect) {
@@ -156,9 +153,7 @@ export class GalleryEditor extends Editor {
     private getGameID = async (category: string | undefined) => {
         const categoryOther = 1;
 
-        if (!category) {
-            return categoryOther;
-        }
+        if (!category) { return categoryOther; }
 
         try {
             const result = await fetch(`${API_URL}/api/products`);

@@ -681,6 +681,11 @@ footer small {
     border-radius: 2px;
 }
 
+.gallery-container > .upload-text {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 /* ====================== GALLERY UPLOADER ====================== */
 
 .gallery-container .upload-container {
@@ -1057,9 +1062,10 @@ footer small {
     margin-bottom: 50px;
 }
 
-.blog-history-container li {
+.blog-history-container a {
     max-width: 360px;
-    cursor: pointer;
+    text-decoration: none;
+    color: white;
 }
 
 .blog-history-container .cover {
@@ -1080,11 +1086,12 @@ footer small {
     color: rgb(122, 194, 101);
 }
 
-.blog-history-container li h3 {
+.blog-history-container a h3 {
     padding: 10px 0;
+    text-decoration: underline;
 }
 
-.blog-history-container li p {
+.blog-history-container a p {
     font-size: 0.9em;
 }
 

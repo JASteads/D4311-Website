@@ -34,9 +34,7 @@ export const tryAdminTest = () => {
     }
 };
 
-export const basicAdminAccessRequest = async () => {
-    return await requestAdminAccess(`${API_URL}/api/admin_access`);
-}
+export const basicAdminAccessRequest = async () => await requestAdminAccess(`${API_URL}/api/admin_access`) === 'true';
 
 export const getSession = () => {
     if (!window.localStorage.getItem('admin-test')) {

@@ -7,7 +7,6 @@ export class Blog {
     author: string;
     body: string;
     created_at: string;
-    cover_link: string
     hook: string
 
     constructor(b?: Blog) {
@@ -17,7 +16,6 @@ export class Blog {
             this.author = b.author;
             this.body = b.body;
             this.created_at = b.created_at;
-            this.cover_link = b.cover_link;
             this.hook = b.hook;
         } else {
             this.id = -1;
@@ -25,7 +23,6 @@ export class Blog {
             this.author = '';
             this.body = '';
             this.created_at = Date.now().toLocaleString();
-            this.cover_link = '';
             this.hook = '';
         }
     }
@@ -73,7 +70,7 @@ export const showBlog = async () => {
 /**
  * Appends a list of blog HTMLElements to the parent element.
  */
-export const showRecentBlogs = async (parent: HTMLElement | null, amount: number | null = null) => {
+export const showRecentBlogs = async (parent: HTMLElement, amount: number) => {
     if (!parent) {
         console.error("No valid parent to display blogs in");
         return;
@@ -108,7 +105,7 @@ const parseLabels = (text: string) => {
      *    until next valid label or end of text
      * 7. At end of text, append remaining text to result and return it
      */
-    const parseLabelInfo = (start: number, end: number): {type: string | null, info: string} => {
+    const parseLabelInfo = (start: number, end: number) => {
         const label = text.substring(start + 1, end);
         const equalIndex = label.indexOf('=');
 
@@ -119,7 +116,7 @@ const parseLabels = (text: string) => {
          * c. [size=20][/size]
          */
         
-        let type: string | null, info = '';
+        let type: string, info = '';
 
         if (equalIndex === -1) {
             type = label;
@@ -235,7 +232,7 @@ const LabelToinnerHTML = (type: string, info: string, content: string): string =
 /**
  * Alters characters into HTML-safe strings that are commonly read as normal characters
  */
-const escapeHTML = (unsafe: string): string => {
+const escapeHTML = (unsafe: string) => {
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -247,7 +244,7 @@ const escapeHTML = (unsafe: string): string => {
 /**
  * Generates a string-formatted date from a valid timestamp.
  */
-export const formatBlogDate = (timestamp: string): string => {
+export const formatBlogDate = (timestamp: string) => {
     const date = new Date(timestamp);
 
     if (isNaN(date.getTime())) return "Invalid date";
@@ -262,7 +259,7 @@ export const formatBlogDate = (timestamp: string): string => {
 /**
  * Returns the proper suffix of a given date.
  */
-const getDaySuffix = (day: number): string => {
+const getDaySuffix = (day: number) => {
     if (day > 3 && day < 21) return 'th';
 
     switch(day % 10) {
@@ -321,22 +318,21 @@ const generateBlogPreview = async (blog: Blog) => {
 
     if (!blog) return document.createElement('li');
 
-    const preview = document.createElement('li');
-    const link = document.createElement('a');
     const title = document.createElement('h3');
-    const meta = document.createElement('small');
-    const body = document.createElement('p');
-
     title.textContent = blog.title;
 
+    const link = document.createElement('a');
     link.href = await safeLink(`blog_viewer.html?id=${blog.id}`);
     link.appendChild(title);
 
+    const meta = document.createElement('small');
     meta.className = 'date';
     meta.textContent = `${blog.author} | ${formatBlogDate(blog.created_at)}`;  
 
+    const body = document.createElement('p');
     body.innerHTML = parseLabels(blog.body);
     
+    const preview = document.createElement('li');
     preview.className = 'blog-preview';
     preview.append(link, body, meta);
 

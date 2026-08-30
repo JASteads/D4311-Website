@@ -154,13 +154,11 @@ app.post('/api/image', async (req, res) => {
 app.get('/api/product/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const genericSplashLink = `../Resources/Images/generic_splash.png`; // Fallback image
-
         const result = await pool.query(`
             SELECT id, title, description, hook, release_date, txn_link
             FROM products
             WHERE id = $1
-        `, [id, genericSplashLink]);
+        `, [id]);
 
         const product = result.rows[0];
 
@@ -176,7 +174,7 @@ app.get('/api/product/:id', async (req, res) => {
 
 app.post('/api/product', async (req, res) => {
     try {
-        const { title, hook, description, splash_art } = req.body;
+        const { title, hook, description, splash_art }: Record<string, string> = req.body;
         const result = await pool.query(`
             INSERT INTO products (title, hook, description, release_date)
             VALUES ($1, $2, $3, $4, $5)
@@ -289,28 +287,21 @@ app.get('/api/blogs', async (req, res) => {
         const { limit, game_id } = req.query;
         const params = [];
 
-        let queryText = `
-            SELECT id, title, author, body, created_at, game_id, hook
-            FROM blogs
-        `;
-        let queryCount = 0;
+        let queryText = 'SELECT id, title, author, body, created_at, game_id, hook FROM blogs';
 
         if (game_id) {
-            queryText += ` WHERE game_id = $${++queryCount}`;
-            params.push(parseInt(game_id as string));
+            params.push(`${game_id}`);
+            queryText += ` WHERE game_id = $${params.length}`;
         }
-
         queryText += ' ORDER BY id DESC';
 
-        // Only add LIMIT if user specifically asks for it
         if (limit) {
             const upperRecentLimit = 15;
 
             const safeLimit = Math.min(Math.max(parseInt(limit as string) || 10), upperRecentLimit);
-            queryText += ` LIMIT $${++queryCount}`;
             params.push(safeLimit);
+            queryText += ` LIMIT $${params.length}`;
         }
-
         const result = await pool.query(queryText, params);
 
         res.json(result.rows);
@@ -541,57 +532,56 @@ const removeItem = async (tableName: string, targetID: string) => {
 const initialiazeDatabase = async () => {
     // Table creation queries to run
     const queries = [
-        {
-            name: 'Blogs', 
-            sql: `
-                CREATE TABLE IF NOT EXISTS blogs(
-                    id SERIAL PRIMARY KEY,
-                    title TEXT,
-                    author TEXT,
-                    subject TEXT, -- Short description used in blips
-                    body TEXT,
-                    created_at TIMESTAMP DEFAULT NOW(),
-                    game_id INT,
-                    FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
-                );`
+        { name: 'Blogs', sql: 
+            `CREATE TABLE IF NOT EXISTS blogs(
+                id SERIAL PRIMARY KEY,
+                title TEXT,
+                author TEXT,
+                subject TEXT, -- Short description used in blips
+                body TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                game_id INT,
+                FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
+            );`
         },
-        {
-            name: 'Products', 
-            sql: `
-                CREATE TABLE IF NOT EXISTS products(
-                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                    title TEXT UNIQUE,
-                    description TEXT,
-                    hook TEXT,
-                    release_date TIMESTAMP,
-                    txn_link TEXT,
-                    is_locked BOOLEAN
-                );`
+        { name: 'Products', sql: 
+            `CREATE TABLE IF NOT EXISTS products(
+                id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                title TEXT UNIQUE,
+                description TEXT,
+                hook TEXT,
+                release_date TIMESTAMP,
+                txn_link TEXT,
+                is_locked BOOLEAN
+            );`
         },
-        {
-            name: 'Portfolio Items',
-            sql: `
-                CREATE TABLE IF NOT EXISTS portfolio_items(
-                    id SERIAL PRIMARY KEY,
-                    title TEXT,
-                    type TEXT,
-                    lang_api TEXT,
-                    date TEXT,
-                    description TEXT,
-                    project_link TEXT
-                );`
+        { name: 'Portfolio Items', sql: 
+            `CREATE TABLE IF NOT EXISTS portfolio_items(
+                id SERIAL PRIMARY KEY,
+                title TEXT,
+                type TEXT,
+                lang_api TEXT,
+                date TEXT,
+                description TEXT,
+                project_link TEXT
+            );`
         },
-        {
-            name: 'Gallery Items',
-            sql: `
-                CREATE TABLE IF NOT EXISTS gallery_items(
-                    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                    title TEXT,
-                    game_id INT,
-                    caption TEXT,
-                    created_at TIMESTAMP,
-                    FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
-                );`
+        { name: 'Gallery Items', sql: 
+            `CREATE TABLE IF NOT EXISTS gallery_items(
+                id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                title TEXT,
+                game_id INT,
+                caption TEXT,
+                created_at TIMESTAMP,
+                FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
+            );`
+        },
+        { name: 'Users', sql: 
+            `CREATE TABLE IF NOT EXISTS users(
+                username TEXT PRIMARY KEY,
+                alias TEXT,
+                password TEXT
+            );`
         }
     ];
 

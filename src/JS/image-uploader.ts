@@ -17,7 +17,6 @@ export class ImageUploader {
     }
 
     isReady = () => !(!this.pendingUpload);
-    clearPendingUpload = () => this.pendingUpload = null;
     
     browse = (preview: HTMLElement | null) => {
         const input = document.createElement('input');
@@ -40,10 +39,7 @@ export class ImageUploader {
             const target = files[0];
 
             // Handle errors
-            const allGood = handleError(
-                target.type === 'image/png' || target.type === 'image/jpeg',
-                'File must be a PNG or JPEG');
-            if (!allGood) return;
+            if (!handleError(target.type === 'image/png', 'File must be a PNG')) return;
 
             this.pendingUpload = target;
 

@@ -29,7 +29,7 @@ const fillBlogHistory = async () => {
 const generateListItem = async (b: Blog) => {
     const img = document.createElement('img');
     img.className = 'cover';
-    img.src = b.cover_link || '';
+    img.src = `Resources/Images/Cover/cover_${b.id}.png` || '';
     img.alt = b.title;
 
     // TODO: Switch with appropriate category
@@ -53,13 +53,9 @@ const generateListItem = async (b: Blog) => {
     const preview = document.createElement('p');
     preview.textContent = b.hook;
 
-    const listItem = document.createElement('li');
+    const listItem = document.createElement('a');
+    listItem.href = await safeLink(`blog_viewer.html?id=${b.id}`);
     listItem.append(img, meta, title, preview);
-
-    const hyperlink = await safeLink(`blog_viewer.html?id=${b.id}`);
-    listItem.addEventListener('click', () => {
-        window.location.href = hyperlink;
-    });
 
     return listItem;
 };

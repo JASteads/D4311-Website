@@ -56,7 +56,7 @@ const formatDate = (timestamp: string, dateFormat: string) => {
     }
 }
 
-export const requestData = async (url: string, ...params: string[]) => {
+const requestData = async (url: string, ...params: string[]) => {
     try {
         const searchParams = new URLSearchParams(window.location.search);
         
@@ -69,6 +69,7 @@ export const requestData = async (url: string, ...params: string[]) => {
         });
         url += query;
 
+        console.log(url);
         const result = await fetch(url);
 
         if (!result.ok) {
@@ -77,7 +78,7 @@ export const requestData = async (url: string, ...params: string[]) => {
 
         return await result.json();
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return null;
     }
 }
@@ -191,7 +192,7 @@ const defineElement = (element: HTMLElement, node: any, payloadData: any) => {
     }
 }
 
-const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElement | null => {
+const generate = (node: any, id: string, ...requests: DataPayload[]) => {
     const element: HTMLElement = document.getElementById(id) || document.createElement(node.tag);
 
     if (!element) {
@@ -199,7 +200,7 @@ const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElemen
         return null;
     }
 
-    element.id = has(node.id) ? node.id : id;
+    element.id = node.id || id;
 
     let data; // Null by default
 
@@ -208,16 +209,22 @@ const generate = (node: any, id: string, ...requests: DataPayload[]): HTMLElemen
     }
 
     defineElement(element, node, data);
-    document.body.appendChild(element);
 
-    // Add child nodes if any
-    if (has(node.children)) {
-        const children = node.children.map((n: any) => {
-            const id = has(n.id) ? n.id : '';
-            return generate(n, id, ...requests)
-        });
-        element.append(...children);
+    // Move only new nodes into the body. Child nodes will not have a defined id argument
+    if (!document.body.contains(element) && !(!id)) {
+        document.body.appendChild(element);
     }
+
+    if (!has(node.children)) { return element; }
+
+    const children: HTMLElement[] = node.children.map((n: any) => 
+        generate(n, (n.id || ''), ...requests))
+    .filter((n: HTMLElement | null) => n !== null);
+
+    // Move child nodes only if they aren't already in the parent
+    children.forEach(c => { 
+        if (!element.contains(c)) { element.appendChild(c); }
+    });
 
     return element;
 } 
