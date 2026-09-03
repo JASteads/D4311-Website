@@ -53,7 +53,22 @@ const startServer = () => {
 
 // =========== USER MANAGEMENT ROUTES ===========
 
-app.post('api/users', async (req, res) => {
+app.get('api/user', async (req, res) => {
+    try {
+        const user = await requireUser(req, res);
+
+        if (!user) {
+            res.status(401).json('No user is currently logged in');
+            return;
+        }
+
+        res.json({ alias: user.alias, email: user.email, type: user.type });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('api/user', async (req, res) => {
     try {
         const { username, password, alias, email } = req.body;
         const user = await getUser(username);
