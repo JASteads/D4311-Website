@@ -26,8 +26,8 @@ export class GalleryEditor extends Editor {
     protected getViewerURL = () => 'gallery.html';
     protected getTableName = () => 'gallery';
 
-    protected getTemplate() {
-        return { 'gallery-editor': { tag: 'div', classList: 'upload-container', children: [
+    protected getTemplate = () => ({
+        'gallery-editor': { tag: 'div', classList: 'upload-container', children: [
             { tag: 'p', classList: 'upload-preview-label', children: [
                 { tag: 'b', textContent: 'Image Upload' }
             ]},
@@ -40,8 +40,7 @@ export class GalleryEditor extends Editor {
             { tag: 'p', classList: 'description-field-label', textContent: 'Caption' },
             { tag: 'div', classList: 'description-field', id: 'gallery-description-field', edit: true },
             { tag: 'button', id: 'upload-button', textContent: 'Upload' }
-        ]}};
-    }
+    ]}});
 
     protected getColumns = async () => {
         const item = await this.generateGalleryItem();

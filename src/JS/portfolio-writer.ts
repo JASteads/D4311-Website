@@ -26,8 +26,8 @@ export class PortfolioWriter extends Editor {
     protected getTableName = () => 'portfolio';
     protected getViewerURL = () => 'portfolio.html';
 
-    protected getTemplate = () => {
-        return { 'portfolio-writer': { tag: 'div', classList: 'portfolio-editor', children: [
+    protected getTemplate = () => ({
+        'portfolio-writer': { tag: 'div', classList: 'portfolio-editor', children: [
             { tag: 'h2', textContent: 'Submit a Portfolio Item'},
             { tag: 'ul', children: [
                 { tag: 'li', classList: 'title', children: [
@@ -56,20 +56,15 @@ export class PortfolioWriter extends Editor {
                 ]},
             ]},
             { tag: 'button', id: 'portfolio-upload-button', textContent: 'Upload' }
-        ]}};
-    }
+    ]}});
 
-    protected getColumns = async () => {
-        const title = this.getEl(keys.title)?.textContent;
-
-        return { columns: {
-            title: title || 'Untitled',
-            lang_api: this.getEl(keys.langapi)?.textContent || '',
-            date: this.getEl(keys.date)?.textContent || Date.now().toLocaleString(),
-            description: this.getEl(keys.desc)?.textContent || '',
-            project_link: this.getEl(keys.project)?.textContent || ''
-        }}
-    }
+    protected getColumns = async () => ({ columns: {
+        title: this.getEl(keys.title)?.textContent || 'Untitled',
+        lang_api: this.getEl(keys.langapi)?.textContent || '',
+        date: this.getEl(keys.date)?.textContent || Date.now().toLocaleString(),
+        description: this.getEl(keys.desc)?.textContent || '',
+        project_link: this.getEl(keys.project)?.textContent || ''
+    }});
 
     protected locateElements = () => this.locate(
         { key: 'editor',     id: 'portfolio-writer'             },

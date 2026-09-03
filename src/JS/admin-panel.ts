@@ -94,7 +94,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
-        viewHyperlink.href = viewLink;
+        viewHyperlink.href = await safeLink(`${viewLink}?id=${item.id}`);
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
@@ -148,21 +148,18 @@ const buildSections = async () => {
             editor: 'library',
             deleteURL: 'api/product'
         }),
-
         buildSection('api/gallery', {
             headerText: 'Gallery',
             viewLink: 'gallery.html',
             editor: 'gallery',
             deleteURL: 'api/gallery'
         }),
-
         buildSection('api/portfolio', {
             headerText: 'Portfolio Items',
             viewLink: 'portfolio.html',
             editor: 'portfolio',
             deleteURL: 'api/portfolio'
         }),
-
         buildSection('api/blogs', {
             headerText: 'Blog Posts',
             viewLink: 'blog_viewer.html',

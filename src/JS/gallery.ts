@@ -183,6 +183,8 @@ const updateCategories = async () => {
 }
 
 const toggleUploadMenu = () => {
+    if (!editor) { return; }
+    
     const container = editor.getContainer();
 
     if (!container) { return; }

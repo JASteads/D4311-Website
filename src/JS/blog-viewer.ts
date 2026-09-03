@@ -70,7 +70,7 @@ export const showBlog = async () => {
 /**
  * Appends a list of blog HTMLElements to the parent element.
  */
-export const showRecentBlogs = async (parent: HTMLElement, amount: number) => {
+export const showRecentBlogs = async (parent: HTMLElement | null, amount?: number) => {
     if (!parent) {
         console.error("No valid parent to display blogs in");
         return;

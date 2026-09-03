@@ -15,37 +15,32 @@ export class BlogEditor extends Editor {
         this.setText(this.getEl(keys.content), body);
     }
 
-    protected getTemplate = () => { 
-        return {
-            'blog-editor': { tag: 'div', classList: 'blog-editor', children: [
-                { tag: 'span', id: 'title-label', classList: 'title-label', textContent: 'Title' },
-                { tag: 'div', id: 'blog-title', classList: 'blog-title', edit: true },
-                { tag: 'div', id: 'buttons', children: [
-                    { tag: 'button', id: 'bold-button', textContent: 'Bold' },
-                    { tag: 'button', id: 'em-button', textContent: 'Italics' },
-                    { tag: 'button', id: 'u-button', textContent: 'Underline' },
-                    { tag: 'button', id: 'url-button', textContent: 'URL' },
-                    { tag: 'button', id: 'image-button', textContent: 'Image' },
-                    { tag: 'button', id: 'size-button', textContent: 'Size' },
-                ]},
-                { tag: 'div', id: 'editor-body', classList: 'blog-editor-body', children: [
-                    { tag: 'span', id: 'editor-content', classList: 'blog-editor-content', edit: true },
-                    { tag: 'span', id: 'editor-placeholder', classList: 'blog-editor-placeholder' }
-                ]},
-                { tag: 'button', id: 'publish-button', textContent: 'Update' }
-        ]}}
-    }
+    protected getTemplate = () => ({
+        'blog-editor': { tag: 'div', classList: 'blog-editor', children: [
+            { tag: 'span', id: 'title-label', classList: 'title-label', textContent: 'Title' },
+            { tag: 'div', id: 'blog-title', classList: 'blog-title', edit: true },
+            { tag: 'div', id: 'buttons', children: [
+                { tag: 'button', id: 'bold-button', textContent: 'Bold' },
+                { tag: 'button', id: 'em-button', textContent: 'Italics' },
+                { tag: 'button', id: 'u-button', textContent: 'Underline' },
+                { tag: 'button', id: 'url-button', textContent: 'URL' },
+                { tag: 'button', id: 'image-button', textContent: 'Image' },
+                { tag: 'button', id: 'size-button', textContent: 'Size' },
+            ]},
+            { tag: 'div', id: 'editor-body', classList: 'blog-editor-body', children: [
+                { tag: 'span', id: 'editor-content', classList: 'blog-editor-content', edit: true },
+                { tag: 'span', id: 'editor-placeholder', classList: 'blog-editor-placeholder' }
+            ]},
+            { tag: 'button', id: 'publish-button', textContent: 'Update' }
+    ]}});
 
     protected getViewerURL = () => 'blog_viewer.html';
     protected getTableName = () => 'blog';
 
-    protected getColumns = async () => {
-        return { columns: {
-            title: document.getElementById('blog-title')?.textContent.trim() || 'Untitled', 
-            body: document.getElementById('editor-content')?.textContent.trim() || '',
-            author: 'Lemon' // Replace later with local storage
-        }};
-    }
+    protected getColumns = async () => ({ columns: {
+        title: document.getElementById('blog-title')?.textContent.trim() || 'Untitled', 
+        body: document.getElementById('editor-content')?.textContent.trim() || ''
+    }});
 
     protected locateElements = () => this.locate(
         { key: 'editor',         id: 'blog-editor'        },

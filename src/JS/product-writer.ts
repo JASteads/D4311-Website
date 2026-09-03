@@ -19,8 +19,8 @@ export class ProductWriter extends Editor {
         this.setText(this.getEl(keys.splash), splashArtLink);
     }
 
-    protected getTemplate = () => {
-        return { 'product-writer': { tag: 'div', classList: 'product-writer', children: [
+    protected getTemplate = () => ({
+        'product-writer': { tag: 'div', classList: 'product-writer', children: [
             { tag: 'h2', textContent: 'Product Details' },
             { tag: 'div', classList: 'field-label', textContent: 'Title' },
             { tag: 'div', classList: 'title-field', id: 'product-title-field', edit: true },
@@ -33,19 +33,16 @@ export class ProductWriter extends Editor {
             { tag: 'div', classList: 'field-label', textContent: 'Description' },
             { tag: 'div', classList: 'description-field', id: 'product-description-field', edit: true },
             { tag: 'button', id: 'product-upload-button', textContent: 'Upload' },
-        ]}};
-    }
+    ]}});
 
     protected getViewerURL = () => 'product_viewer.html';
     protected getTableName = () => 'product';
 
-    protected getColumns = async () => {
-        return { columns: {
-            title: this.getEl(keys.title)?.textContent.trim() || '',
-            hook: this.getEl(keys.hook)?.textContent.trim() || '',
-            description: this.getEl(keys.desc)?.textContent.trim() || ''
-        }};
-    }
+    protected getColumns = async () => ({ columns: {
+        title: this.getEl(keys.title)?.textContent.trim() || '',
+        hook: this.getEl(keys.hook)?.textContent.trim() || '',
+        description: this.getEl(keys.desc)?.textContent.trim() || ''
+    }});
 
     protected locateElements = () => this.locate(
         { key: 'editor',    id: 'product-writer'            },
