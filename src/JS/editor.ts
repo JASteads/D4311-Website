@@ -1,3 +1,4 @@
+import type { Account } from "./account-manager";
 import { API_URL } from "./config";
 import { buildScripts } from "./page-builder";
 import { basicAdminAccessRequest } from "./permissions";
@@ -13,14 +14,14 @@ export abstract class Editor {
     }
 
     abstract setContent(...content: any): void;
-    protected abstract init(): void;
+    protected abstract init(user: Account): void;
     protected abstract locateElements(): void;
     protected abstract getTemplate(): any;
     protected abstract getTableName(): string;
     protected abstract getViewerURL(): string;
     protected abstract getColumns(): Promise<{ columns: Record<string, string> }>;
 
-    generateEditor = async () => {
+    generateEditor = async (user: Account) => {
         if (this.getContainer()) {
             console.warn('Editor already exists');
             return this.getContainer();
@@ -38,7 +39,7 @@ export abstract class Editor {
 
         // Hide editor while preparing contents
         editor.style.display = 'none';
-        await this.init();
+        await this.init(user);
         editor.style.display = defaultDisplay;
 
         return editor;
@@ -58,8 +59,8 @@ export abstract class Editor {
         items.forEach(i => this.elements.set(i.key, document.getElementById(i.id)));
     }
 
-    protected publish = async () => {
-        if (!await basicAdminAccessRequest()) {
+    protected publish = async (user: Account) => {
+        if (!await basicAdminAccessRequest(user)) {
             console.warn('Access denied');
             return;
         }
@@ -83,7 +84,8 @@ export abstract class Editor {
             const res = await fetch(`${API_URL}/api/${this.getTableName()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(await this.getPostBody())
+                body: JSON.stringify(await this.getPostBody()),
+                credentials: 'include'
             });
 
             if (!res.ok) throw new Error('Failed to create blog post');
@@ -102,7 +104,8 @@ export abstract class Editor {
             const res = await fetch(`${API_URL}/api/${this.getTableName()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(await this.getPutBody())
+                body: JSON.stringify(await this.getPutBody()),
+                credentials: 'include'
             });
 
             if (!res.ok) {

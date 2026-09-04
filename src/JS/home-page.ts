@@ -1,7 +1,6 @@
 import { showRecentBlogs } from './blog-viewer';
 import { buildComponents } from './components';
 
-
 document.addEventListener('DOMContentLoaded', async () => {
     const fabu = document.getElementById('fabu');
     if (fabu) {

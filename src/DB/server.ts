@@ -53,22 +53,22 @@ const startServer = () => {
 
 // =========== USER MANAGEMENT ROUTES ===========
 
-app.get('api/user', async (req, res) => {
+app.get('/api/me', async (req, res) => {
     try {
         const user = await requireUser(req, res);
 
         if (!user) {
-            res.status(401).json('No user is currently logged in');
+            res.json('No user is currently logged in');
             return;
         }
 
-        res.json({ alias: user.alias, email: user.email, type: user.type });
+        res.json({ username: user.username, alias: user.alias, email: user.email, type: user.type });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
 
-app.post('api/user', async (req, res) => {
+app.post('/api/user', async (req, res) => {
     try {
         const { username, password, alias, email } = req.body;
         const user = await getUser(username);
@@ -82,20 +82,31 @@ app.post('api/user', async (req, res) => {
         const result = await pool.query(
             `INSERT INTO users (username, password, alias, type, email)
                 VALUES ($1, $2, $3, 'standard', $4)
-                RETURNING *I
+                RETURNING *
         `, [username, hash, alias, email]);
+        const newUser = result.rows[0];
+
+        const session = await generateSession(newUser.username, true);
+        res.cookie(SESSION_COOKIE, session.rows[0].id, {
+            httpOnly: true,
+            secure: process.env.DEV_MODE === 'false',
+            sameSite: 'lax' as const,
+            path: '/',
+            maxAge: daysToMS(true)
+        });
+        
         res.json(result.rows[0]);
     } catch(e: any) {
         res.status(500).json({ error: e.message });
     }
 });
 
-app.post('api/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { username, password, remember } = req.body;
         const user = await getUser(username);
 
-        if (!(user && argon2.verify(password, user.password))) { 
+        if (!(user && argon2.verify(user.password, password))) { 
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
@@ -105,7 +116,7 @@ app.post('api/login', async (req, res) => {
 
         res.cookie(SESSION_COOKIE, session.rows[0].id, {
             httpOnly: true,
-            secure: process.env.DEV_MODE === 'false',
+            secure: process.env.DEV_MODE !== 'true',
             sameSite: 'lax' as const,
             path: '/',
             maxAge: daysToMS(remember)
@@ -116,7 +127,7 @@ app.post('api/login', async (req, res) => {
     }
 });
 
-app.post('api/logout', async (req, res) => {
+app.post('/api/logout', async (req, res) => {
     try {
         await removeItem('sessions', getSessionID(req));
         res.clearCookie(SESSION_COOKIE, {
@@ -132,8 +143,8 @@ app.post('api/logout', async (req, res) => {
 });
 
 // For simple access requests
-app.post('/api/admin_access', async (req, res) => {
-    return res.send(await requireUser(req, res, 'admin'));
+app.get('/api/admin_access', async (req, res) => {
+    return res.send(await requireUser(req, res, 'admin') !== null);
 });
 
 // =========== INJECTION ROUTES ===========
@@ -146,16 +157,17 @@ app.post('/api/admin_panel', async (req, res) => {
 });
 
 // TODO : Make this an addon for a general get_nav route that uses user info
-app.post('/api/get_admin_nav', async (req, res) => {
-    if (await requireUser(req, res, 'admin')) {
-        const panelButtonStr = ' <button id="admin-panel-button">Admin Panel</button>';
-        const portalButtonStr = ' <button id="admin-portal-button">Upload Portal</button>';
-        const html = panelButtonStr.concat(portalButtonStr);
+app.get('/api/get_admin_nav', async (req, res) => {
+    let html: string | null = null;
 
-        return res.send(html);
-    } else {
-        return res.send();
+    if (await requireUser(req, res, 'admin')) {
+        const panelButtonStr = '<button id="admin-panel-button">Admin Panel</button>';
+        const portalButtonStr = '<button id="admin-portal-button">Upload Portal</button>';
+        
+        html = `${panelButtonStr} ${portalButtonStr}`;   
     }
+
+    return res.send(html);
 });
 
 // =========== GENERAL ROUTES ===========
@@ -168,8 +180,8 @@ app.get('/api/redirect', async (req, res) => {
 
 app.post('/api/image', async (req, res) => {
     if (!await requireUser(req, res, 'admin')) {
-            res.status(403).json({ error: 'You must be an admin to perform this action' });
-            return;
+        res.status(403).json({ error: 'You must be an admin to perform this action' });
+        return;
     }
 
     const { type, isThumbnail } = req.query;
@@ -673,7 +685,11 @@ const parseCookie = (header: string | undefined) => {
 }
 
 const getUser = async (username: string): Promise<Record<string, string> | null> => {
-    const user = await pool.query(`SELECT username FROM users WHERE username = $1`, [username]);
+    const user = await pool.query(`
+        SELECT username, password, alias, email
+        FROM users
+        WHERE username = $1`, [username]
+    );
 
     return user && user.rows.length > 0 ? user.rows[0] : null;
 }
@@ -708,7 +724,7 @@ const requireUser = async (req: express.Request, res: ExpressResponse, accountTy
     if (!id) { return null; }
 
     const users = await pool.query(`
-        SELECT u.username, u.alias, u.account_type AS type, s.remember
+        SELECT u.username, u.alias, u.type AS type, u.email, s.remember
         FROM sessions s
         INNER JOIN users u
            ON u.username = s.username
@@ -806,10 +822,11 @@ const initialiazeDatabase = async () => {
         },
         { name: 'Sessions', sql:
             `CREATE TABLE IF NOT EXISTS sessions(
-                id INT PRIMARY KEY,
+                id TEXT PRIMARY KEY,
                 username TEXT,
                 created_at TIMESTAMPTZ,
                 expires_at TIMESTAMPTZ,
+                remember boolean,
                 FOREIGN KEY (username) REFERENCES users(username) ON DELETE SET DEFAULT
             );` // TIMESTAMPTZ considers timezone
         }

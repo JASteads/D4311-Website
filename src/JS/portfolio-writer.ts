@@ -1,5 +1,6 @@
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
+import type { Account } from "./account-manager";
 
 const keys = { 
     title: 'title', langapi: 'langAPI', project: 'project', date: 'date', desc: 'desc' 
@@ -8,11 +9,11 @@ const keys = {
 export class PortfolioWriter extends Editor {
     private uploader = new ImageUploader('portfolio', true);
 
-    constructor(isUpdate = false) {
+    constructor(user: Account, isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.getContainer()) { this.init(); }
+        if (this.getContainer()) { this.init(user); }
     }
 
     setContent(title: string, langAPIs: string, projectLink: string, date: string, desc: string) {
@@ -75,7 +76,7 @@ export class PortfolioWriter extends Editor {
         { key: keys.desc,    id: 'portfolio-description-field'  }
     );
 
-    protected init = () => {
+    protected init = (user: Account) => {
         const imagePreview = document.getElementById('portfolio-image-link-field');
         if (imagePreview) {
             const browseButton = document.getElementById('browse-button');
@@ -89,12 +90,12 @@ export class PortfolioWriter extends Editor {
                     return;
                 }
             } else {
-                const imgMsg = await this.uploader.upload(this.getID()) ? 
+                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
                     'Image uploaded successfully' : 'Image upload failed';
                 
                 alert(imgMsg);
             }
-            this.publish();
+            this.publish(user);
         });
     }
 }

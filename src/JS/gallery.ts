@@ -134,8 +134,7 @@ const generateImageCard = (item: GalleryItem) => {
 
 const getGalleryItems = async (category?: string) => {
     try {
-        const url = `${API_URL}/api/gallery${category ? `?category=${category}` : ''}`;
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}/api/gallery${category ? `?category=${category}` : ''}`);
 
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
@@ -193,7 +192,7 @@ const toggleUploadMenu = () => {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    buildComponents();
+    const user = await buildComponents();
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');
     if (emptyGalleryMessage) {
@@ -202,19 +201,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     gallerySelect = document.getElementById('gallery-select') as HTMLSelectElement;
     if (gallerySelect) {
-        gallerySelect.addEventListener('change', () => loadGallery(gallerySelect.value));
-        updateCategories();
+        gallerySelect.addEventListener('change', async () => await loadGallery(gallerySelect.value));
+        await updateCategories();
 
         // TODO : Replace this with server HTML injection
-        if (await basicAdminAccessRequest()) {
+        if (await basicAdminAccessRequest(user)) {
             const uploadText = document.createElement('span');
             uploadText.classList = 'upload-text';
             uploadText.textContent = 'Upload New Image';
 
             gallerySelect.insertAdjacentElement('afterend', uploadText);
-            editor = new GalleryEditor();
+            editor = new GalleryEditor(user);
 
-            const editorContainer = await editor.generateEditor();
+            const editorContainer = await editor.generateEditor(user);
             if (editorContainer) {
                 const closeButton = document.createElement('button');
                 closeButton.textContent = 'Close';
@@ -228,5 +227,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     toggleUploadMenu();
-    loadGallery();
+    await loadGallery();
 });

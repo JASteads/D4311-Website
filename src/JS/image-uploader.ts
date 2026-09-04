@@ -1,3 +1,4 @@
+import type { Account } from "./account-manager";
 import { API_URL } from "./config";
 import { basicAdminAccessRequest } from "./permissions";
 
@@ -61,8 +62,8 @@ export class ImageUploader {
         input.click();
     }
     
-    upload = async (id: number) => {
-        if (!await basicAdminAccessRequest()) {
+    upload = async (user: Account, id: number) => {
+        if (!await basicAdminAccessRequest(user)) {
             console.warn('Access denied');
             return false;
         }

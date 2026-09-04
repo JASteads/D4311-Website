@@ -42,7 +42,7 @@ const confirmDelete = async (tableName: string, item: any, deleteURL: string) =>
     try {
         const url = `${API_URL}/${deleteURL}/${item.id}`;
         alert(url);
-        const res = await fetch(url, { method: 'DELETE' });
+        const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         
         if (!res.ok) {
             throw new Error(`Error code: ${res.status}`);
@@ -136,11 +136,6 @@ const buildSections = async () => {
         return;
     }
 
-    if (!await basicAdminAccessRequest()) {
-        console.warn('Access denied');
-        return;
-    }
-
     const results = await Promise.allSettled([
         buildSection('api/products', {
             headerText: 'Products',
@@ -178,6 +173,13 @@ const buildSections = async () => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    buildComponents();
+    const user = await buildComponents();
+    console.log(user);
+
+    if (!await basicAdminAccessRequest(user)) {
+        console.warn('Access denied');
+        return;
+    }
+
     buildSections();
 });

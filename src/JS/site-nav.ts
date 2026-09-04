@@ -8,5 +8,5 @@ export const safeLink = async (url: string) => {
         return '';
     }
 
-    return (await result.json()).redirectTo;
+    return (await result.json()).redirectTo as string;
 }

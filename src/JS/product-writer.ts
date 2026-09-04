@@ -1,3 +1,4 @@
+import type { Account } from "./account-manager";
 import { Editor } from "./editor";
 import { ImageUploader } from "./image-uploader";
 
@@ -6,10 +7,10 @@ const keys = { title: 'title', desc: 'desc', hook: 'hook', splash: 'splash' } as
 export class ProductWriter extends Editor {
     private uploader = new ImageUploader('splash');
 
-    constructor(isUpdate = false) {
+    constructor(user: Account, isUpdate = false) {
         super(isUpdate);
         this.locateElements();
-        if (this.getContainer()) { this.init(); }
+        if (this.getContainer()) { this.init(user); }
     }
 
     setContent = (title: string, description: string, hook: string, splashArtLink: string) => {
@@ -52,7 +53,7 @@ export class ProductWriter extends Editor {
         { key: keys.splash, id: 'splash-name'               }
     );
 
-    protected init = () => {
+    protected init = (user: Account) => {
         const splashPreview = document.getElementById('splash-file');
         if (splashPreview) {
             const browseButton = document.getElementById('splash-button');
@@ -66,12 +67,12 @@ export class ProductWriter extends Editor {
                     return;
                 }
             } else {
-                const imgMsg = await this.uploader.upload(this.getID()) ? 
+                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
                     'Image uploaded successfully' : 'Image upload failed';
                 
                 alert(imgMsg);
             }
-            this.publish();
+            this.publish(user);
         });
     }
 }

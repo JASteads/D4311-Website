@@ -1,3 +1,4 @@
+import type { Account } from "./account-manager";
 import { API_URL } from "./config";
 import { Editor } from "./editor";
 import { GalleryItem } from "./gallery-item";
@@ -8,11 +9,11 @@ export class GalleryEditor extends Editor {
     private uploader = new ImageUploader('gallery', true);
     private categorySelect: HTMLSelectElement | null = null;
 
-    constructor(isUpdate = false) {
+    constructor(user: Account, isUpdate = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.getContainer()) { this.init(); }
+        if (this.getContainer()) { this.init(user); }
     }
 
     setContent(title: string, caption: string, gameID: number) {
@@ -59,7 +60,7 @@ export class GalleryEditor extends Editor {
         { key: 'select', id: 'category-select' }
     )
 
-    protected init = async () => {
+    protected init = async (user: Account) => {
         const uploadPreview = document.getElementById('upload-preview');
         if (uploadPreview) {
             const browseButton = document.getElementById('browse-button');
@@ -75,12 +76,12 @@ export class GalleryEditor extends Editor {
                     return;
                 }
             } else {
-                const imgMsg = await this.uploader.upload(this.getID()) ? 
+                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
                     'Image uploaded successfully' : 'Image upload failed';
                 
                 alert(imgMsg);
             }
-            this.publish();
+            this.publish(user);
         });
         await this.updateCategories();
     }

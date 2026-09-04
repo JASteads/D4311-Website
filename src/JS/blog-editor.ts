@@ -1,13 +1,14 @@
+import type { Account } from "./account-manager";
 import { Editor } from './editor';
 
 const keys = { body: 'body', content: 'content', placeholder: 'placeholder' } as const;
 
 export class BlogEditor extends Editor {
-    constructor(isUpdate: boolean = false) {
+    constructor(user: Account, isUpdate: boolean = false) {
         super(isUpdate);
         this.locateElements();
 
-        if (this.getContainer()) { this.init(); }
+        if (this.getContainer()) { this.init(user); }
     }
 
     setContent = (title: string, body: string) => {
@@ -49,7 +50,7 @@ export class BlogEditor extends Editor {
         { key: keys.placeholder, id: 'editor-placeholder' }
     );
     
-    protected init = () => {
+    protected init = (user: Account) => {
         const body = this.getEl(keys.body);
         if (body) {
             body.addEventListener('click', () => body.focus());
@@ -71,7 +72,7 @@ export class BlogEditor extends Editor {
         this.assignLabel('size', document.getElementById('size-button'));
 
         const publishButton = document.getElementById('publish-button');
-        publishButton?.addEventListener('click', this.publish);
+        publishButton?.addEventListener('click', () => this.publish(user));
     }
 
     // =================== EDITOR-SPECIFIC FUNCTIONS ===================
