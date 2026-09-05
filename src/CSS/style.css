@@ -68,7 +68,9 @@ body {
     right: 0;
 }
 
-.dropdown button {
+.dropdown a {
+    text-decoration: none;
+    text-align: center;
     font-family: "Courier", system-ui, sans-serif;
     font-size: 1em;
     color: white;
@@ -79,7 +81,7 @@ body {
     transition: 0.1s background-color ease;
 }
 
-.dropdown button:hover {
+.dropdown a:hover {
     background-color: rgba(100, 255, 100, 0.2);
 }
 

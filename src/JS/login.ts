@@ -38,7 +38,6 @@ const tryLogin = async (username?: string, password?: string) => {
     } catch (e: any) {
         console.error('Login error:', e);
     }
-    
 }
 
 const tryRegister = async () => {
@@ -71,13 +70,12 @@ const tryRegister = async () => {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const signInID = 'sign-in';
-    const signUpID = 'sign-up';
-
     const signInToggle = document.getElementById('sign-in-toggle');
     const signUpToggle = document.getElementById('sign-up-toggle');
 
     if (signInToggle && signUpToggle) {
+        const [signInID, signUpID] = ['sign-in' ,'sign-up'];
+
         signInToggle.dataset.active = 'true';
         signUpToggle.dataset.active = 'false';
 
@@ -92,11 +90,31 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     }
 
+    const editables = document.querySelectorAll('div[contenteditable="true"]');
+    for (const value of editables.values()) {
+        value.setAttribute('spellcheck', 'false');
+        value.addEventListener('input', (e) => {
+            const div = value as HTMLDivElement;
+            
+            const input = e as InputEvent;
+            if (input.inputType === 'insertParagraph' || input.inputType === 'insertLineBreak') {
+                div.innerText = div.textContent; // Removes all newlines
+
+                // Create the illusion that pressing 'Enter' does nothing
+                const range = window.getSelection()?.getRangeAt(0);
+                if (!range) { return; }
+
+                range.setStart(range.commonAncestorContainer, div.textContent.length);
+                range.collapse(true);
+            }
+        });
+    }
+
     const signInButton = document.getElementById('sign-in-button');
-    signInButton?.addEventListener('click', () => tryLogin());
+    signInButton?.addEventListener('click', async () => await tryLogin());
 
     const registerButton = document.getElementById('register-button');
-    registerButton?.addEventListener('click', tryRegister);
+    registerButton?.addEventListener('click', async () => await tryRegister());
 
     buildComponents();
 })

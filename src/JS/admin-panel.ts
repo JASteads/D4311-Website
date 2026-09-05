@@ -173,13 +173,23 @@ const buildSections = async () => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await buildComponents();
-    console.log(user);
-
-    if (!await basicAdminAccessRequest(user)) {
-        console.warn('Access denied');
+    const main = document.getElementsByTagName('main')[0];
+    if (!main) {
+        console.error('No main');
         return;
     }
 
-    buildSections();
+    main.style.display = 'none';
+    
+    const user = await buildComponents();
+
+    if (!await basicAdminAccessRequest(user)) {
+        console.warn('Access denied');
+        window.location.href = await safeLink('load_fail.html');
+        return;
+    }
+
+    await buildSections();
+
+    main.style.display = 'block';
 });

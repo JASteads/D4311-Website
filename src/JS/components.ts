@@ -1,5 +1,6 @@
 import { Account } from "./account-manager.ts";
 import { API_URL } from "./config";
+import { safeLink } from "./site-nav.ts";
 
 class NavItem {
     name: string;
@@ -85,10 +86,10 @@ const createDropdown = (...childNodes: HTMLElement[]) => {
 const getNavSections = () => {
     return {
         middle: [
-            { name: 'News',   link: 'news'},
-            { name: 'Library', link: 'library'},
+            { name: 'News',   link: 'news' },
+            { name: 'Library', link: 'library' },
             { name: 'Gallery', link: 'gallery' },
-            { name: 'Portfolio', link: 'portfolio'}
+            { name: 'Portfolio', link: 'portfolio' }
         ],
         right: []
     };
@@ -125,10 +126,10 @@ const tryAdminNodes = async () => {
             document.body.insertAdjacentHTML('beforeend', dropDownHTML);
 
             const prepareAdminButton = async (id: string, url: string) => {
-                const button = document.getElementById(id);
+                const button = document.getElementById(id) as HTMLAnchorElement;
 
-                button?.addEventListener('click', () => window.location.href = url);
-
+                if (button) { button.href = url; }
+                
                 return button;
             }
 
@@ -138,7 +139,7 @@ const tryAdminNodes = async () => {
             ]);
 
             nodes.push(
-                createNavButton({ name: 'Admin', link: '#' }), 
+                createNavButton({ name: 'Admin', link: 'admin_panel' }), 
                 createDropdown(...adminNodes.filter(b => !(!b)))
             );
         }
@@ -169,15 +170,37 @@ const createNavigation = async (user: Account) => {
 
     /* ================= MANUAL NODE GROUP HANDLING ================= */
 
-    const createAccountDropdown = () => {
+    const createAccountDropdown = async () => {
         const username = document.createElement('span');
+        username.textContent = `Welcome, ${user.alias}!`;
+        username.style.textAlign = 'center';
+
         const icon = document.createElement('img');
+        icon.style.maxWidth = '120px';
+        icon.style.height = '120px';
+        icon.style.margin = 'auto';
+        icon.src = './Resources/Images/perhaps.png';
 
         const accountInfo = document.createElement('div');
+        accountInfo.style.display = 'flex';
+        accountInfo.style.flexDirection = 'column';
         accountInfo.append(username, icon);
 
-        const accountSettings = document.createElement('span');
-        const logout = document.createElement('span');
+        const accountSettings = document.createElement('a');
+        accountSettings.textContent = 'Settings';
+
+        const logout = document.createElement('a');
+        logout.textContent = 'Log Out';
+        logout.addEventListener('click', async () => { 
+           const result = await fetch(`${API_URL}/api/login`, { method: 'DELETE', credentials: 'include' });
+           
+           if (!result.ok) { 
+                console.error('Logout failed:', await result.json());
+                return;
+            }
+
+           window.location.href = await safeLink('index.html');
+        });
 
         return createDropdown(accountInfo, accountSettings, logout);
     }
@@ -185,7 +208,7 @@ const createNavigation = async (user: Account) => {
     const { name, link } = user.isEmpty() ? { name: 'Log In', link: 'login' } : { name: user.alias, link: '#' };
     const accountNodes: HTMLElement[] = [createNavButton(new NavItem(name, link))];
     if (!user.isEmpty()) {
-        accountNodes.push(createAccountDropdown());
+        accountNodes.push(await createAccountDropdown());
     }
     
     const rightGroups = {
@@ -196,9 +219,7 @@ const createNavigation = async (user: Account) => {
 
     if (rightGroups.adminNodes.length > 0) {
         const adminContainer = createButtonContainer(rightGroups.adminNodes);
-        if (adminContainer) {
-            rightContainers.push(adminContainer);
-        }
+        if (adminContainer) { rightContainers.push(adminContainer); }
     }
 
     sectionRight.append(...rightContainers.filter(n => !(!n)));

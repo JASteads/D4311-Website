@@ -45,9 +45,7 @@ const onDatabaseConnect = async () => {
 }
 
 // Connect once when server starts
-const startServer = () => {
-    onDatabaseConnect();
-};
+const startServer = () => onDatabaseConnect();
 
 // === API Routes ===
 
@@ -127,7 +125,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-app.post('/api/logout', async (req, res) => {
+app.delete('/api/login', async (req, res) => {
     try {
         await removeItem('sessions', getSessionID(req));
         res.clearCookie(SESSION_COOKIE, {
@@ -161,8 +159,8 @@ app.get('/api/get_admin_nav', async (req, res) => {
     let html: string | null = null;
 
     if (await requireUser(req, res, 'admin')) {
-        const panelButtonStr = '<button id="admin-panel-button">Admin Panel</button>';
-        const portalButtonStr = '<button id="admin-portal-button">Upload Portal</button>';
+        const panelButtonStr = '<a id="admin-panel-button">Admin Panel</a>';
+        const portalButtonStr = '<a id="admin-portal-button">Upload Portal</a>';
         
         html = `${panelButtonStr} ${portalButtonStr}`;   
     }
