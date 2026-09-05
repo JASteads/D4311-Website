@@ -1,55 +1,43 @@
 import { buildComponents } from "./components.ts";
-import { GalleryUploader } from "./gallery-uploader.ts";
+import { GalleryEditor } from "./gallery-editor.ts";
 import { PortfolioWriter } from "./portfolio-writer.ts";
 import { ProductWriter } from "./product-writer.ts";
 import { BlogEditor } from "./blog-editor.ts";
+import { basicAdminAccessRequest } from "./permissions.ts";
+import { safeLink } from "./site-nav.ts";
 
-const inputs: HTMLInputElement[] = [];
-let containers: Record<string, HTMLElement | null>;
-
-// TODO : Modularize image browsing feature from GalleryUploader
-//        so multiple upload tools can upload images
- 
-const selectEditor = () => {
-    const selected = inputs.find(i => i?.checked === true)?.value;
-
-    if (!selected) {
-        console.error("No valid input selected");
+document.addEventListener("DOMContentLoaded", async () => {
+    const details = document.getElementById('submission-details');
+    const main = document.getElementById('main-upload');
+    if (!(details && main)) { 
+        console.error('No main or submission details on page');
         return;
     }
 
-    for (let key in containers) {
-        if (containers[key]) {
-            containers[key].style.display = (key === selected) ? 'block' : 'none';
-        }
-    }
-}
+    details.style.display = 'none';
+    main.style.display = 'none';
 
-document.addEventListener("DOMContentLoaded", () => {
-    buildComponents();
-    new GalleryUploader(true);
-    new BlogEditor();
-    new PortfolioWriter();
-    new ProductWriter();
-
-    containers = {
-        'product-writer': document.getElementById('product-writer'),
-        'gallery-uploader': document.getElementById('gallery-uploader'),
-        'blog-editor': document.getElementById('blog-editor'),
-        'portfolio-writer': document.getElementById('portfolio-writer')
-    };
-    
-    for (let key in containers) {
-        if (containers[key]) {
-            containers[key].style.display = 'none';
-        }
+    const user = await buildComponents();
+    if (!await basicAdminAccessRequest(user)) {
+        window.location.href = await safeLink('load_fail.html');
+        return; // Get yeeted
     }
 
-    inputs.push(document.getElementById('product-input') as HTMLInputElement);
-    inputs.push(document.getElementById('image-input') as HTMLInputElement);
-    inputs.push(document.getElementById('blog-input') as HTMLInputElement);
-    inputs.push(document.getElementById('portfolio-input') as HTMLInputElement);
+    // Find and hide all editor containers
+    const items = [
+        { input: document.getElementById('product-input'),   container: new ProductWriter(user).getContainer() },
+        { input: document.getElementById('image-input'),     container: new GalleryEditor(user).getContainer() },
+        { input: document.getElementById('blog-input'),      container: new BlogEditor(user).getContainer() },
+        { input: document.getElementById('portfolio-input'), container: new PortfolioWriter(user).getContainer() }
+    ].filter((i): i is { input: HTMLInputElement; container: HTMLElement } => 
+        i.input instanceof HTMLInputElement && i.container instanceof HTMLElement);
+    items.forEach(i => i.container.style.display = 'none');
 
     const chooseButton = document.getElementById('choose-button') as HTMLButtonElement;
-    chooseButton?.addEventListener('click', selectEditor);
+    chooseButton?.addEventListener('click', () => 
+        items.forEach(i => i.container.style.display = i.input.checked ? 'block' : 'none')
+    );
+    
+    details.style.display = 'block';
+    main.style.display = 'flex';
 });

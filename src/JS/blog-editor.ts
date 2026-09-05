@@ -1,18 +1,81 @@
-import { API_URL } from './config';
-import { basicAdminAccessRequest } from './permissions';
+import type { Account } from "./account-manager";
+import { Editor } from './editor';
 
-export class BlogEditor {
-    private editorBody: HTMLElement | null;
-    private editorContent: HTMLElement | null;
-    private editorPlaceholder: HTMLElement | null;
+const keys = { body: 'body', content: 'content', placeholder: 'placeholder' } as const;
 
-    constructor() {
-        this.editorBody = document.getElementById('editor-body');
-        this.editorContent = document.getElementById('editor-content');
-        this.editorPlaceholder = document.getElementById('editor-placeholder');
-        
-        this.initializeEditor();
+export class BlogEditor extends Editor {
+    constructor(user: Account, isUpdate: boolean = false) {
+        super(isUpdate);
+        this.locateElements();
+
+        if (this.getContainer()) { this.init(user); }
     }
+
+    setContent = (title: string, body: string) => {
+        this.setText(document.getElementById('blog-title'), title);
+        this.setText(this.getEl(keys.content), body);
+    }
+
+    protected getTemplate = () => ({
+        'blog-editor': { tag: 'div', classList: 'blog-editor', children: [
+            { tag: 'span', id: 'title-label', classList: 'title-label', textContent: 'Title' },
+            { tag: 'div', id: 'blog-title', classList: 'blog-title', edit: true },
+            { tag: 'div', id: 'buttons', children: [
+                { tag: 'button', id: 'bold-button', textContent: 'Bold' },
+                { tag: 'button', id: 'em-button', textContent: 'Italics' },
+                { tag: 'button', id: 'u-button', textContent: 'Underline' },
+                { tag: 'button', id: 'url-button', textContent: 'URL' },
+                { tag: 'button', id: 'image-button', textContent: 'Image' },
+                { tag: 'button', id: 'size-button', textContent: 'Size' },
+            ]},
+            { tag: 'div', id: 'editor-body', classList: 'blog-editor-body', children: [
+                { tag: 'span', id: 'editor-content', classList: 'blog-editor-content', edit: true },
+                { tag: 'span', id: 'editor-placeholder', classList: 'blog-editor-placeholder' }
+            ]},
+            { tag: 'button', id: 'publish-button', textContent: 'Update' }
+    ]}});
+
+    protected getViewerURL = () => 'blog_viewer.html';
+    protected getTableName = () => 'blog';
+
+    protected getColumns = async () => ({ columns: {
+        title: document.getElementById('blog-title')?.textContent.trim() || 'Untitled', 
+        body: document.getElementById('editor-content')?.textContent.trim() || ''
+    }});
+
+    protected locateElements = () => this.locate(
+        { key: 'editor',         id: 'blog-editor'        },
+        { key: keys.body,        id: 'editor-body'        },
+        { key: keys.content,     id: 'editor-content'     },
+        { key: keys.placeholder, id: 'editor-placeholder' }
+    );
+    
+    protected init = (user: Account) => {
+        const body = this.getEl(keys.body);
+        if (body) {
+            body.addEventListener('click', () => body.focus());
+            body.addEventListener('input', this.updatePlaceholder);
+            body.addEventListener('keyup', this.updatePlaceholder);
+            body.addEventListener('focus', this.updatePlaceholder);
+            body.addEventListener('blur', this.updatePlaceholder);
+            body.addEventListener('paste', (e: ClipboardEvent) => this.fixPaste(e));
+        }
+
+        this.updatePlaceholder();
+
+        // Initialize formatting tools
+        this.assignLabel('b', document.getElementById('bold-button'));
+        this.assignLabel('i', document.getElementById('em-button'));
+        this.assignLabel('u', document.getElementById('u-button'));
+        this.assignLabel('url', document.getElementById('url-button'));
+        this.assignLabel('img', document.getElementById('image-button'));
+        this.assignLabel('size', document.getElementById('size-button'));
+
+        const publishButton = document.getElementById('publish-button');
+        publishButton?.addEventListener('click', () => this.publish(user));
+    }
+
+    // =================== EDITOR-SPECIFIC FUNCTIONS ===================
 
     /**
      * Gives the target button the ability to augment text.
@@ -24,9 +87,7 @@ export class BlogEditor {
             const selection = window.getSelection();
 
             // Make sure only the text editor is being modified
-            if (!selection || !this.editorBody?.contains(selection.anchorNode)) return;
-
-            console.log('Selection area found');
+            if (!selection || !this.getEl(keys.body)?.contains(selection.anchorNode)) return;
             
             // Properties setup
             const range = selection.getRangeAt(0);
@@ -51,59 +112,12 @@ export class BlogEditor {
         button.addEventListener('click', () => activateLabelButton(type));
     }
 
-    /**
-     * Creates a blog post record for the database.
-     */
-    private postBlog = async (title: string, author: string, bodyText: string) => {
-        const newBlog = { title, author, bodyText };
-    
-        try {
-            const res = await fetch(`${API_URL}/api/blog`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newBlog)
-            });
-
-            if (!res.ok) throw new Error('Failed to create blog post');
-
-            const blogResult = await res.json();
-            alert('Added: ' + blogResult.title);
-        } catch (e) {
-            console.error('Failed to add:', e);
-        }
-    };
-
-    public publishBlog = async () => {
-        if (await basicAdminAccessRequest() === 'false') {
-            console.warn('Access denied');
-            return;
-        }
-        
-        const placeholderAuthor = 'Lemon'; // Replace later with local storage
-        const titleElement = document.getElementById('blog-title');
-        const bodyElement = document.getElementById('blog-body');
-
-        if (!titleElement || !bodyElement) {
-            console.error('Blog title or body element not found');
-            return;
-        }
-
-        const title = titleElement.textContent.trim();
-        const body = bodyElement.textContent.trim();
-        
-        if (!title) {
-            alert('You need a title for your blog post.');
-            return;
-        }
-
-        await this.postBlog(title, placeholderAuthor, body);
-    }
-
     private updatePlaceholder = () => {
-        const isEmpty = this.editorContent?.textContent.trim() === '';
+        const isEmpty = this.getEl(keys.body)?.textContent.trim() === '';
+        const placeholder = this.getEl(keys.placeholder);
 
-        if (this.editorPlaceholder) {
-            this.editorPlaceholder.style.display = isEmpty ? 'inline' : 'none';
+        if (placeholder) {
+            placeholder.style.display = isEmpty ? 'inline' : 'none';
         }
     }
 
@@ -119,7 +133,7 @@ export class BlogEditor {
 
         const range = selection.getRangeAt(0);
 
-        if (!range || !this.editorContent?.contains(range.commonAncestorContainer)) return;
+        if (!range || !this.getEl(keys.content)?.contains(range.commonAncestorContainer)) return;
 
         const plainText = e.clipboardData.getData('text/plain');
         const textNode = document.createTextNode(plainText);
@@ -133,52 +147,5 @@ export class BlogEditor {
         selection.addRange(range);
 
         this.updatePlaceholder();
-    }
-
-    private initializeEditor = () => {
-        const publishButton = document.getElementById('publish-button');
-        
-        // Initialize editor body
-        if (this.editorBody) {
-            this.editorBody.addEventListener('click', () => this.editorContent?.focus());
-            this.editorBody.addEventListener('input', this.updatePlaceholder);
-            this.editorBody.addEventListener('keyup', this.updatePlaceholder);
-            this.editorBody.addEventListener('focus', this.updatePlaceholder);
-            this.editorBody.addEventListener('blur', this.updatePlaceholder);
-            this.editorBody.addEventListener('paste', (e: ClipboardEvent) => this.fixPaste(e));
-        }
-
-        this.updatePlaceholder();
-
-        // Initialize formatting tools
-        this.assignLabel('b', document.getElementById('bold-button'));
-        this.assignLabel('i', document.getElementById('em-button'));
-        this.assignLabel('u', document.getElementById('u-button'));
-        this.assignLabel('url', document.getElementById('url-button'));
-        this.assignLabel('img', document.getElementById('image-button'));
-        this.assignLabel('size', document.getElementById('size-button'));
-
-        publishButton?.addEventListener('click', this.publishBlog);
-    }
-
-    private deleteBlog = async (blogId: string) => {
-        try {
-            const res = await fetch(`${API_URL}/api/blog/${blogId}`, {
-                method: 'DELETE'
-            });
-
-            if (!res.ok) throw new Error('Failed to delete blog post');
-
-            alert('Deleted blog post with ID: ' + blogId);
-        } 
-        catch (e) {
-            console.error('Failed to delete:', e);
-        }
-    }
-    
-    private confirmDelete = (blogId: string) => {
-        if (confirm('Are you sure you want to delete this blog post?')) {
-            this.deleteBlog(blogId);
-        }
     }
 }

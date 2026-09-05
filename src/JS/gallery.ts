@@ -1,7 +1,8 @@
 import { buildComponents } from "./components.ts";
 import { API_URL } from "./config.ts";
-import { GalleryUploader } from "./gallery-uploader.ts";
-import { GalleryItem } from "./gallery-item.ts";
+import { GalleryEditor } from "./gallery-editor.ts";
+import type { GalleryItem } from "./gallery-item.ts";
+import { basicAdminAccessRequest } from "./permissions.ts";
 
 class Section {
     section: HTMLElement;
@@ -21,7 +22,7 @@ let categories: string[];
 
 let gallerySelect: HTMLSelectElement;
 let emptyGalleryMessage: HTMLElement | null;
-let uploader: GalleryUploader;
+let editor: GalleryEditor;
 
 // =================== GALLERY LOADING ===================
 
@@ -63,13 +64,10 @@ const loadGallery = async (category?: string) => {
     galleryItems.forEach((i: GalleryItem) => {
         const { category, element } = generateImageCard(i);
 
-        if (!cardMap.has(category)) {
-            cardMap.set(category, []);
-        }
+        if (!cardMap.has(category)) { cardMap.set(category, []); }
 
         cardMap.get(category)?.push(element);
     });
-    console.log(cardMap);
 
     // Create and populate sections with the new cards
     cardMap.forEach((section, category) => {
@@ -79,14 +77,13 @@ const loadGallery = async (category?: string) => {
 
         sections[category].container.append(...section);
     });
-    console.log(sections);
 
     for (let category in sections) {
         galleryGrid.appendChild(sections[category].section);
     }
 }
 
-const generateCardSection = (categoryName: string): Section => {
+const generateCardSection = (categoryName: string) => {
     const section = document.createElement('section');
     section.className = 'card-section';
     
@@ -114,37 +111,30 @@ const emptyGallery = () => {
 
 // Does not use caption or date yet. This is intended for when full images are rendered on top of the page.
 const generateImageCard = (item: GalleryItem) => {
-    console.log('Generating image card for', item.title);
     const galleryLocation = 'Resources/Images/Gallery/';
-
-    const cardElement = document.createElement('div');
-    cardElement.className = 'gallery-card';
-
-    const image_link = document.createElement('a');
-    image_link.href = galleryLocation.concat(item.image_link);
-    image_link.target = '_blank';
-    cardElement.appendChild(image_link);
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'card-thumbnail';
-    thumbnail.src = galleryLocation.concat(item.thumbnail_link);
+    thumbnail.src = `${galleryLocation}preview_gallery_${item.id}.png`;
     thumbnail.alt = item.title;
     thumbnail.loading = 'lazy';
     thumbnail.decoding = 'async';
-    image_link.appendChild(thumbnail);
+    
+    const imageLink = document.createElement('a');
+    imageLink.href = `${galleryLocation}gallery_${item.id}.png`;
+    imageLink.target = '_blank';
+    imageLink.appendChild(thumbnail);
+
+    const cardElement = document.createElement('div');
+    cardElement.className = 'gallery-card';
+    cardElement.appendChild(imageLink);
 
     return { category: item.category, element: cardElement };
 }
 
-const getGalleryItems = async (category?: string): Promise<any[]> => {
+const getGalleryItems = async (category?: string) => {
     try {
-        let url = `${API_URL}/api/gallery`;
-        if (category) {
-            url += `?category=${category}`;
-        }
-        console.log(url);
-
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}/api/gallery${category ? `?category=${category}` : ''}`);
 
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
@@ -160,10 +150,10 @@ const getGalleryItems = async (category?: string): Promise<any[]> => {
 // =================== SETUP ===================
 
 // Special version of the GalleryUploader updateCategories() for efficiency
-const updateCategories = async (uploader: GalleryUploader) => {
+const updateCategories = async () => {
     // Disable filters until prepared
     gallerySelect.disabled = true; 
-    uploader.setSelectDisabled(true);
+    editor?.setSelectDisabled(true);
 
     try {
         const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
@@ -181,50 +171,28 @@ const updateCategories = async (uploader: GalleryUploader) => {
             nextOptGallery.textContent = c;
 
             gallerySelect.add(nextOptGallery);
-
-            uploader.addCategory(c);
         });
 
         // Re-enable filters only on success
         gallerySelect.disabled = false;
-        uploader.setSelectDisabled(false);
-
-        console.log("Categories updated");
-    } catch (e) {
+        editor?.setSelectDisabled(false);
+    } catch (e: any) {
         console.error(e);
     }
 }
 
-const setUploadMenuVisibility = (isVisible: boolean) => {
-    const uploadContainer = document.getElementById('upload-container');
-
-    if (!uploadContainer) {
-        console.error('No upload menu connected to this button');
-        return;
-    }
+const toggleUploadMenu = () => {
+    if (!editor) { return; }
     
-    // Allow initial toggle button to also close the container if already open
-    if (isVisible && uploadContainer.style.display === 'none') {
-        uploadContainer.style.display = 'block';
-    } else {
-        uploadContainer.style.display = 'none';
+    const container = editor.getContainer();
 
-        // Reset the preview text
-        const preview = document.getElementById('upload-preview');
-        if (!preview) {
-            console.error("Preview is missing");
-        } else {
-            preview.textContent = "File Name..";
-        }
-
-        // Remove the pending upload so we can start over
-        uploader.clearPendingUpload();
-    }
+    if (!container) { return; }
+    
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    buildComponents();
-    uploader = new GalleryUploader(false);
+document.addEventListener("DOMContentLoaded", async () => {
+    const user = await buildComponents();
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');
     if (emptyGalleryMessage) {
@@ -233,16 +201,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gallerySelect = document.getElementById('gallery-select') as HTMLSelectElement;
     if (gallerySelect) {
-        gallerySelect.addEventListener('change', () => loadGallery(gallerySelect.value));
-        updateCategories(uploader);
+        gallerySelect.addEventListener('change', async () => await loadGallery(gallerySelect.value));
+        await updateCategories();
+
+        // TODO : Replace this with server HTML injection
+        if (await basicAdminAccessRequest(user)) {
+            const uploadText = document.createElement('span');
+            uploadText.classList = 'upload-text';
+            uploadText.textContent = 'Upload New Image';
+
+            gallerySelect.insertAdjacentElement('afterend', uploadText);
+            editor = new GalleryEditor(user);
+
+            const editorContainer = await editor.generateEditor(user);
+            if (editorContainer) {
+                const closeButton = document.createElement('button');
+                closeButton.textContent = 'Close';
+                closeButton.addEventListener('click', toggleUploadMenu);
+
+                uploadText.insertAdjacentElement('afterend', editorContainer);
+                editorContainer.appendChild(closeButton);
+            }
+            uploadText.addEventListener('click', toggleUploadMenu);
+        }
     }
 
-    const openUploadButton = document.getElementById('upload-text');
-    openUploadButton?.addEventListener('click', () => setUploadMenuVisibility(true));
-
-    const closeUploadButton = document.getElementById('close-button');
-    closeUploadButton?.addEventListener('click', () => setUploadMenuVisibility(false));
-
-    setUploadMenuVisibility(false);
-    loadGallery();
+    toggleUploadMenu();
+    await loadGallery();
 });

@@ -2,27 +2,25 @@ import { buildComponents } from "./components";
 import { API_URL } from "./config";
 
 class PortfolioItem {
+    id: number;
     title: string;
-    type: string;
     lang_api: string;
     date: string;
     description: string
-    image_link: string;
     project_link: string;
 
-    constructor(title: string, type: string, lang_api: string, date: string,
-         description: string, image_link: string, project_link: string) {
+    constructor(id: number, title: string, lang_api: string, date: string,
+        description: string, project_link: string) {
+        this.id = id;
         this.title = title;
-        this.type = type;
         this.lang_api = lang_api;
         this.date = date;
         this.description = description;
-        this.image_link = image_link;
         this.project_link = project_link;
     }
 }
 
-const getPortfolioItems = async (): Promise<any[]> => {
+const getPortfolioItems = async () => {
     try {
         const res = await fetch(`${API_URL}/api/portfolio`);
 
@@ -39,16 +37,13 @@ const getPortfolioItems = async (): Promise<any[]> => {
 }
 
 const loadPorfolio = async () => {
-    const portfolioItems = await getPortfolioItems();
+    const portfolioItems = (await getPortfolioItems()).reverse(); // Most recent first
     if (!portfolioItems || portfolioItems.length === 0) {
         console.error("No portfolio items found.");
         return;
     }
 
-    portfolioItems.reverse(); // Most recent first
-    portfolioItems.forEach((i: PortfolioItem) => {
-        generatePortfolioItem(i);
-    });
+    portfolioItems.forEach((i: any) => generatePortfolioItem(i));
 }
 
 const generatePortfolioItem = (item: PortfolioItem) => {
@@ -78,19 +73,18 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     description.className = 'project-description';
     description.innerText = item.description;
 
-    const imgLinkURL = `Resources/Portfolio/References/${item.image_link}`;
+    const root = `Resources/Images/Portfolio`;
 
-    const image_link = document.createElement('a');
-    image_link.href = imgLinkURL;
-    image_link.target = '_blank';
-
-    const image = document.createElement('img');
-    image.className = 'project-image';
-    image.src = imgLinkURL;
-    image.alt = item.title;
-    image.style.maxWidth = '250px';
-
-    image_link.appendChild(image);
+    const thumbnail = document.createElement('img');
+    thumbnail.className = 'project-image';
+    thumbnail.src = `${root}/preview_portfolio_${item.id}.png`;
+    thumbnail.alt = item.title;
+    thumbnail.style.maxWidth = '250px';
+    
+    const imageLink = document.createElement('a');
+    imageLink.href = `${root}/porfolio_${item.id}.png`;
+    imageLink.target = '_blank';
+    imageLink.appendChild(thumbnail);
 
     const link = document.createElement('a');
     link.className = 'project-link';
@@ -98,13 +92,11 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     link.target = '_blank';
     link.innerText = 'View Project';
 
-    projectItem.append(title, date, lang_api, description, image_link, link);
+    projectItem.append(title, date, lang_api, description, imageLink, link);
     projectList.appendChild(projectItem);
 }
 
-const initPortfolio = () => {
+document.addEventListener('DOMContentLoaded', () => {
     buildComponents();
-    loadPorfolio();
-}
-
-document.addEventListener('DOMContentLoaded', () => initPortfolio());
+    loadPorfolio();    
+});

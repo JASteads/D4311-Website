@@ -1,17 +1,18 @@
 import { API_URL } from "./config";
 import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
+import { safeLink } from "./site-nav";
 
 class FillConfig {
     headerText: string;
     viewLink: string;
-    editLink: string;
-    deleteURL : string
+    editor: string;
+    deleteURL: string;
 
-    constructor(headerText: string, viewLink: string, editLink: string, deleteURL: string) {
+    constructor(headerText: string, viewLink: string, editor: string, deleteURL: string) {
         this.headerText = headerText;
         this.viewLink = viewLink;
-        this.editLink = editLink;
+        this.editor = editor;
         this.deleteURL = deleteURL;
     }
 }
@@ -35,21 +36,21 @@ const getTableItems = async (url: string) => {
 
 const confirmDelete = async (tableName: string, item: any, deleteURL: string) => {
     if (!confirm(`Delete ${item.name} from ${tableName}?`)) {
-        return;   
+        return;
     }
 
     try {
-        const res = await fetch(deleteURL, {
-            method: 'POST',
-            body: JSON.stringify({ id: item.id }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-
+        const url = `${API_URL}/${deleteURL}/${item.id}`;
+        alert(url);
+        const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
+        
         if (!res.ok) {
             throw new Error(`Error code: ${res.status}`);
         }
+
+        window.location.reload();
     } catch (e) {
-        console.error(`Failed to delete ${item}:`, e);
+        alert(`Failed to delete ${item.name}: ${e}`);
     }
 }
 
@@ -62,7 +63,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
     const section = document.createElement('section');
 
-    const generateListItem = (item: any) => {
+    const generateListItem = async (item: any) => {
         const title = document.createElement('p');
         title.textContent = item.title;
 
@@ -88,15 +89,20 @@ const buildSection = async (url: string, config: FillConfig) => {
         const options = document.createElement('div');
         options.className = 'options';
 
-        const { headerText, viewLink, editLink, deleteURL } = config;
+        const { headerText, viewLink, editor, deleteURL } = config;
+        item['editor'] = editor;
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
-        viewHyperlink.href = viewLink;
+        viewHyperlink.href = await safeLink(`${viewLink}?id=${item.id}`);
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
-        editHyperlink.href = editLink;
+        editHyperlink.href = await safeLink('admin_editor.html');
+        editHyperlink.addEventListener('click', async () => {
+            sessionStorage.setItem('edit-item', JSON.stringify(item));
+            editHyperlink.click();
+        });
 
         const deleteHyperlink = document.createElement('a');
         deleteHyperlink.textContent = 'Delete';
@@ -111,7 +117,7 @@ const buildSection = async (url: string, config: FillConfig) => {
         return listItem;
     }
 
-    const listElements = items.map(i => generateListItem(i));
+    const listElements = await Promise.all(items.map(i => generateListItem(i)));
     const list = document.createElement('ul');
     list.append(...listElements);
 
@@ -130,38 +136,30 @@ const buildSections = async () => {
         return;
     }
 
-    if (await basicAdminAccessRequest() === 'false') {
-        console.warn('Access denied');
-        return;
-    }
-
     const results = await Promise.allSettled([
         buildSection('api/products', {
             headerText: 'Products',
-            viewLink: '#',
-            editLink: '#',
-            deleteURL: '#'
+            viewLink: 'product_viewer.html',
+            editor: 'library',
+            deleteURL: 'api/product'
         }),
-
         buildSection('api/gallery', {
             headerText: 'Gallery',
-            viewLink: '#',
-            editLink: '#',
-            deleteURL: '#'
+            viewLink: 'gallery.html',
+            editor: 'gallery',
+            deleteURL: 'api/gallery'
         }),
-
         buildSection('api/portfolio', {
             headerText: 'Portfolio Items',
-            viewLink: '#',
-            editLink: '#',
-            deleteURL: '#'
+            viewLink: 'portfolio.html',
+            editor: 'portfolio',
+            deleteURL: 'api/portfolio'
         }),
-
         buildSection('api/blogs', {
             headerText: 'Blog Posts',
-            viewLink: '#',
-            editLink: '#',
-            deleteURL: '#'
+            viewLink: 'blog_viewer.html',
+            editor: 'blog',
+            deleteURL: 'api/blog'
         })
     ]);
 
@@ -175,6 +173,23 @@ const buildSections = async () => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    buildComponents();
-    buildSections();
+    const main = document.getElementsByTagName('main')[0];
+    if (!main) {
+        console.error('No main');
+        return;
+    }
+
+    main.style.display = 'none';
+    
+    const user = await buildComponents();
+
+    if (!await basicAdminAccessRequest(user)) {
+        console.warn('Access denied');
+        window.location.href = await safeLink('load_fail.html');
+        return;
+    }
+
+    await buildSections();
+
+    main.style.display = 'block';
 });

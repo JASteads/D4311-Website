@@ -1,21 +1,35 @@
+import { Account } from "./account-manager.ts";
 import { API_URL } from "./config";
-import { requestAdminAccess, tryAdminTest, getSession } from './permissions.ts';
+import { safeLink } from "./site-nav.ts";
 
 class NavItem {
     name: string;
     link: string;
 
-    constructor(name: string, link: string) {
-        this.name = name;
-        this.link = link;
+    constructor(name?: string, link?: string) {
+        this.name = name || '';
+        this.link = link || '';
     }
 }
 
 export const buildComponents = async () => {
     const body = document.body;
+
+    // Create parallax for the background
+    const html = document.getElementsByTagName('html')[0];
+    const parallaxStrength = 0.9;
+    document.addEventListener('scroll', () => {
+        html.style.backgroundPositionY = `${(window.scrollY * parallaxStrength).toPrecision()}px`;
+    });
+
+    const { username, alias, email, type } = await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
+    const user = new Account(username, alias, email, type);
+
     body.insertBefore(createHeader(), body.firstChild);
-    body.insertBefore(await createNavigation(), body.firstChild);
+    body.insertBefore(await createNavigation(user), body.firstChild);
     body.appendChild(createFooter());
+
+    return user;
 }
 
 const createLogo = (className: string): HTMLAnchorElement => {
@@ -60,10 +74,7 @@ const createFooter = (): HTMLElement => {
     return footer;
 }
 
-const createDropdown = (childNodes: Node[]) => {
-    if (childNodes.length === 0) {
-
-    }
+const createDropdown = (...childNodes: HTMLElement[]) => {
     const dropdown = document.createElement('div');
     dropdown.className = 'dropdown';
 
@@ -75,10 +86,10 @@ const createDropdown = (childNodes: Node[]) => {
 const getNavSections = () => {
     return {
         middle: [
-            { name: 'News',   link: 'blog_history'},
-            { name: 'Library', link: 'library'},
+            { name: 'News',   link: 'news' },
+            { name: 'Library', link: 'library' },
             { name: 'Gallery', link: 'gallery' },
-            { name: 'Portfolio', link: 'portfolio'}
+            { name: 'Portfolio', link: 'portfolio' }
         ],
         right: []
     };
@@ -106,56 +117,40 @@ const createButtonContainer = (nodes: Node[]) => {
 }
 
 const tryAdminNodes = async () => {
-    const result: Node[] = [];
+    const nodes: HTMLElement[] = [];
 
     try {
-        const dropDownHTML = await requestAdminAccess(`${API_URL}/api/get_admin_nav`);
+        const dropDownHTML = await (await fetch(`${API_URL}/api/get_admin_nav`, { credentials: 'include' })).text();
 
         if (dropDownHTML) {
-            const adminNodes: Node[] = [];
-            console.log('Found admin elements!');
             document.body.insertAdjacentHTML('beforeend', dropDownHTML);
 
-            const panelButton = document.getElementById('admin-panel-button');
-            const portalButton = document.getElementById('admin-portal-button');
+            const prepareAdminButton = async (id: string, url: string) => {
+                const button = document.getElementById(id) as HTMLAnchorElement;
 
-            const linkPrefix = 'http://localhost:5173'; // TODO : Correct this
-
-            if (panelButton) {
-                panelButton.addEventListener('click', () => {
-                    window.location.href = `${linkPrefix}/admin_panel.html`;
-                });
-                adminNodes.push(panelButton);
+                if (button) { button.href = url; }
+                
+                return button;
             }
 
-            if (portalButton) {
-                portalButton.addEventListener('click', () => {
-                    window.location.href = `${linkPrefix}/upload.html`;
-                })
-                adminNodes.push(portalButton);
-            }
+            const adminNodes = await Promise.all([
+                prepareAdminButton('admin-panel-button', './admin_panel.html'),
+                prepareAdminButton('admin-portal-button', './upload.html')
+            ]);
 
-            result.push(createNavButton({ name: 'Admin', link: '#' }));
-            result.push(createDropdown(adminNodes));
+            nodes.push(
+                createNavButton({ name: 'Admin', link: 'admin_panel' }), 
+                createDropdown(...adminNodes.filter(b => !(!b)))
+            );
         }
     } catch (e) {
         console.error('No good:', e);
     }
 
-    return result;
+    return nodes;
 }
 
-const createNavigation = async () => {
-    const createDevToggle = () => {
-        const isAdmin = getSession().session === 'true';
-        const devToggleButton = document.createElement('button');
-        devToggleButton.className = 'dev-toggle-button';
-        devToggleButton.textContent = `${isAdmin ? 'Guest' : 'Admin'} View`;
-        devToggleButton.addEventListener('click', () => tryAdminTest());
-
-        return devToggleButton;
-    }
-
+const createNavigation = async (user: Account) => {
     const websiteTitle = document.createElement('a');
     websiteTitle.className = 'website-title'
     websiteTitle.textContent = 'District 4';
@@ -169,43 +164,65 @@ const createNavigation = async () => {
     const { middle, right } = getNavSections();
 
     // Append default buttons
-    sectionLeft.append(websiteTitle, createDevToggle());
+    sectionLeft.append(websiteTitle);
     sectionMid.append(...generateNavButtons(middle));
     sectionRight.append(...generateNavButtons(right));
 
     /* ================= MANUAL NODE GROUP HANDLING ================= */
 
-    const createAccountDropdown = () => {
-        const accountInfo = document.createElement('div');
+    const createAccountDropdown = async () => {
         const username = document.createElement('span');
-        const icon = document.createElement('img');
+        username.textContent = `Welcome, ${user.alias}!`;
+        username.style.textAlign = 'center';
 
+        const icon = document.createElement('img');
+        icon.style.maxWidth = '120px';
+        icon.style.height = '120px';
+        icon.style.margin = 'auto';
+        icon.src = './Resources/Images/perhaps.png';
+
+        const accountInfo = document.createElement('div');
+        accountInfo.style.display = 'flex';
+        accountInfo.style.flexDirection = 'column';
         accountInfo.append(username, icon);
 
-        const accountSettings = document.createElement('span');
-        const logout = document.createElement('span');
+        const accountSettings = document.createElement('a');
+        accountSettings.textContent = 'Settings';
 
-        return createDropdown([accountInfo, accountSettings, logout]);
+        const logout = document.createElement('a');
+        logout.textContent = 'Log Out';
+        logout.addEventListener('click', async () => { 
+           const result = await fetch(`${API_URL}/api/login`, { method: 'DELETE', credentials: 'include' });
+           
+           if (!result.ok) { 
+                console.error('Logout failed:', await result.json());
+                return;
+            }
+
+           window.location.href = await safeLink('index.html');
+        });
+
+        return createDropdown(accountInfo, accountSettings, logout);
     }
 
-
-    const rightGroups = { 
-        accountNodes: [
-            createNavButton({ name: 'Log In', link: 'login' }),
-            createAccountDropdown()
-        ],
+    const { name, link } = user.isEmpty() ? { name: 'Log In', link: 'login' } : { name: user.alias, link: '#' };
+    const accountNodes: HTMLElement[] = [createNavButton(new NavItem(name, link))];
+    if (!user.isEmpty()) {
+        accountNodes.push(await createAccountDropdown());
+    }
+    
+    const rightGroups = {
+        accountNodes: accountNodes,
         adminNodes: [ ...(await tryAdminNodes()) ]
     };
-    const rightContainers: Node[] = [ createButtonContainer(rightGroups.accountNodes)! ];
+    const rightContainers = [ createButtonContainer(rightGroups.accountNodes) ];
 
     if (rightGroups.adminNodes.length > 0) {
-        const adminContainer = (createButtonContainer(rightGroups.adminNodes));
-        if (adminContainer) {
-            rightContainers.push(adminContainer);
-        }
+        const adminContainer = createButtonContainer(rightGroups.adminNodes);
+        if (adminContainer) { rightContainers.push(adminContainer); }
     }
 
-    sectionRight.append(...rightContainers);
+    sectionRight.append(...rightContainers.filter(n => !(!n)));
 
     // Finally, create the nav bar
     const navigation = document.createElement('div');

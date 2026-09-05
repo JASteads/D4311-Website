@@ -8,20 +8,25 @@
     <script type="module" src="JS/product-viewer.ts"></script>
 </head>
 <body>
-    <div class="product-body">
-        <h1>Super Game</h1>
-        <small>April 3rd, 2011</small>
-        <div class="product-body-sections">
-            <section class="details">
-                <p>This is the best game ever! It features birb, a goofy lil guy
-                    who loves to eat food and hang out with friends. Use his wings to
-                    flutter across the land and find the best treats there is!
-                </p>
-                <div class="trailer"></div>
+    <div id="product-body" class="product-body">
+        <h1 id="title"></h1>
+        <small id="date"></small>
+        <div id="content">
+            <section class="introduction" id="introduction"></section>
+            <section class="details" id="details">
+                <h2>Recent News</h2>
+                <ul class="news" id="news"></ul>
             </section>
+        </div>
+    </div>
 
-            <section style="background-color: grey; width: 100%;">
-
+    <div id="download" class="product-download">
+        <div class="inner">
+            <h1>Download</h1>
+            <section id="links" class="links">
+                <a id="steam-link">Steam</a>
+                <a id="paypal-link">PayPal</a>
+                <a id="other-link">Other</a>
             </section>
         </div>
     </div>
