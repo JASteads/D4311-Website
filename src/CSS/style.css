@@ -513,14 +513,14 @@ footer small {
 
 /* News Feed */
 .news-feed {
-    flex: 1;
-    padding: 20px 0;
+    display: grid;
+    row-gap: 35px;
+    padding: 40px;
 }
 
 .news-feed .blog-preview {
-    width: 90%;
+    width: 100%;
     padding-bottom: 20px;
-    margin: 0 30px 30px 35px;   
     border-radius: 10px 10px 4px 4px;
     border-bottom: 1px solid #0a0;
     overflow: hidden;
@@ -1166,7 +1166,7 @@ footer small {
         max-width: 720px;
     }
 
-    main {
+    .home-container > main {
         max-width: 720px;
         min-height: 500px;
         width: 100%;

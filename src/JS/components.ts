@@ -1,6 +1,5 @@
 import { Account } from "./account-manager.ts";
 import { API_URL } from "./config";
-import { safeLink } from "./site-nav.ts";
 
 class NavItem {
     name: string;
@@ -199,7 +198,7 @@ const createNavigation = async (user: Account) => {
                 return;
             }
 
-           window.location.href = await safeLink('index.html');
+           window.location.href = 'index.html';
         });
 
         return createDropdown(accountInfo, accountSettings, logout);

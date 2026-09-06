@@ -19,13 +19,20 @@
                 <h2>Lock in!</h2>
                 <small><i>The white void beckons.</i></small>
             </div>
-            <div class="sign-in-info">
-                <span>Username</span>
-                <div id="username-login" contenteditable="true"></div>
-                <span>Password</span>
-                <div id="pw-login" contenteditable="true"></div>
-                <button id="sign-in-button">Log In</button>
-            </div>
+            <form method="POST" action="/api/login" class="sign-in-info">
+                <label for="username">Username</label><br>
+                <input id="username" name="username" autocomplete="username" required>
+                <br><br>
+                <label for="password">Password</label><br>
+                <input id="password" name="password" type="password" required>
+                <br><br>
+                <label for="remember">
+                    <input id="remember" name="remember" type="checkbox"> 
+                    Remember Login
+                </label>
+                <br>
+                <button type="submit">Log In</button>
+            </form>
         </div>
 
         <div class="sign-up" id="sign-up">
@@ -33,18 +40,23 @@
                 <h2>New Here, are You?</h2>
                 <small><i>Go on, tell us more.</i></small>
             </div>
-            <div class="sign-up-info">
-                <span>Username</span>
-                <div id="username-reg" contenteditable="true"></div>
-                <span>Nickname</span>
-                <div id="alias-reg" contenteditable="true"></div>
-                <span>Email Address</span>
-                <div id="email-reg" contenteditable="true"></div>
-                <span>Password</span>
-                <div id="pw-reg" contenteditable="true"></div>
-                <span>Confirm Password</span>
-                <div id="pw-confirm" contenteditable="true"></div>
-                <button id="register-button">Register</button>
+            <form method="POST" action="/api/user" id="sign-up-info" class="sign-up-info">
+                <label for="username">Username</label><br>
+                <input id="username" name="username" required>
+                <br><br>
+                <label for="alias">Nickname</label><br>
+                <input id="alias" name="alias" required>
+                <br><br>
+                <label for="email">Email Address</label><br>
+                <input id="email" name="email" required>
+                <br><br>
+                <label for="pw-reg">Password</label><br>
+                <input id="pw-reg" name="password" type="password" id="pw-reg" required>
+                <br><br>
+                <label for="pw-confirm">Confirm Password</label><br>
+                <input id="pw-confirm" name="confirm" type="password" id="pw-confirm" required>
+                <br>
+                <button type="submit">Register</button>
             </div>
         </div>
         

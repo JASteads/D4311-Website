@@ -1,7 +1,7 @@
 import { buildComponents } from "./components";
-import { Blog, formatBlogDate } from "./blog-viewer";
+import { formatBlogDate } from "./blog-viewer";
 import { API_URL } from "./config";
-import { safeLink } from "./site-nav";
+import type { Blog } from "./blog-viewer";
 
 const fillBlogHistory = async () => {
     const container = document.getElementById('blog-history-container');
@@ -14,25 +14,21 @@ const fillBlogHistory = async () => {
     try {
         const result = await fetch(`${API_URL}/api/blogs`);
 
-        if (!result.ok) {
-            throw new Error(`Failed to fetch blogs.`);
-        }
+        if (!result.ok) { throw new Error(`Failed to fetch blogs.`); }
 
         const blogs: Blog[] = await result.json();
-        const listItems = await Promise.all(blogs.map(b => generateListItem(b)));
-        container.append(...listItems);
+        container.append(...blogs.map(b => generateListItem(b)));
     } catch (e) {
         console.log(e);
     }
 };
 
-const generateListItem = async (b: Blog) => {
+const generateListItem = (b: Blog) => {
     const img = document.createElement('img');
     img.className = 'cover';
     img.src = `Resources/Images/Cover/cover_${b.id}.png` || '';
     img.alt = b.title;
 
-    // TODO: Switch with appropriate category
     const category = document.createElement('small');
     category.className = 'category';
     category.textContent = b.author || 'News';
@@ -54,13 +50,13 @@ const generateListItem = async (b: Blog) => {
     preview.textContent = b.hook;
 
     const listItem = document.createElement('a');
-    listItem.href = await safeLink(`blog_viewer.html?id=${b.id}`);
+    listItem.href = `blog_viewer.html?id=${b.id}`;
     listItem.append(img, meta, title, preview);
 
     return listItem;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    buildComponents();
-    fillBlogHistory();
+document.addEventListener('DOMContentLoaded', async () => {
+    await buildComponents();
+    await fillBlogHistory();
 });

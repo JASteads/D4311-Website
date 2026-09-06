@@ -1,7 +1,6 @@
 import { API_URL } from "./config";
 import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
-import { safeLink } from "./site-nav";
 
 class FillConfig {
     headerText: string;
@@ -63,7 +62,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
     const section = document.createElement('section');
 
-    const generateListItem = async (item: any) => {
+    const generateListItem = (item: any) => {
         const title = document.createElement('p');
         title.textContent = item.title;
 
@@ -94,12 +93,12 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
-        viewHyperlink.href = await safeLink(`${viewLink}?id=${item.id}`);
+        viewHyperlink.href = `${viewLink}?id=${item.id}`;
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
-        editHyperlink.href = await safeLink('admin_editor.html');
-        editHyperlink.addEventListener('click', async () => {
+        editHyperlink.href = 'admin_editor.html';
+        editHyperlink.addEventListener('click', () => {
             sessionStorage.setItem('edit-item', JSON.stringify(item));
             editHyperlink.click();
         });
@@ -117,9 +116,8 @@ const buildSection = async (url: string, config: FillConfig) => {
         return listItem;
     }
 
-    const listElements = await Promise.all(items.map(i => generateListItem(i)));
     const list = document.createElement('ul');
-    list.append(...listElements);
+    list.append(...items.map(i => generateListItem(i)));
 
     const header = document.createElement('h2');
     header.textContent = config.headerText;
@@ -182,10 +180,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     main.style.display = 'none';
     
     const user = await buildComponents();
-
     if (!await basicAdminAccessRequest(user)) {
         console.warn('Access denied');
-        window.location.href = await safeLink('load_fail.html');
+        window.location.href = 'load_fail.html';
         return;
     }
 

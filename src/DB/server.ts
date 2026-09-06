@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const tempFolder = 'Resources/tmp';
 const devEnvLink = 'http://localhost:5173';
-const debugMode = process.env.DEV_MODE;
+const debugMode = process.env.DEV_MODE === 'true';
 const SRC_DIR = path.resolve(__dirname, '..');
 const SESSION_COOKIE = 'session';
 
@@ -27,6 +27,7 @@ const pool = new Pool({
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true
@@ -93,7 +94,7 @@ app.post('/api/user', async (req, res) => {
             maxAge: daysToMS(true)
         });
         
-        res.json(result.rows[0]);
+        safeRedirect(res, 'index.html');
     } catch(e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -109,9 +110,7 @@ app.post('/api/login', async (req, res) => {
             return;
         }
 
-        const [alias, type] = [user.alias, user.account_type];
         const session = await generateSession(user.username, remember);
-
         res.cookie(SESSION_COOKIE, session.rows[0].id, {
             httpOnly: true,
             secure: process.env.DEV_MODE !== 'true',
@@ -119,7 +118,7 @@ app.post('/api/login', async (req, res) => {
             path: '/',
             maxAge: daysToMS(remember)
         });
-        res.json({ alias, type });
+        safeRedirect(res, 'index.html');
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -149,9 +148,8 @@ app.get('/api/admin_access', async (req, res) => {
 
 app.post('/api/admin_panel', async (req, res) => {
     const user = await requireUser(req, res, 'admin');
-    const url = user ? 'admin_panel.html' : 'load_fail.html';
 
-    return safeRedirect(res, url);
+    safeRedirect(res, user ? 'admin_panel.html' : 'load_fail.html');
 });
 
 // TODO : Make this an addon for a general get_nav route that uses user info
@@ -169,12 +167,6 @@ app.get('/api/get_admin_nav', async (req, res) => {
 });
 
 // =========== GENERAL ROUTES ===========
-
-app.get('/api/redirect', async (req, res) => {
-    const { file } = req.query;
-    
-    return safeRedirect(res, file as string);
-});
 
 app.post('/api/image', async (req, res) => {
     if (!await requireUser(req, res, 'admin')) {
@@ -355,7 +347,8 @@ app.post('/api/blog', async (req, res) => {
         }
 
         const result = await basicPost('blogs', { title, body, author: user.alias });
-        res.json(result.rows[0]);
+        
+        safeRedirect(res, `blog-viewer.html?id=${result.rows[0].id}`);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -371,8 +364,9 @@ app.put('/api/blog', async (req, res) => {
 
         const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         const { title, body } = columns;
+        const result = await basicPut('blogs', id, { title, body });
 
-        res.json(await basicPut('blogs', id, { title, body }));
+        safeRedirect(res, `blog-viewer.html?id=${result.rows[0].id}`);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -576,28 +570,15 @@ app.delete('/api/gallery/:id', async (req, res) => {
     }
 });
 
-app.use((_, res) => {
-    safeRedirect(res, 'load_fail.html');
-});
+app.use((_, res) => safeRedirect(res, 'load_fail.html'));
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PORT}`));
 
 // =========== HELPER FUNCTIONS ===========
 
-const getSafeLink = (file: string) => {
-    return (debugMode === 'true') ? `${devEnvLink}/${file}` : path.join(SRC_DIR, file);
-}
-
-const safeRedirect = (res: ExpressResponse, file: string) => {
-    const link = getSafeLink(file);
-
-    if (debugMode === 'true') {
-        return res.json({ redirectTo: link });
-    } else {
-        return res.status(404).sendFile(link);
-    }
-}
+const safeRedirect = (res: ExpressResponse, file: string) =>
+    res.redirect(debugMode ? `${devEnvLink}/${file}` : `/${file}`);
 
 const prepareTemp = () => {
     const tempName = `temp_${crypto.randomBytes(10).toString('hex')}.dat`;

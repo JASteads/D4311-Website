@@ -1,5 +1,4 @@
 import { formatBlogDate } from "./blog-viewer";
-import { safeLink } from "./site-nav";
 
 // NOTE: THIS MODULE IS CURRENTLY A WORK-IN-PROGRESS. Use with caution.
 
@@ -107,7 +106,7 @@ const scriptButton = async (button: HTMLButtonElement, config: Config, ...data: 
             query = '?' + query;
         }
 
-        const hyperlink = await safeLink(`product_viewer.html${query}`);
+        const hyperlink = `product_viewer.html${query}`;
 
         button.addEventListener('click', () => { window.location.href = hyperlink; });
     }

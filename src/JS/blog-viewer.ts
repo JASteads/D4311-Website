@@ -1,5 +1,4 @@
 import { API_URL } from './config';
-import { safeLink } from './site-nav';
 
 export class Blog {
     id: number;
@@ -63,7 +62,7 @@ export const showBlog = async () => {
 
         generateBlogFull(blog);
     } catch (e) {
-        window.location.href = await safeLink('load_fail.html');
+        window.location.href = 'load_fail.html';
     }
 }
 
@@ -322,7 +321,7 @@ const generateBlogPreview = async (blog: Blog) => {
     title.textContent = blog.title;
 
     const link = document.createElement('a');
-    link.href = await safeLink(`blog_viewer.html?id=${blog.id}`);
+    link.href = `blog_viewer.html?id=${blog.id}`;
     link.appendChild(title);
 
     const meta = document.createElement('small');

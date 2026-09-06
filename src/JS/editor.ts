@@ -2,7 +2,6 @@ import type { Account } from "./account-manager";
 import { API_URL } from "./config";
 import { buildScripts } from "./page-builder";
 import { basicAdminAccessRequest } from "./permissions";
-import { safeLink } from "./site-nav";
 
 export abstract class Editor {
     protected isUpdate: boolean;
@@ -67,7 +66,7 @@ export abstract class Editor {
 
         // Redirect to viewing page on success
         if (await (this.isUpdate ? this.put : this.post)()) {
-            window.location.href = await safeLink(`${this.getViewerURL()}?id=${this.getID()}`);
+            window.location.href = `${this.getViewerURL()}?id=${this.getID()}`;
         }
     }
 
