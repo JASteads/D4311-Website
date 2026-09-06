@@ -13,6 +13,8 @@ class NavItem {
 
 export const buildComponents = async () => {
     const body = document.body;
+    body.insertBefore(createHeader(), body.firstChild);
+    body.appendChild(createFooter());
 
     // Create parallax for the background
     const html = document.getElementsByTagName('html')[0];
@@ -21,12 +23,23 @@ export const buildComponents = async () => {
         html.style.backgroundPositionY = `${(window.scrollY * parallaxStrength).toPrecision()}px`;
     });
 
-    const { username, alias, email, type } = await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
+    const userItem = sessionStorage.getItem('user');
+    const { username, alias, email, type } = userItem
+        ? JSON.parse(userItem)
+        : await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
+    
+    if (!userItem) { 
+        sessionStorage.setItem('user', JSON.stringify({
+            username: username,
+            alias: alias,
+            email: email,
+            type: type
+        }));
+    }
+
     const user = new Account(username, alias, email, type);
 
-    body.insertBefore(createHeader(), body.firstChild);
     body.insertBefore(await createNavigation(user), body.firstChild);
-    body.appendChild(createFooter());
 
     return user;
 }
@@ -98,15 +111,13 @@ const createNavButton = (item: NavItem) => {
     const button = document.createElement('a');
     button.className = 'navigation-button';
     button.textContent = item.name;
-    button.href = `/${item.link}.html`;
+    button.href = `${item.link}.html`;
 
     return button;
 }
 
 const createButtonContainer = (nodes: Node[]) => {
-    if (nodes.length === 0) {
-        return null;
-    }
+    if (nodes.length === 0) { return null; }
 
     const container = document.createElement('div');
     container.className = 'main-nav-button-container';
@@ -169,7 +180,7 @@ const createNavigation = async (user: Account) => {
 
     /* ================= MANUAL NODE GROUP HANDLING ================= */
 
-    const createAccountDropdown = async () => {
+    const createAccountDropdown = () => {
         const username = document.createElement('span');
         username.textContent = `Welcome, ${user.alias}!`;
         username.style.textAlign = 'center';
@@ -198,7 +209,8 @@ const createNavigation = async (user: Account) => {
                 return;
             }
 
-           window.location.href = 'index.html';
+            sessionStorage.removeItem('user');
+            window.location.href = 'index.html';
         });
 
         return createDropdown(accountInfo, accountSettings, logout);
@@ -207,7 +219,7 @@ const createNavigation = async (user: Account) => {
     const { name, link } = user.isEmpty() ? { name: 'Log In', link: 'login' } : { name: user.alias, link: '#' };
     const accountNodes: HTMLElement[] = [createNavButton(new NavItem(name, link))];
     if (!user.isEmpty()) {
-        accountNodes.push(await createAccountDropdown());
+        accountNodes.push(createAccountDropdown());
     }
     
     const rightGroups = {

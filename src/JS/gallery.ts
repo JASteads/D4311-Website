@@ -192,6 +192,13 @@ const toggleUploadMenu = () => {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    const main = document.body.getElementsByTagName('main')[0];
+    if (!main) {
+        console.error('No main defined');
+        return;
+    }
+    main.style.display = 'none';
+
     const user = await buildComponents();
 
     emptyGalleryMessage = document.getElementById('empty-gallery-message');
@@ -228,4 +235,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     toggleUploadMenu();
     await loadGallery();
+
+    main.style.display = 'block';
 });

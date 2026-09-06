@@ -3,6 +3,8 @@
 /* Variable Declarations */
 :root {
     --login-border-size: 2px;
+    --content-border-dark: rgb(62, 58, 77);
+    --content-box-dark: rgb(28, 25, 34);
 }
 
 * {
@@ -299,24 +301,22 @@ footer small {
 
 /* ====================== LOGIN ====================== */
 
-.login-container {
-    position: relative;
-    align-self: center;
-    justify-items: center;
-    border: #0a0 solid var(--login-border-size);
-    border-radius: 2px;
-    padding: 40px;
+.login {
+    display: grid;
     margin: auto;
 }
 
-.login-container .type-container {
-    position: absolute;
+.login-container {
+    border: #0a0 solid var(--login-border-size);
+    border-radius: 2px;
+    padding: 40px;
+}
+
+.type-container {
     display: flex;
-    background-color: transparent;
+    justify-self: end;
     outline: #0a0 solid var(--login-border-size);
-    bottom: 100%;
-    margin-bottom: var(--login-border-size);
-    right: 0;
+    margin-right: var(--login-border-size);
 }
 
 .type-container > button {
@@ -329,10 +329,6 @@ footer small {
     cursor: pointer;
 }
 
-.sign-in {
-    display: flex;
-}
-
 .sign-in > .flavor, .sign-up > .flavor {
     display: flex;
     flex-direction: column;
@@ -340,12 +336,13 @@ footer small {
     margin-right: 40px;
 }
 
-.sign-in > .flavor small, .sign-up > .flavor small {
-    padding: 12px 0;
+.sign-in form, .sign-up form {
+    display: grid;
+    row-gap: 1px;
 }
 
-.sign-up {
-    display: none; 
+.sign-in > .flavor small, .sign-up > .flavor small {
+    padding: 12px 0;
 }
 
 #sign-in-toggle[data-active="true"], #sign-up-toggle[data-active="true"] {
@@ -358,17 +355,19 @@ footer small {
     background-color: transparent;
 }
 
-.sign-in-info div, .sign-up-info div {
-    color: black;
-    background-color: white;
-    padding: 1px 5px;
+.sign-in-info input[type="text"], .sign-up-info input[type="text"],
+.sign-in-info input[type="password"], .sign-up-info input[type="password"] {
+    color: white;
+    border: var(--content-border-dark) solid 1px;
+    border-radius: 1px;
+    background-color: var(--content-box-dark);
+    padding: 3px;
     width: 240px;
     margin: 5px 0;
 }
 
 .sign-in-info button, .sign-up-info button {
-    margin-top: 40px;
-    padding: 2px;
+    margin-top: 20px;
     width: 100px;
 }
 
@@ -385,12 +384,15 @@ footer small {
 }
 
 .home-nav .discord-button {
+    text-decoration: none;
     background-color:rgb(45, 51, 122);
     color:rgb(223, 230, 255);
     border:rgb(177, 195, 233) inset 5px;
     border-radius: 20px;
     width: 280px;
     font-size: 2.4em;
+    text-align: center;
+    align-content: center;
     font-family: 'Soopafresh', 'Verdana';
 }
 
@@ -621,8 +623,8 @@ footer small {
 
 .blog-editor-body {
     margin: 10px auto;
-    border: 1px solid rgb(62, 58, 77);
-    background-color: rgb(28, 25, 34);
+    border: 1px solid var(--content-border-dark);
+    background-color: var(--content-box-dark);
     color: white;
     padding: 10px;
     min-height: 200px;

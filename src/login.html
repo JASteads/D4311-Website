@@ -8,58 +8,59 @@
     <script type="module" src="JS/login.ts"></script>
 </head>
 <body>
-    <div class="login-container">
+    <main class="login">
         <div class="type-container">
             <button class="type" id="sign-in-toggle">Sign In</button>
             <button class="type" id="sign-up-toggle">Sign Up</button>
         </div>
 
-        <div class="sign-in" id="sign-in">
-            <div class="flavor">
-                <h2>Lock in!</h2>
-                <small><i>The white void beckons.</i></small>
+        <div class="login-container">
+            <div class="sign-in" id="sign-in" style="display: flex;">
+                <div class="flavor">
+                    <h2>Lock in!</h2>
+                    <small><i>The white void beckons.</i></small>
+                </div>
+                <form method="POST" action="/api/login" class="sign-in-info">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" autocomplete="username" required>
+                    
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" type="password" required>
+                    
+                    <label for="remember">
+                        <input id="remember" name="remember" type="checkbox"> 
+                        Remember Login
+                    </label>
+                    
+                    <button type="submit">Log In</button>
+                </form>
             </div>
-            <form method="POST" action="/api/login" class="sign-in-info">
-                <label for="username">Username</label><br>
-                <input id="username" name="username" autocomplete="username" required>
-                <br><br>
-                <label for="password">Password</label><br>
-                <input id="password" name="password" type="password" required>
-                <br><br>
-                <label for="remember">
-                    <input id="remember" name="remember" type="checkbox"> 
-                    Remember Login
-                </label>
-                <br>
-                <button type="submit">Log In</button>
-            </form>
-        </div>
 
-        <div class="sign-up" id="sign-up">
-            <div class="flavor">
-                <h2>New Here, are You?</h2>
-                <small><i>Go on, tell us more.</i></small>
-            </div>
-            <form method="POST" action="/api/user" id="sign-up-info" class="sign-up-info">
-                <label for="username">Username</label><br>
-                <input id="username" name="username" required>
-                <br><br>
-                <label for="alias">Nickname</label><br>
-                <input id="alias" name="alias" required>
-                <br><br>
-                <label for="email">Email Address</label><br>
-                <input id="email" name="email" required>
-                <br><br>
-                <label for="pw-reg">Password</label><br>
-                <input id="pw-reg" name="password" type="password" id="pw-reg" required>
-                <br><br>
-                <label for="pw-confirm">Confirm Password</label><br>
-                <input id="pw-confirm" name="confirm" type="password" id="pw-confirm" required>
-                <br>
-                <button type="submit">Register</button>
+            <div class="sign-up" id="sign-up" style="display: none;">
+                <div class="flavor">
+                    <h2>New Here, are You?</h2>
+                    <small><i>Go on, tell us more.</i></small>
+                </div>
+                <form method="POST" action="/api/user" id="sign-up-info" class="sign-up-info">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" required>
+
+                    <label for="alias">Nickname</label>
+                    <input id="alias" type="text" name="alias" required>
+                    
+                    <label for="email">Email Address</label>
+                    <input id="email" type="text" name="email" required>
+                    
+                    <label for="pw-reg">Password</label>
+                    <input id="pw-reg" type="password" name="password" type="password" id="pw-reg" required>
+
+                    <label for="pw-confirm">Confirm Password</label>
+                    <input id="pw-confirm" type="password" name="confirm" type="password" id="pw-confirm" required>
+
+                    <button type="submit">Register</button>
+                </form>
             </div>
         </div>
-        
-    </div>
+    </main>
 </body>
 </html>
