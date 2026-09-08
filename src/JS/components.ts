@@ -28,6 +28,7 @@ export const buildComponents = async () => {
         ? JSON.parse(userItem)
         : await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
     
+    // NOTE : Session storage may fall out of sync when session expires
     if (!userItem) { 
         sessionStorage.setItem('user', JSON.stringify({
             username: username,
@@ -196,6 +197,7 @@ const createNavigation = async (user: Account) => {
         accountInfo.style.flexDirection = 'column';
         accountInfo.append(username, icon);
 
+        // TODO : Add accountSettings to dropdown once settings page is implemented
         const accountSettings = document.createElement('a');
         accountSettings.textContent = 'Settings';
 
@@ -213,7 +215,7 @@ const createNavigation = async (user: Account) => {
             window.location.href = 'index.html';
         });
 
-        return createDropdown(accountInfo, accountSettings, logout);
+        return createDropdown(accountInfo, /* accountSettings, */ logout);
     }
 
     const { name, link } = user.isEmpty() ? { name: 'Log In', link: 'login' } : { name: user.alias, link: '#' };

@@ -312,6 +312,12 @@ footer small {
     padding: 40px;
 }
 
+.login-container .fail {
+    padding: 10px 0;
+    color: red;
+    font-size: small;
+}
+
 .type-container {
     display: flex;
     justify-self: end;

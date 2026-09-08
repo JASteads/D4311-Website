@@ -14,22 +14,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const tempFolder = 'Resources/tmp';
-const devEnvLink = 'http://localhost:5173';
+const devHost = process.env.DEV_HOST || '';
+const prodHost = process.env.PROD_HOST || '';
 const debugMode = process.env.DEV_MODE === 'true';
 const SRC_DIR = path.resolve(__dirname, '..');
 const SESSION_COOKIE = 'session';
 
-const pool = new Pool({
-    connectionString: process.env.DB_CONNECTION_STRING
-});
 
-// =========== SETUP ===========
+/* ================================= SETUP ================================= */
 
+const pool = new Pool({ connectionString: process.env.DB_CONNECTION_STRING });
 const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: debugMode ? devHost : prodHost,
     credentials: true
 }));
 
@@ -37,7 +37,7 @@ const onDatabaseConnect = async () => {
     try {
         await initialiazeDatabase();
         console.log('Current root:', SRC_DIR);
-        console.log('Debug Mode:', debugMode);
+        if (debugMode) { console.log('Debug Mode:', debugMode); }
         console.log('✅ Database connected and initialized');
     }
     catch (e: any) {
@@ -45,19 +45,19 @@ const onDatabaseConnect = async () => {
     }
 }
 
-// Connect once when server starts
-const startServer = () => onDatabaseConnect();
+const startServer = async () => await onDatabaseConnect();
 
-// === API Routes ===
 
-// =========== USER MANAGEMENT ROUTES ===========
+/* ================================= API ROUTES ================================= */
+
+// =========== USER MANAGEMENT ===========
 
 app.get('/api/me', async (req, res) => {
     try {
         const user = await requireUser(req, res);
 
         if (!user) {
-            res.json('No user is currently logged in');
+            res.status(401).json({ error: 'No user is currently logged in' });
             return;
         }
 
@@ -73,27 +73,20 @@ app.post('/api/user', async (req, res) => {
         const user = await getUser(username);
 
         if (user && user.username === username) {
-            res.status(409).json({ error: 'Username has been taken' });
+            safeRedirect(res, 'login.html?mode=register&error=taken');
             return;
         }
 
         const hash = await argon2.hash(password);
-        const result = await pool.query(
-            `INSERT INTO users (username, password, alias, type, email)
-                VALUES ($1, $2, $3, 'standard', $4)
-                RETURNING *
+        const result = await pool.query(`
+            INSERT INTO users (username, password, alias, type, email)
+            VALUES ($1, $2, $3, 'standard', $4)
+            RETURNING *
         `, [username, hash, alias, email]);
         const newUser = result.rows[0];
 
         const session = await generateSession(newUser.username, true);
-        res.cookie(SESSION_COOKIE, session.rows[0].id, {
-            httpOnly: true,
-            secure: process.env.DEV_MODE === 'false',
-            sameSite: 'lax' as const,
-            path: '/',
-            maxAge: daysToMS(true)
-        });
-        
+        res.cookie(SESSION_COOKIE, session.rows[0].id, getCookieProperties(daysToMS(true)));
         safeRedirect(res, 'index.html');
     } catch(e: any) {
         res.status(500).json({ error: e.message });
@@ -105,19 +98,13 @@ app.post('/api/login', async (req, res) => {
         const { username, password, remember } = req.body;
         const user = await getUser(username);
 
-        if (!(user && argon2.verify(user.password, password))) { 
-            res.status(401).json({ error: 'Invalid credentials' });
+        if (!(user && await argon2.verify(user.password, password))) { 
+            safeRedirect(res, 'login.html?error=invalid');
             return;
         }
 
         const session = await generateSession(user.username, remember);
-        res.cookie(SESSION_COOKIE, session.rows[0].id, {
-            httpOnly: true,
-            secure: process.env.DEV_MODE !== 'true',
-            sameSite: 'lax' as const,
-            path: '/',
-            maxAge: daysToMS(remember)
-        });
+        res.cookie(SESSION_COOKIE, session.rows[0].id, getCookieProperties(daysToMS(remember)));
         safeRedirect(res, 'index.html');
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -127,24 +114,18 @@ app.post('/api/login', async (req, res) => {
 app.delete('/api/login', async (req, res) => {
     try {
         await removeItem('sessions', getSessionID(req));
-        res.clearCookie(SESSION_COOKIE, {
-            httpOnly: true,
-            secure: process.env.DEBUG === 'false',
-            sameSite: 'lax',
-            path: '/'
-        });
+        res.clearCookie(SESSION_COOKIE, getCookieProperties());
         res.json({ ok: true });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 });
 
-// For simple access requests
-app.get('/api/admin_access', async (req, res) => {
-    return res.send(await requireUser(req, res, 'admin') !== null);
-});
+app.get('/api/admin_access', async (req, res) => 
+    res.send(await requireUser(req, res, 'admin') !== null)
+);
 
-// =========== INJECTION ROUTES ===========
+// =========== INJECTIONS ===========
 
 app.post('/api/admin_panel', async (req, res) => {
     const user = await requireUser(req, res, 'admin');
@@ -166,7 +147,7 @@ app.get('/api/get_admin_nav', async (req, res) => {
     return res.send(html);
 });
 
-// =========== GENERAL ROUTES ===========
+// =========== IMAGE UPLOADING ===========
 
 app.post('/api/image', async (req, res) => {
     if (!await requireUser(req, res, 'admin')) {
@@ -175,18 +156,26 @@ app.post('/api/image', async (req, res) => {
     }
 
     const { type, isThumbnail } = req.query;
+    const folder = type as string;
+
+    // Validate that the 'type' value is not exploitative
+    if (!/^[A-Za-z0-9_-]+$/.test(folder)) {
+        res.status(400).json({ error: 'Invalid type provided '});
+        return;
+    }
+
     const { tempPath, tempName, stream } = prepareTemp();
 
     req.pipe(stream);
 
     // Setup by making sure characters are legal for download
-    const realName = decodeURIComponent(req.headers['x-file-name'] as string);
-    const realPath = path.join(SRC_DIR, `Resources/Images/${type}`);
+    const realName = path.basename(decodeURIComponent(req.headers['x-file-name'] as string));
+    const realPath = path.join(SRC_DIR, `Resources/Images/${folder}`);
     const finalPath = path.join(realPath, realName);
-
-    console.log('Final path:', finalPath);
+    
     console.log('Real Name:', realName);
     console.log('Real Path:', realPath);
+    console.log('Final path:', finalPath);
 
     if (!fs.existsSync(realPath)) {
         fs.mkdirSync(realPath, { recursive: true });
@@ -195,11 +184,7 @@ app.post('/api/image', async (req, res) => {
     stream.on('finish', async () => {
         try {
             // Move the temp file into its permanent location
-            console.log('Moving temp file from:', path.join(tempPath, tempName));
-            console.log('..to:', finalPath);
-
             await fs.promises.rename(path.join(tempPath, tempName), finalPath);
-            console.log('File moved');
             
             const thumb = !(!isThumbnail) && isThumbnail;
             const response = {
@@ -220,7 +205,7 @@ app.post('/api/image', async (req, res) => {
     });
 });
 
-// =========== PRODUCT ROUTES ===========
+// =========== PRODUCTS ===========
 
 app.get('/api/product/:id', async (req, res) => {
     const { id } = req.params;
@@ -277,7 +262,7 @@ app.put('/api/product', async (req, res) => {
     }
 });
 
-app.delete('api/product/:id', async (req, res) => {
+app.delete('/api/product/:id', async (req, res) => {
     try {
         if (!await requireUser(req, res, 'admin')) {
             res.status(403).json({ error: 'You must be an admin to perform this action' });
@@ -285,9 +270,7 @@ app.delete('api/product/:id', async (req, res) => {
         }
 
         const { id } = req.params;
-        const result = await removeItem('products', id);
-
-        res.json(result);
+        res.json(await removeItem('products', id));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -312,7 +295,7 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// =========== BLOG ROUTES =========== 
+// =========== NEWS ARTICLES =========== 
 
 // Get target blog entry
 app.get('/api/blog/:id', async (req, res) => {
@@ -380,9 +363,7 @@ app.delete('/api/blog/:id', async (req, res) => {
         }
 
         const { id } = req.params;
-        const result = await removeItem('blogs', id);
-
-        res.json(result);
+        res.json(await removeItem('blogs', id));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -417,7 +398,7 @@ app.get('/api/blogs', async (req, res) => {
     }
 });
 
-// =========== PORTFOLIO ROUTES ===========
+// =========== PORTFOLIO ENTRIES ===========
 
 app.get('/api/portfolio', async (_, res) => {
     try {
@@ -482,9 +463,9 @@ app.delete('/api/portfolio/:id', async (req, res) => {
     }
 });
 
-// =========== GALLERY ROUTES ===========
+// =========== GALLERY ===========
 
-// Get gallery items -- Lazy method for now. Add filter when gallery grows too large
+// Lazy method for now. Add filter when gallery grows too large
 app.get('/api/gallery', async (req, res) => {
     try {
         const { id, category } = req.query;
@@ -517,7 +498,6 @@ app.get('/api/gallery', async (req, res) => {
     }
 });
 
-// For uploading pics to the gallery
 app.post('/api/gallery', async (req, res) => {
     try {
         if (!await requireUser(req, res, 'admin')) {
@@ -533,7 +513,7 @@ app.post('/api/gallery', async (req, res) => {
         res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
-    }6
+    }
 });
 
 app.put('/api/gallery', async (req, res) => {
@@ -562,9 +542,7 @@ app.delete('/api/gallery/:id', async (req, res) => {
         }
 
         const { id } = req.params;
-        const result = await removeItem('gallery_items', id);
-
-        res.json(result);
+        res.json(await removeItem('gallery_items', id));
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -575,10 +553,11 @@ app.use((_, res) => safeRedirect(res, 'load_fail.html'));
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🐭 Server running at http://localhost:${PORT}`));
 
-// =========== HELPER FUNCTIONS ===========
+
+/* ================================= HELPER FUNCTIONS ================================= */
 
 const safeRedirect = (res: ExpressResponse, file: string) =>
-    res.redirect(debugMode ? `${devEnvLink}/${file}` : `/${file}`);
+    res.redirect(debugMode ? `${devHost}/${file}` : `/${file}`);
 
 const prepareTemp = () => {
     const tempName = `temp_${crypto.randomBytes(10).toString('hex')}.dat`;
@@ -597,6 +576,8 @@ const prepareTemp = () => {
     };
 }
 
+// =========== SQL QUERIES ===========
+
 const basicPost = async (tableName: string, columns: Record<string, string>) => {
     const keys = Object.keys(columns).filter(k => columns[k] !== undefined);
     const values = Object.values(columns).filter(v => v !== undefined);
@@ -612,39 +593,33 @@ const basicPut = async (tableName: string, id: number, columns: Record<string, s
     const setClauses: string[] = [];
     const queryParams: any[] = [];
 
-    console.log(columns);
-    console.log('Columns...');
-
     for (const [column, value] of Object.entries(columns)) {
         if (value === undefined) { continue; }
 
         setClauses.push(`${column} = $${queryParams.length + 1}`);
         queryParams.push(value);
     }
+    queryParams.push(id);
 
     console.log(`
         UPDATE ${tableName} SET ${setClauses.join(', ')}
-        WHERE id = ${id} RETURNING *
+        WHERE id = $${queryParams.length} RETURNING *
     `);
     console.log(queryParams);
 
     return await pool.query(`
         UPDATE ${tableName} SET ${setClauses.join(', ')}
-        WHERE id = ${id} RETURNING *`, queryParams
+        WHERE id = $${queryParams.length} RETURNING *`, queryParams
     );
 }
 
 const removeItem = async (tableName: string, targetID: string) => {
-    const result = await pool.query(
-        `DELETE FROM ${tableName} WHERE id = $1 RETURNING *`,
-    [targetID]);
-
-    console.log('Deleted item', result.rows[0]);
-
-    return({ message: 
-        `${tableName} #${targetID}: ${result.rows[0].title} has been deleted.` 
-    });
+    await pool.query(`DELETE FROM ${tableName} WHERE id = $1 RETURNING *`, [targetID]);
+    
+    return { message: `${tableName} -- Record #${targetID} has been deleted.` };
 }
+
+// =========== ACCOUNT MANAGEMENT ===========
 
 const parseCookie = (header: string | undefined) => {
     const result: Record<string, string> = {};
@@ -678,6 +653,14 @@ const daysToMS = (remember: boolean) => 1000 * 60 * 60 * 24 * (remember ? REMEMB
 
 const getSessionID = (req: express.Request) => parseCookie(req.headers.cookie)[SESSION_COOKIE];
 
+const getCookieProperties = (maxAge?: number) => ({
+    httpOnly: true,
+    secure: !debugMode,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: maxAge || undefined
+});
+
 const generateSession = async (username: string, remember: boolean) => {
     const query = `INSERT INTO sessions (id, username, created_at, expires_at, remember)
         VALUES($1, $2, $3, $4, $5) 
@@ -710,16 +693,10 @@ const requireUser = async (req: express.Request, res: ExpressResponse, accountTy
         WHERE s.id = $1
           AND s.expires_at > NOW()
     `, [id]);
-
+    
     // Remove the cookie from the request if no valid user
     if (!(users && users.rows.length > 0)) {
-        res.clearCookie(SESSION_COOKIE, {
-            httpOnly: true,
-            secure: process.env.DEBUG === 'true',
-            sameSite: 'lax',
-            path: '/'
-        });
-
+        res.clearCookie(SESSION_COOKIE, getCookieProperties());
         return null;
     }
     const user = users.rows[0]; // Get the target user from DB
@@ -728,13 +705,7 @@ const requireUser = async (req: express.Request, res: ExpressResponse, accountTy
     if (accountType && !(user.type === accountType || user.type === 'admin')) { return null; }
     
     await renewSession(id, user.remember); // Authorized -- refresh session
-    res.cookie(SESSION_COOKIE, id, {
-        httpOnly: true,
-        secure: process.env.DEV_MODE === 'false',
-        sameSite: 'lax' as const,
-        path: '/',
-        maxAge: daysToMS(user.remember)
-    });
+    res.cookie(SESSION_COOKIE, id, getCookieProperties(daysToMS(user.remember)));
 
     return user;
 }
@@ -795,8 +766,7 @@ const initialiazeDatabase = async () => {
                 password TEXT,
                 alias TEXT,
                 type TEXT,
-                email TEXT,
-                salt TEXT
+                email TEXT
             );`
         },
         { name: 'Sessions', sql:
@@ -813,7 +783,6 @@ const initialiazeDatabase = async () => {
 
     // Run all queries in parallel and verify results
     const results = await Promise.allSettled(queries.map(q => pool.query(q.sql)));
-    
     if (!results.every((result) => result.status === 'fulfilled')) {
         throw new Error('Failed to connect to the database');
     }

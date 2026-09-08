@@ -21,8 +21,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const signInToggle = document.getElementById('sign-in-toggle');
     const signUpToggle = document.getElementById('sign-up-toggle');
+    const loginFail = document.getElementById('login-fail');
+    const regFail = document.getElementById('reg-fail');
+    const params = new URLSearchParams(location.search);
 
-    if (signInToggle && signUpToggle) {
+    // Toggling behaviors
+   if (signInToggle && signUpToggle) {
         const [signInID, signUpID] = ['sign-in' ,'sign-up'];
 
         signInToggle.dataset.active = 'true';
@@ -37,6 +41,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleInterface(signUpToggle, signUpID);
             toggleInterface(signInToggle, signInID);
         })
+
+        const mode = params.get('mode');
+        if (mode === 'register') { signUpToggle.click(); }
+    }
+
+    // Error handling and presentation
+    const error = params.get('error');
+    if (loginFail && error === 'invalid') {
+        loginFail.hidden = false;
+        document.getElementById('login')?.addEventListener(
+            'input', () => { loginFail.hidden = true; }, { once: true }
+        );
+        signInToggle?.addEventListener(
+            'click', () => { loginFail.hidden = true; }, { once: true }
+        );
+    } else if (regFail && error === 'taken') {
+        regFail.hidden = false;
+        document.getElementById('reg')?.addEventListener(
+            'input', () => { regFail.hidden = true; }, { once: true }
+        );
+        signUpToggle?.addEventListener(
+            'click', () => { regFail.hidden = true; }, { once: true }
+        );
     }
 
     document.getElementById('pw-reg')?.addEventListener('input', checkMatch);

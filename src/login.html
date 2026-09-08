@@ -20,7 +20,7 @@
                     <h2>Lock in!</h2>
                     <small><i>The white void beckons.</i></small>
                 </div>
-                <form method="POST" action="/api/login" class="sign-in-info">
+                <form method="POST" id="login" action="/api/login" class="sign-in-info">
                     <label for="username">Username</label>
                     <input id="username" type="text" name="username" autocomplete="username" required>
                     
@@ -31,6 +31,8 @@
                         <input id="remember" name="remember" type="checkbox"> 
                         Remember Login
                     </label>
+
+                    <div id="login-fail" class="fail" hidden><b>Invalid credentials</b></div>
                     
                     <button type="submit">Log In</button>
                 </form>
@@ -41,7 +43,7 @@
                     <h2>New Here, are You?</h2>
                     <small><i>Go on, tell us more.</i></small>
                 </div>
-                <form method="POST" action="/api/user" id="sign-up-info" class="sign-up-info">
+                <form method="POST" action="/api/user" id="reg" class="sign-up-info">
                     <label for="username">Username</label>
                     <input id="username" type="text" name="username" required>
 
@@ -56,6 +58,8 @@
 
                     <label for="pw-confirm">Confirm Password</label>
                     <input id="pw-confirm" type="password" name="confirm" type="password" id="pw-confirm" required>
+
+                    <div id="reg-fail" class="fail" hidden><b>Username is already taken</b></div>
 
                     <button type="submit">Register</button>
                 </form>
