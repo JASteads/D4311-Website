@@ -84,18 +84,16 @@ export class PortfolioWriter extends Editor {
         }
 
         document.getElementById('portfolio-upload-button')?.addEventListener('click', async () => {
+            const item = await this.publish(user);
+            if (!item) { return; }
+
             if (!this.uploader.isReady()) {
-                if (!this.isUpdate) {
-                    alert('An image is required to upload this item');
-                    return;
-                }
+                // Custom behavior if needed
             } else {
-                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
-                    'Image uploaded successfully' : 'Image upload failed';
-                
-                alert(imgMsg);
+                await this.uploader.upload(user, item.id);
             }
-            this.publish(user);
+
+            window.location.href = `${this.getViewerURL()}?id=${item.id}`;
         });
     }
 }

@@ -1,15 +1,8 @@
 import { formatBlogDate } from "./blog-viewer";
 
-// NOTE: THIS MODULE IS CURRENTLY A WORK-IN-PROGRESS. Use with caution.
-
-export class Config {
+export interface Config {
     requires: string;
     args: any;
-
-    constructor(config: Config) {
-        this.requires = config.requires;
-        this.args = config.args;
-    }
 }
 
 export class DataRequest {
@@ -82,35 +75,35 @@ const requestData = async (url: string, ...params: string[]) => {
     }
 }
 
-const scriptButton = async (button: HTMLButtonElement, config: Config, ...data: DataPayload[]) => {
-    if (!has(config.args) || !has(config.args.action)) {
-        console.error('scriptButton(): Invalid args provided');
-        return;
-    }
+// const scriptButton = async (button: HTMLButtonElement, config: Config, ...data: DataPayload[]) => {
+//     if (!has(config.args) || !has(config.args.action)) {
+//         console.error('scriptButton(): Invalid args provided');
+//         return;
+//     }
 
-    const item = data[0];
-    console.log(item);
-    console.log(config);
+//     const item = data[0];
+//     console.log(item);
+//     console.log(config);
 
-    if (config.args.action === 'link') {
-        const params: any[] = config.args.queryParams || [];
-        let query: string = params.reduce((p, i) => {
-            let partial = (i > 0) ? '&' : '';
+//     if (config.args.action === 'link') {
+//         const params: any[] = config.args.queryParams || [];
+//         let query: string = params.reduce((p, i) => {
+//             let partial = (i > 0) ? '&' : '';
 
-            partial += `${p}=${'value'}`; // TODO: Define 'value' using payload
+//             partial += `${p}=${'value'}`; // TODO: Define 'value' using payload
 
-            return partial;
-        });
+//             return partial;
+//         });
 
-        if (query !== '') {
-            query = '?' + query;
-        }
+//         if (query !== '') {
+//             query = '?' + query;
+//         }
 
-        const hyperlink = `product_viewer.html${query}`;
+//         const hyperlink = `product_viewer.html${query}`;
 
-        button.addEventListener('click', () => { window.location.href = hyperlink; });
-    }
-}
+//         button.addEventListener('click', () => { window.location.href = hyperlink; });
+//     }
+// }
 
 const buildList = (list: HTMLUListElement, config: Config, ...data: DataPayload[]) => {
     if (!list) {
@@ -119,9 +112,7 @@ const buildList = (list: HTMLUListElement, config: Config, ...data: DataPayload[
     }
 
     // Ignore if the data is empty
-    if (data.length === 1 && !data[0]) {
-        return;
-    }
+    if (data.length === 1 && !data[0]) { return; }
     
     const generateListItem = (payload: DataPayload) => {
         const li = document.createElement('li');
@@ -149,10 +140,6 @@ const functions: {
 } = {
     'list': (element: HTMLElement, config: Config, ...data: DataPayload[]) => {
         buildList(element as HTMLUListElement, config, ...data)
-    },
-
-    'click': async (element: HTMLElement, config: Config, ...data: DataPayload[]) => {
-        await scriptButton(element as HTMLButtonElement, config, ...data);
     }
 };
 
@@ -171,6 +158,10 @@ const defineElement = (element: HTMLElement, node: any, payloadData: any) => {
         }
 
         element.textContent = text;
+    }
+
+    if (has(node.value)) {
+        (node as HTMLInputElement).value = node.value;
     }
 
     if (has(node.classList)) {

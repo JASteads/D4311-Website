@@ -7,7 +7,7 @@ import path from 'path';
 import crypto from 'crypto';
 import argon2 from 'argon2';
 import { Pool } from 'pg';
-import type { Response as ExpressResponse } from 'express';
+import type { CookieOptions, Response as ExpressResponse } from 'express';
 import { fileURLToPath } from 'url';
 
 // Reference values
@@ -72,7 +72,7 @@ app.post('/api/user', async (req, res) => {
         const { username, password, alias, email } = req.body;
         const user = await getUser(username);
 
-        if (user && user.username === username) {
+        if (user && (user.username === username || user.email === email)) {
             safeRedirect(res, 'login.html?mode=register&error=taken');
             return;
         }
@@ -235,11 +235,10 @@ app.post('/api/product', async (req, res) => {
             return;
         }
 
-        const { title, hook, description }: Record<string, string> = req.body;
+        const { title, hook, description }: Record<string, string> = req.body.columns;
         const result = await basicPost(
             'products', { title, hook, description, release_date: new Date().toISOString() }
         );
-
         res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -255,8 +254,8 @@ app.put('/api/product', async (req, res) => {
 
         const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         const { title, hook, description, release_date } = columns;
-
-        res.json(await basicPut('products', id, { title, hook, description, release_date }));
+        const result = await basicPut('products', id, { title, hook, description, release_date });
+        res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -321,7 +320,7 @@ app.get('/api/blog/:id', async (req, res) => {
 // Add blog entry
 app.post('/api/blog', async (req, res) => {
     try {
-        const { title, body } = req.body;
+        const { title, body } = req.body.columns;
         const user = await requireUser(req, res, 'admin');
 
         if (!user) {
@@ -329,9 +328,12 @@ app.post('/api/blog', async (req, res) => {
             return;
         }
 
-        const result = await basicPost('blogs', { title, body, author: user.alias });
-        
-        safeRedirect(res, `blog-viewer.html?id=${result.rows[0].id}`);
+        const result = await basicPost('blogs', { 
+            title: title, 
+            body: body, 
+            author: user.alias 
+        });
+        res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -348,8 +350,7 @@ app.put('/api/blog', async (req, res) => {
         const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         const { title, body } = columns;
         const result = await basicPut('blogs', id, { title, body });
-
-        safeRedirect(res, `blog-viewer.html?id=${result.rows[0].id}`);
+        res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -391,7 +392,6 @@ app.get('/api/blogs', async (req, res) => {
             queryText += ` LIMIT $${params.length}`;
         }
         const result = await pool.query(queryText, params);
-
         res.json(result.rows);
     } catch (e: any) {
         res.status(500).json({ error: 'Failed to fetch blogs' });
@@ -420,11 +420,10 @@ app.post('/api/portfolio', async (req, res) => {
             return;
         }
 
-        const { title, lang_api, date, description, project_link } = req.body;
+        const { title, lang_api, date, description, project_link } = req.body.columns;
         const result = await basicPost('portfolio_items', {
             title, lang_api, date, description, project_link
         });
-        
         res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -440,10 +439,10 @@ app.put('/api/portfolio', async (req, res) => {
 
         const { id, columns }: { id: number; columns: Record<string, string> } = req.body;
         const { title, lang_api, date, description, project_link } = columns;
-
-        res.json(await basicPut('portfolio_items', id, {
+        const result = await basicPut('portfolio_items', id, {
             title, lang_api, date, description, project_link
-        }));
+        });
+        res.json(result.rows[0]);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -505,7 +504,7 @@ app.post('/api/gallery', async (req, res) => {
             return;
         }
 
-        const { title, caption, created_at, game_id } = req.body;
+        const { title, caption, created_at, game_id } = req.body.columns;
         const result = await basicPost('gallery_items', {
             title, caption, created_at, game_id
         });
@@ -582,6 +581,12 @@ const basicPost = async (tableName: string, columns: Record<string, string>) => 
     const keys = Object.keys(columns).filter(k => columns[k] !== undefined);
     const values = Object.values(columns).filter(v => v !== undefined);
 
+    console.log(`
+        INSERT INTO ${tableName} (${keys.join(', ')})
+        VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})
+        RETURNING *
+    `, values);
+    
     return await pool.query(`
         INSERT INTO ${tableName} (${keys.join(', ')})
         VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})
@@ -659,7 +664,7 @@ const getCookieProperties = (maxAge?: number) => ({
     sameSite: 'lax' as const,
     path: '/',
     maxAge: maxAge || undefined
-});
+}) as CookieOptions;
 
 const generateSession = async (username: string, remember: boolean) => {
     const query = `INSERT INTO sessions (id, username, created_at, expires_at, remember)

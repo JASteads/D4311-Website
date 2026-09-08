@@ -1,30 +1,12 @@
 import { API_URL } from './config';
 
-export class Blog {
+export interface Blog {
     id: number;
     title: string;
     author: string;
     body: string;
     created_at: string;
-    hook: string
-
-    constructor(b?: Blog) {
-        if (b) {
-            this.id = b.id;
-            this.title = b.title;
-            this.author = b.author;
-            this.body = b.body;
-            this.created_at = b.created_at;
-            this.hook = b.hook;
-        } else {
-            this.id = -1;
-            this.title = '';
-            this.author = '';
-            this.body = '';
-            this.created_at = Date.now().toLocaleString();
-            this.hook = '';
-        }
-    }
+    hook: string;
 }
 
 /**
@@ -55,7 +37,7 @@ export const showBlog = async () => {
             }
         }
 
-        const blog = await getBlog(paramsID);
+        const blog = await getBlog(paramsID) as Blog;
         if (!blog || !blog.id) {
             throw new Error('Blog does not exist.');
         }
@@ -281,11 +263,11 @@ const getBlog = async (id: number) => {
             throw new Error("Failed to fetch blog");
         }
 
-        return await res.json();
+        return await res.json() as Blog[];
     }
     catch (e) {
         console.error("Something went wrong:", e);
-        return new Blog();
+        return { id: -1, title: '', author: '', created_at: '', body: '', hook: '' } as Blog;
     }
 }
 

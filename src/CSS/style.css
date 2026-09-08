@@ -699,7 +699,6 @@ footer small {
 /* ====================== GALLERY UPLOADER ====================== */
 
 .gallery-container .upload-container {
-    display: block;
     margin: 20px 0;
 }
 

@@ -54,11 +54,9 @@ export class ImageUploader {
                 
                 preview.textContent = previewName;
             }
-            
-            input.removeEventListener('change', handleBrowse);
         }
     
-        input.addEventListener('change', handleBrowse);
+        input.addEventListener('change', handleBrowse, { once: true });
         input.click();
     }
     
@@ -74,9 +72,9 @@ export class ImageUploader {
         }
 
         const root = `${API_URL}/api/image`;
-        const fixedName = encodeURIComponent(`${this.uploadType}_${id}.png`);
+        const fixedName = encodeURIComponent(`${this.uploadType.toLowerCase()}_${id}.png`);
 
-        // ------------- FULL IMAGE UPLOAD -------------
+        // ============= FULL IMAGE UPLOAD =============
         try {
             const res = await fetch(`${root}?type=${this.uploadType}`, {
                 method: 'POST',
@@ -84,7 +82,8 @@ export class ImageUploader {
                 headers: { 
                     'Content-Type': this.pendingUpload.type || 'application/octet-stream',
                     'X-File-Name': fixedName
-                }
+                },
+                credentials: 'include'
             });
     
             if (!res.ok) {
@@ -96,7 +95,7 @@ export class ImageUploader {
             return false;
         }
 
-        // ------------- THUMBNAIL UPLOAD -------------
+        // ============= THUMBNAIL UPLOAD =============
         if (!this.includeThumbnail) {
             alert('File uploaded successfully');
             return true;
@@ -115,7 +114,8 @@ export class ImageUploader {
                 headers: { 
                     'Content-Type': thumbnailFile.type || 'application/octet-stream',
                     'X-File-Name': thumbnailFile.name
-                }
+                },
+                credentials: 'include'
             });
 
             if (!res.ok) {

@@ -200,8 +200,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                 uploadText.insertAdjacentElement('afterend', editorContainer);
                 editorContainer.appendChild(closeButton);
             }
-            uploadText.addEventListener('click', toggleUploadMenu);
-            toggleUploadMenu();
+
+            const container = editor.getContainer();
+            if (container) {
+                container.hidden = true;
+                uploadText.addEventListener('click', () => container.hidden = !container.hidden);
+            }
         }
     }
 

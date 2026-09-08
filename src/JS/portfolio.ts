@@ -44,6 +44,8 @@ const loadPorfolio = async () => {
     }
 
     portfolioItems.forEach((i: any) => generatePortfolioItem(i));
+    const portfolio = document.getElementById('portfolio');
+    if (portfolio) portfolio.hidden = false;
 }
 
 const generatePortfolioItem = (item: PortfolioItem) => {
@@ -73,7 +75,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     description.className = 'project-description';
     description.innerText = item.description;
 
-    const root = `Resources/Images/Portfolio`;
+    const root = 'Resources/Images/Portfolio';
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'project-image';
@@ -82,7 +84,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     thumbnail.style.maxWidth = '250px';
     
     const imageLink = document.createElement('a');
-    imageLink.href = `${root}/porfolio_${item.id}.png`;
+    imageLink.href = `${root}/Portfolio_${item.id}.png`;
     imageLink.target = '_blank';
     imageLink.appendChild(thumbnail);
 
@@ -96,7 +98,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
     projectList.appendChild(projectItem);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    buildComponents();
-    loadPorfolio();    
+document.addEventListener('DOMContentLoaded', async () => {
+    await buildComponents();
+    await loadPorfolio();
 });

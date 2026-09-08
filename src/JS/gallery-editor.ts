@@ -70,18 +70,19 @@ export class GalleryEditor extends Editor {
         this.categorySelect = this.getEl('select') as HTMLSelectElement;
 
         document.getElementById('upload-button')?.addEventListener('click', async () => {
+            const item = await this.publish(user);
+            if (!item) { return; }
+            
             if (!this.uploader.isReady()) {
                 if (!this.isUpdate) {
                     alert('An image is required to upload this item');
                     return;
                 }
             } else {
-                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
-                    'Image uploaded successfully' : 'Image upload failed';
-                
-                alert(imgMsg);
+                await this.uploader.upload(user, item.id);
             }
-            this.publish(user);
+
+            window.location.href = `${this.getViewerURL()}?id=${item.id}`;
         });
         await this.updateCategories();
     }

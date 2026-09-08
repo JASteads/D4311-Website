@@ -17,9 +17,9 @@ export const buildComponents = async () => {
     body.appendChild(createFooter());
 
     // Create parallax for the background
-    const html = document.getElementsByTagName('html')[0];
-    const parallaxStrength = 0.9;
     document.addEventListener('scroll', () => {
+        const html = document.getElementsByTagName('html')[0];
+        const parallaxStrength = 0.9;
         html.style.backgroundPositionY = `${(window.scrollY * parallaxStrength).toPrecision()}px`;
     });
 
@@ -29,7 +29,7 @@ export const buildComponents = async () => {
         : await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
     
     // NOTE : Session storage may fall out of sync when session expires
-    if (!userItem) { 
+    if (!userItem && (username && alias && email && type)) { 
         sessionStorage.setItem('user', JSON.stringify({
             username: username,
             alias: alias,

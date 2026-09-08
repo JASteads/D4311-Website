@@ -34,13 +34,12 @@ const getTableItems = async (url: string) => {
 };
 
 const confirmDelete = async (tableName: string, item: any, deleteURL: string) => {
-    if (!confirm(`Delete ${item.name} from ${tableName}?`)) {
+    if (!confirm(`Delete '${item.title}' from ${tableName}?`)) {
         return;
     }
 
     try {
         const url = `${API_URL}/${deleteURL}/${item.id}`;
-        alert(url);
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         
         if (!res.ok) {
@@ -105,7 +104,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const deleteHyperlink = document.createElement('a');
         deleteHyperlink.textContent = 'Delete';
-        deleteHyperlink.href = '#';
+        deleteHyperlink.style = 'text-decoration: underline; cursor: pointer;';
         deleteHyperlink.addEventListener('click', () => confirmDelete(headerText, item, deleteURL));
 
         options.append(viewHyperlink, editHyperlink, deleteHyperlink);
