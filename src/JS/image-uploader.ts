@@ -1,5 +1,5 @@
 import type { Account } from "./account-manager";
-import { API_URL } from "./config";
+
 import { basicAdminAccessRequest } from "./permissions";
 
 export class ImageUploader {
@@ -71,7 +71,7 @@ export class ImageUploader {
             return false;
         }
 
-        const root = `${API_URL}/api/image`;
+        const root = `${import.meta.env.VITE_API_URL}/api/image`;
         const fixedName = encodeURIComponent(`${this.uploadType.toLowerCase()}_${id}.png`);
 
         // ============= FULL IMAGE UPLOAD =============

@@ -1,5 +1,3 @@
-import { API_URL } from './config';
-
 export interface Blog {
     id: number;
     title: string;
@@ -256,7 +254,7 @@ const getDaySuffix = (day: number) => {
  */
 const getBlog = async (id: number) => {
     try {
-        const res = await fetch(`${API_URL}/api/blog/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/blog/${id}`);
 
         if (!res.ok) {
             if (res.status === 404) console.warn(`Blog ${id} was not found.`);
@@ -277,8 +275,8 @@ const getBlog = async (id: number) => {
 const getRecentBlogs = async (n: number | null = null) => {
     try {
         const url = n && n > 0 
-            ? `${API_URL}/api/blogs?limit=${n}` 
-            : `${API_URL}/api/blogs`;
+            ? `${import.meta.env.VITE_API_URL}/api/blogs?limit=${n}` 
+            : `${import.meta.env.VITE_API_URL}/api/blogs`;
 
         const res = await fetch(url);
 

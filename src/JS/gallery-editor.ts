@@ -1,5 +1,5 @@
 import type { Account } from "./account-manager";
-import { API_URL } from "./config";
+
 import { Editor } from "./editor";
 import { GalleryItem } from "./gallery-item";
 import { ImageUploader } from "./image-uploader";
@@ -118,7 +118,7 @@ export class GalleryEditor extends Editor {
         this.categorySelect.disabled = true;
     
         try {
-            const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
+            const resCategories = await fetch(`${import.meta.env.VITE_API_URL}/api/products?onlyTitles=true`);
     
             if (!resCategories.ok) {
                 throw new Error(`Failed to fetch categories: ${resCategories.status}`);
@@ -157,7 +157,7 @@ export class GalleryEditor extends Editor {
         if (!category) { return categoryOther; }
 
         try {
-            const result = await fetch(`${API_URL}/api/products`);
+            const result = await fetch(`${import.meta.env.VITE_API_URL}/api/products`);
 
             if (!result.ok) {
                 throw new Error(`HTTP Error: ${result.status}`);

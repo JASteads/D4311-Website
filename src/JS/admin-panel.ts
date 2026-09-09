@@ -1,4 +1,4 @@
-import { API_URL } from "./config";
+
 import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
 
@@ -19,7 +19,7 @@ class FillConfig {
 const getTableItems = async (url: string) => {
     const items = [];
     try {
-        const res = await fetch(`${API_URL}/${url}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/${url}`);
 
         if (!res.ok) {
             throw new Error(`Request failure: ${res.status}`);    
@@ -39,7 +39,7 @@ const confirmDelete = async (tableName: string, item: any, deleteURL: string) =>
     }
 
     try {
-        const url = `${API_URL}/${deleteURL}/${item.id}`;
+        const url = `${import.meta.env.VITE_API_URL}/${deleteURL}/${item.id}`;
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         
         if (!res.ok) {

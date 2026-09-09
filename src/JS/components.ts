@@ -1,5 +1,5 @@
 import { Account } from "./account-manager.ts";
-import { API_URL } from "./config";
+
 
 class NavItem {
     name: string;
@@ -23,21 +23,8 @@ export const buildComponents = async () => {
         html.style.backgroundPositionY = `${(window.scrollY * parallaxStrength).toPrecision()}px`;
     });
 
-    const userItem = sessionStorage.getItem('user');
-    const { username, alias, email, type } = userItem
-        ? JSON.parse(userItem)
-        : await (await fetch(`${API_URL}/api/me`, { credentials: 'include' })).json();
-    
-    // NOTE : Session storage may fall out of sync when session expires
-    if (!userItem && (username && alias && email && type)) { 
-        sessionStorage.setItem('user', JSON.stringify({
-            username: username,
-            alias: alias,
-            email: email,
-            type: type
-        }));
-    }
-
+    const { username, alias, email, type } = await (await fetch(
+        `${import.meta.env.VITE_API_URL}/api/me`, { credentials: 'include' })).json();    
     const user = new Account(username, alias, email, type);
 
     body.insertBefore(await createNavigation(user), body.firstChild);
@@ -131,7 +118,9 @@ const tryAdminNodes = async () => {
     const nodes: HTMLElement[] = [];
 
     try {
-        const dropDownHTML = await (await fetch(`${API_URL}/api/get_admin_nav`, { credentials: 'include' })).text();
+        const dropDownHTML = await (await fetch(
+            `${import.meta.env.VITE_API_URL}/api/get_admin_nav`, { credentials: 'include' })
+        ).text();
 
         if (dropDownHTML) {
             document.body.insertAdjacentHTML('beforeend', dropDownHTML);
@@ -174,6 +163,9 @@ const createNavigation = async (user: Account) => {
     const sectionRight = document.createElement('section');
     const { middle, right } = getNavSections();
 
+    const viewPortfolio = new URLSearchParams(window.location.search).get('showPortfolio');
+    if (viewPortfolio !== 'true') { middle.pop(); } // Removes the Portfolio button
+
     // Append default buttons
     sectionLeft.append(websiteTitle);
     sectionMid.append(...generateNavButtons(middle));
@@ -204,9 +196,10 @@ const createNavigation = async (user: Account) => {
         const logout = document.createElement('a');
         logout.textContent = 'Log Out';
         logout.addEventListener('click', async () => { 
-           const result = await fetch(`${API_URL}/api/login`, { method: 'DELETE', credentials: 'include' });
+            const result = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, { 
+                method: 'DELETE', credentials: 'include' });
            
-           if (!result.ok) { 
+            if (!result.ok) { 
                 console.error('Logout failed:', await result.json());
                 return;
             }

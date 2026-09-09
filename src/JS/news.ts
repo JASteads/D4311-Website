@@ -1,6 +1,6 @@
 import { buildComponents } from "./components";
 import { formatBlogDate } from "./blog-viewer";
-import { API_URL } from "./config";
+
 import type { Blog } from "./blog-viewer";
 
 const fillBlogHistory = async () => {
@@ -12,7 +12,7 @@ const fillBlogHistory = async () => {
     }
 
     try {
-        const result = await fetch(`${API_URL}/api/blogs`);
+        const result = await fetch(`${import.meta.env.VITE_API_URL}/api/blogs`);
 
         if (!result.ok) { throw new Error(`Failed to fetch blogs.`); }
 

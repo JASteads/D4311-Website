@@ -721,18 +721,6 @@ const requireUser = async (req: express.Request, res: ExpressResponse, accountTy
 const initialiazeDatabase = async () => {
     // Table creation queries to run
     const queries = [
-        { name: 'Blogs', sql: 
-            `CREATE TABLE IF NOT EXISTS blogs(
-                id SERIAL PRIMARY KEY,
-                title TEXT,
-                author TEXT,
-                subject TEXT, -- Short description used in blips
-                body TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                game_id INT,
-                FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
-            );`
-        },
         { name: 'Products', sql: 
             `CREATE TABLE IF NOT EXISTS products(
                 id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -753,6 +741,18 @@ const initialiazeDatabase = async () => {
                 date TEXT,
                 description TEXT,
                 project_link TEXT
+            );`
+        },
+        { name: 'Blogs', sql: 
+            `CREATE TABLE IF NOT EXISTS blogs(
+                id SERIAL PRIMARY KEY,
+                title TEXT,
+                author TEXT,
+                subject TEXT, -- Short description used in blips
+                body TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                game_id INT,
+                FOREIGN KEY (game_id) REFERENCES products(id) ON DELETE SET DEFAULT
             );`
         },
         { name: 'Gallery Items', sql: 
@@ -786,11 +786,8 @@ const initialiazeDatabase = async () => {
         }
     ];
 
-    // Run all queries in parallel and verify results
-    const results = await Promise.allSettled(queries.map(q => pool.query(q.sql)));
-    if (!results.every((result) => result.status === 'fulfilled')) {
-        throw new Error('Failed to connect to the database');
-    }
+    // Run all queries in order
+    for (const q of queries) { await pool.query(q.sql); };
 }
 
 startServer();

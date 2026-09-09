@@ -1,5 +1,5 @@
 import { buildComponents } from "./components";
-import { API_URL } from "./config";
+
 
 class PortfolioItem {
     id: number;
@@ -22,7 +22,7 @@ class PortfolioItem {
 
 const getPortfolioItems = async () => {
     try {
-        const res = await fetch(`${API_URL}/api/portfolio`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/portfolio`);
 
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);

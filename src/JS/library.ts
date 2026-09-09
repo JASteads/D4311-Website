@@ -1,5 +1,5 @@
 import { buildComponents } from "./components";
-import { API_URL } from "./config";
+
 import type { Product } from "./product";
 
 const fillLibrary = async () => {
@@ -10,7 +10,7 @@ const fillLibrary = async () => {
     }
 
     try {
-        const result = await fetch(`${API_URL}/api/products`);
+        const result = await fetch(`${import.meta.env.VITE_API_URL}/api/products`);
 
         if (!result.ok) { throw new Error(`Failed to fetch products.`); }
 

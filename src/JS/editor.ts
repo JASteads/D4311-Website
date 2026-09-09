@@ -1,5 +1,5 @@
 import type { Account } from "./account-manager";
-import { API_URL } from "./config";
+
 import { buildScripts } from "./page-builder";
 import { basicAdminAccessRequest } from "./permissions";
 
@@ -63,7 +63,7 @@ export abstract class Editor {
         }
         
         try {
-            const res = await fetch(`${API_URL}/api/${this.getTableName()}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${this.getTableName()}`, {
                 method: this.isUpdate ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.isUpdate ? await this.getPutBody() : await this.getPostBody()),

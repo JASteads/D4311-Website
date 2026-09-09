@@ -38,7 +38,7 @@ const updateDisplay = (category: string) => {
 
 const getGalleryItems = async () => {
     try {
-        const res = await fetch(`${API_URL}/api/gallery`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/gallery`);
 
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
@@ -143,7 +143,7 @@ const updateCategories = async () => {
     gallerySelect.disabled = true;
 
     try {
-        const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
+        const resCategories = await fetch(`${import.meta.env.VITE_API_URL}/api/products?onlyTitles=true`);
 
         if (!resCategories.ok) {
             throw new Error(`Failed to fetch categories: ${resCategories.status}`);
