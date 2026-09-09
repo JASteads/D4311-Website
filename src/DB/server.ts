@@ -33,6 +33,11 @@ app.use(cors({
     credentials: true
 }));
 
+// Use dist on production build
+if (!debugMode) {
+    app.use(express.static(path.resolve(__dirname, '../../dist')));
+}
+
 const onDatabaseConnect = async () => {
     try {
         await initialiazeDatabase();
