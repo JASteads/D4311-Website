@@ -79,7 +79,7 @@ const generatePortfolioItem = (item: PortfolioItem) => {
 
     const thumbnail = document.createElement('img');
     thumbnail.className = 'project-image';
-    thumbnail.src = `${root}/preview_portfolio_${item.id}.png`;
+    thumbnail.src = `${root}/preview_Portfolio_${item.id}.png`;
     thumbnail.alt = item.title;
     thumbnail.style.maxWidth = '250px';
     

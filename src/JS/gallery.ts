@@ -1,5 +1,4 @@
 import { buildComponents } from "./components.ts";
-import { API_URL } from "./config.ts";
 import { GalleryEditor } from "./gallery-editor.ts";
 import type { GalleryItem } from "./gallery-item.ts";
 import { basicAdminAccessRequest } from "./permissions.ts";
