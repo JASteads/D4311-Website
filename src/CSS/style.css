@@ -381,12 +381,12 @@ footer small {
 
 .home-nav {
     display: flex;
-    justify-content: space-around;
+    justify-content: start;
     height: fit-content;
     background-color: rgb(0, 15, 0);
     border: #0a0 solid;
     border-width: 1px 0;
-    padding: 30px 0;
+    padding: 30px 100px;
 }
 
 .home-nav .discord-button {
@@ -395,6 +395,7 @@ footer small {
     color:rgb(223, 230, 255);
     border:rgb(177, 195, 233) inset 5px;
     border-radius: 20px;
+    min-height: 180px;
     width: 280px;
     font-size: 2.4em;
     text-align: center;
@@ -493,7 +494,7 @@ footer small {
  /* Sidebars */
 .sidebar {
     background: rgb(15, 31, 20);
-    width: 260px;
+    width: 400px;
     height: fit-content;
     border: 1px solid rgba(0, 100, 0, 0.3);
     border-radius: 2px;
@@ -1156,7 +1157,7 @@ footer small {
 /* ====================== RESPONSIVE ====================== */
 
 @media (max-width: 1100px) {
-    .container {
+    .home-container {
         flex-direction: column;
         align-items: center;
     }
@@ -1166,6 +1167,10 @@ footer small {
         flex-direction: column;
         max-width: 720px;
         width: 100%;
+    }
+
+    .home-nav {
+        justify-content: center;
     }
 
     .sidebar {
