@@ -1,7 +1,6 @@
-import { API_URL } from "./config";
+
 import { basicAdminAccessRequest } from "./permissions";
 import { buildComponents } from "./components";
-import { safeLink } from "./site-nav";
 
 class FillConfig {
     headerText: string;
@@ -20,7 +19,7 @@ class FillConfig {
 const getTableItems = async (url: string) => {
     const items = [];
     try {
-        const res = await fetch(`${API_URL}/${url}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/${url}`);
 
         if (!res.ok) {
             throw new Error(`Request failure: ${res.status}`);    
@@ -35,13 +34,12 @@ const getTableItems = async (url: string) => {
 };
 
 const confirmDelete = async (tableName: string, item: any, deleteURL: string) => {
-    if (!confirm(`Delete ${item.name} from ${tableName}?`)) {
+    if (!confirm(`Delete '${item.title}' from ${tableName}?`)) {
         return;
     }
 
     try {
-        const url = `${API_URL}/${deleteURL}/${item.id}`;
-        alert(url);
+        const url = `${import.meta.env.VITE_API_URL}/${deleteURL}/${item.id}`;
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         
         if (!res.ok) {
@@ -63,7 +61,7 @@ const buildSection = async (url: string, config: FillConfig) => {
 
     const section = document.createElement('section');
 
-    const generateListItem = async (item: any) => {
+    const generateListItem = (item: any) => {
         const title = document.createElement('p');
         title.textContent = item.title;
 
@@ -94,19 +92,19 @@ const buildSection = async (url: string, config: FillConfig) => {
 
         const viewHyperlink = document.createElement('a');
         viewHyperlink.textContent = 'View';
-        viewHyperlink.href = await safeLink(`${viewLink}?id=${item.id}`);
+        viewHyperlink.href = `${viewLink}?id=${item.id}`;
 
         const editHyperlink = document.createElement('a');
         editHyperlink.textContent = 'Edit';
-        editHyperlink.href = await safeLink('admin_editor.html');
-        editHyperlink.addEventListener('click', async () => {
+        editHyperlink.href = 'admin_editor.html';
+        editHyperlink.addEventListener('click', () => {
             sessionStorage.setItem('edit-item', JSON.stringify(item));
             editHyperlink.click();
         });
 
         const deleteHyperlink = document.createElement('a');
         deleteHyperlink.textContent = 'Delete';
-        deleteHyperlink.href = '#';
+        deleteHyperlink.style = 'text-decoration: underline; cursor: pointer;';
         deleteHyperlink.addEventListener('click', () => confirmDelete(headerText, item, deleteURL));
 
         options.append(viewHyperlink, editHyperlink, deleteHyperlink);
@@ -117,9 +115,8 @@ const buildSection = async (url: string, config: FillConfig) => {
         return listItem;
     }
 
-    const listElements = await Promise.all(items.map(i => generateListItem(i)));
     const list = document.createElement('ul');
-    list.append(...listElements);
+    list.append(...items.map(i => generateListItem(i)));
 
     const header = document.createElement('h2');
     header.textContent = config.headerText;
@@ -182,10 +179,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     main.style.display = 'none';
     
     const user = await buildComponents();
-
     if (!await basicAdminAccessRequest(user)) {
         console.warn('Access denied');
-        window.location.href = await safeLink('load_fail.html');
+        window.location.href = 'load_fail.html';
         return;
     }
 

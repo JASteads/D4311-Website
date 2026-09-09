@@ -1,31 +1,10 @@
-import { API_URL } from './config';
-import { safeLink } from './site-nav';
-
-export class Blog {
+export interface Blog {
     id: number;
     title: string;
     author: string;
     body: string;
     created_at: string;
-    hook: string
-
-    constructor(b?: Blog) {
-        if (b) {
-            this.id = b.id;
-            this.title = b.title;
-            this.author = b.author;
-            this.body = b.body;
-            this.created_at = b.created_at;
-            this.hook = b.hook;
-        } else {
-            this.id = -1;
-            this.title = '';
-            this.author = '';
-            this.body = '';
-            this.created_at = Date.now().toLocaleString();
-            this.hook = '';
-        }
-    }
+    hook: string;
 }
 
 /**
@@ -56,14 +35,14 @@ export const showBlog = async () => {
             }
         }
 
-        const blog = await getBlog(paramsID);
+        const blog = await getBlog(paramsID) as Blog;
         if (!blog || !blog.id) {
             throw new Error('Blog does not exist.');
         }
 
         generateBlogFull(blog);
     } catch (e) {
-        window.location.href = await safeLink('load_fail.html');
+        window.location.href = 'load_fail.html';
     }
 }
 
@@ -275,18 +254,18 @@ const getDaySuffix = (day: number) => {
  */
 const getBlog = async (id: number) => {
     try {
-        const res = await fetch(`${API_URL}/api/blog/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/blog/${id}`);
 
         if (!res.ok) {
             if (res.status === 404) console.warn(`Blog ${id} was not found.`);
             throw new Error("Failed to fetch blog");
         }
 
-        return await res.json();
+        return await res.json() as Blog[];
     }
     catch (e) {
         console.error("Something went wrong:", e);
-        return new Blog();
+        return { id: -1, title: '', author: '', created_at: '', body: '', hook: '' } as Blog;
     }
 }
 
@@ -296,8 +275,8 @@ const getBlog = async (id: number) => {
 const getRecentBlogs = async (n: number | null = null) => {
     try {
         const url = n && n > 0 
-            ? `${API_URL}/api/blogs?limit=${n}` 
-            : `${API_URL}/api/blogs`;
+            ? `${import.meta.env.VITE_API_URL}/api/blogs?limit=${n}` 
+            : `${import.meta.env.VITE_API_URL}/api/blogs`;
 
         const res = await fetch(url);
 
@@ -322,7 +301,7 @@ const generateBlogPreview = async (blog: Blog) => {
     title.textContent = blog.title;
 
     const link = document.createElement('a');
-    link.href = await safeLink(`blog_viewer.html?id=${blog.id}`);
+    link.href = `blog_viewer.html?id=${blog.id}`;
     link.appendChild(title);
 
     const meta = document.createElement('small');

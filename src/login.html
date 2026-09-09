@@ -8,46 +8,63 @@
     <script type="module" src="JS/login.ts"></script>
 </head>
 <body>
-    <div class="login-container">
+    <main class="login">
         <div class="type-container">
             <button class="type" id="sign-in-toggle">Sign In</button>
             <button class="type" id="sign-up-toggle">Sign Up</button>
         </div>
 
-        <div class="sign-in" id="sign-in">
-            <div class="flavor">
-                <h2>Lock in!</h2>
-                <small><i>The white void beckons.</i></small>
-            </div>
-            <div class="sign-in-info">
-                <span>Username</span>
-                <div id="username-login" contenteditable="true"></div>
-                <span>Password</span>
-                <div id="pw-login" contenteditable="true"></div>
-                <button id="sign-in-button">Log In</button>
-            </div>
-        </div>
+        <div class="login-container">
+            <div class="sign-in" id="sign-in" style="display: flex;">
+                <div class="flavor">
+                    <h2>Lock in!</h2>
+                    <small><i>The white void beckons.</i></small>
+                </div>
+                <form method="POST" id="login" action="/api/login" class="sign-in-info">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" autocomplete="username" required>
+                    
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" type="password" required>
+                    
+                    <label for="remember">
+                        <input id="remember" name="remember" type="checkbox"> 
+                        Remember Login
+                    </label>
 
-        <div class="sign-up" id="sign-up">
-            <div class="flavor">
-                <h2>New Here, are You?</h2>
-                <small><i>Go on, tell us more.</i></small>
+                    <div id="login-fail" class="fail" hidden><b>Invalid credentials</b></div>
+                    
+                    <button type="submit">Log In</button>
+                </form>
             </div>
-            <div class="sign-up-info">
-                <span>Username</span>
-                <div id="username-reg" contenteditable="true"></div>
-                <span>Nickname</span>
-                <div id="alias-reg" contenteditable="true"></div>
-                <span>Email Address</span>
-                <div id="email-reg" contenteditable="true"></div>
-                <span>Password</span>
-                <div id="pw-reg" contenteditable="true"></div>
-                <span>Confirm Password</span>
-                <div id="pw-confirm" contenteditable="true"></div>
-                <button id="register-button">Register</button>
+
+            <div class="sign-up" id="sign-up" style="display: none;">
+                <div class="flavor">
+                    <h2>New Here, are You?</h2>
+                    <small><i>Go on, tell us more.</i></small>
+                </div>
+                <form method="POST" action="/api/user" id="reg" class="sign-up-info">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" required>
+
+                    <label for="alias">Nickname</label>
+                    <input id="alias" type="text" name="alias" required>
+                    
+                    <label for="email">Email Address</label>
+                    <input id="email" type="text" name="email" required>
+                    
+                    <label for="pw-reg">Password</label>
+                    <input id="pw-reg" type="password" name="password" type="password" id="pw-reg" required>
+
+                    <label for="pw-confirm">Confirm Password</label>
+                    <input id="pw-confirm" type="password" name="confirm" type="password" id="pw-confirm" required>
+
+                    <div id="reg-fail" class="fail" hidden><b>Username or email is already taken</b></div>
+
+                    <button type="submit">Register</button>
+                </form>
             </div>
         </div>
-        
-    </div>
+    </main>
 </body>
 </html>

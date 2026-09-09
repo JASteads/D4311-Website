@@ -1,5 +1,5 @@
 import type { Account } from "./account-manager";
-import { API_URL } from "./config";
+
 import { Editor } from "./editor";
 import { GalleryItem } from "./gallery-item";
 import { ImageUploader } from "./image-uploader";
@@ -70,18 +70,19 @@ export class GalleryEditor extends Editor {
         this.categorySelect = this.getEl('select') as HTMLSelectElement;
 
         document.getElementById('upload-button')?.addEventListener('click', async () => {
+            const item = await this.publish(user);
+            if (!item) { return; }
+            
             if (!this.uploader.isReady()) {
                 if (!this.isUpdate) {
                     alert('An image is required to upload this item');
                     return;
                 }
             } else {
-                const imgMsg = await this.uploader.upload(user, this.getID()) ? 
-                    'Image uploaded successfully' : 'Image upload failed';
-                
-                alert(imgMsg);
+                await this.uploader.upload(user, item.id);
             }
-            this.publish(user);
+
+            window.location.href = `${this.getViewerURL()}?id=${item.id}`;
         });
         await this.updateCategories();
     }
@@ -117,7 +118,7 @@ export class GalleryEditor extends Editor {
         this.categorySelect.disabled = true;
     
         try {
-            const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
+            const resCategories = await fetch(`${import.meta.env.VITE_API_URL}/api/products?onlyTitles=true`);
     
             if (!resCategories.ok) {
                 throw new Error(`Failed to fetch categories: ${resCategories.status}`);
@@ -156,7 +157,7 @@ export class GalleryEditor extends Editor {
         if (!category) { return categoryOther; }
 
         try {
-            const result = await fetch(`${API_URL}/api/products`);
+            const result = await fetch(`${import.meta.env.VITE_API_URL}/api/products`);
 
             if (!result.ok) {
                 throw new Error(`HTTP Error: ${result.status}`);

@@ -1,7 +1,7 @@
 import type { Account } from "./account-manager";
 import { Editor } from './editor';
 
-const keys = { body: 'body', content: 'content', placeholder: 'placeholder' } as const;
+const keys = { title: 'title', body: 'body', content: 'content', placeholder: 'placeholder' } as const;
 
 export class BlogEditor extends Editor {
     constructor(user: Account, isUpdate: boolean = false) {
@@ -12,14 +12,15 @@ export class BlogEditor extends Editor {
     }
 
     setContent = (title: string, body: string) => {
-        this.setText(document.getElementById('blog-title'), title);
+        const titleField = document.getElementById('blog-title') as HTMLInputElement;
+        if (titleField) { titleField.value = title; }
         this.setText(this.getEl(keys.content), body);
     }
 
     protected getTemplate = () => ({
         'blog-editor': { tag: 'div', classList: 'blog-editor', children: [
             { tag: 'span', id: 'title-label', classList: 'title-label', textContent: 'Title' },
-            { tag: 'div', id: 'blog-title', classList: 'blog-title', edit: true },
+            { tag: 'input', id: 'blog-title', classList: 'blog-title' },
             { tag: 'div', id: 'buttons', children: [
                 { tag: 'button', id: 'bold-button', textContent: 'Bold' },
                 { tag: 'button', id: 'em-button', textContent: 'Italics' },
@@ -39,12 +40,13 @@ export class BlogEditor extends Editor {
     protected getTableName = () => 'blog';
 
     protected getColumns = async () => ({ columns: {
-        title: document.getElementById('blog-title')?.textContent.trim() || 'Untitled', 
+        title: (document.getElementById('blog-title') as HTMLInputElement).value.trim() || 'Untitled', 
         body: document.getElementById('editor-content')?.textContent.trim() || ''
     }});
 
     protected locateElements = () => this.locate(
         { key: 'editor',         id: 'blog-editor'        },
+        { key: keys.title,       id: 'blog-title'         },
         { key: keys.body,        id: 'editor-body'        },
         { key: keys.content,     id: 'editor-content'     },
         { key: keys.placeholder, id: 'editor-placeholder' }
@@ -72,7 +74,12 @@ export class BlogEditor extends Editor {
         this.assignLabel('size', document.getElementById('size-button'));
 
         const publishButton = document.getElementById('publish-button');
-        publishButton?.addEventListener('click', () => this.publish(user));
+        publishButton?.addEventListener('click', async () => {
+            const item = await this.publish(user);
+            if (!item) { return; }
+            
+            window.location.href = `${this.getViewerURL()}?id=${item.id}`;
+        });
     }
 
     // =================== EDITOR-SPECIFIC FUNCTIONS ===================

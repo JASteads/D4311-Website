@@ -16,59 +16,74 @@ class Section {
 
 // =================== PERSISTENT DATA ===================
 
-let cardMap: Map<string, HTMLElement[]>; // Stores generated cards that can be overwritten via filter
-let sections: Record<string, Section>;
-let categories: string[];
-
 let gallerySelect: HTMLSelectElement;
-let emptyGalleryMessage: HTMLElement | null;
 let editor: GalleryEditor;
 
-// =================== GALLERY LOADING ===================
+const sections: Record<string, Section> = {};
+const cardMap = new Map<string, HTMLElement[]>(); // Stores generated cards that can be overwritten via filter
+const galleryItems: any[] = [];
 
-const loadGallery = async (category?: string) => {
+const updateDisplay = (category: string) => {
+    let categoryShown = false;
+    Object.entries(sections).forEach(i => {
+        i[1].section.hidden = !(category === 'None' || i[0] === category);
+        categoryShown = categoryShown || !i[1].section.hidden;
+    });
+
+    const message = document.getElementById('empty-gallery-message');
+    if (message) { message.hidden = categoryShown; }
+}
+
+// =================== SETUP ===================
+
+const getGalleryItems = async () => {
+    try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/gallery`);
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        return (await res.json()).map((i: any) => ({
+            id: i.id,
+            title: i.title,
+            caption: i.caption,
+            category: i.category,
+            createdAt: new Date(Date.parse(i.created_at)).toLocaleString()
+        }));
+    }
+    catch (e) {
+        console.error("Failed to fetch gallery items:", e);
+        return [];
+    }
+}
+
+const loadGallery = async () => {
     const galleryGrid = document.getElementById('gallery-grid');
-
     if (!galleryGrid) {
         console.error("Gallery grid container not found.");
         return;
     }
-    
-    if (category === 'None') {
-        category = undefined; // Remove the value so we don't query for 'None'
-    }
 
     // Gather the expected gallery data from DB
-    const galleryItems = await getGalleryItems(category);
+    if (galleryItems.length === 0) {
+        galleryItems.push(...await getGalleryItems());
+    }
     
-    if (!galleryItems) {
-        console.warn("Gallery query failed.");
+    if (galleryItems.length === 0) {
+        const message = document.getElementById('empty-gallery-message');
+        if (message) { message.hidden = false; }
         return;
     }
-
-    emptyGallery(); 
-    // Putting this in separate block so it immediately leaves scope after use
-    {
-        const emptyGalleryMessage = document.getElementById('empty-gallery-message');
-        if (emptyGalleryMessage) {
-            if (galleryItems.length === 0) {
-                emptyGalleryMessage.style.display = 'block';
-                return;
-            } else {
-                emptyGalleryMessage.style.display = 'none';
-            }      
-        }
-    }
     
-    // Prepare the cards
     galleryItems.forEach((i: GalleryItem) => {
         const { category, element } = generateImageCard(i);
 
         if (!cardMap.has(category)) { cardMap.set(category, []); }
-
         cardMap.get(category)?.push(element);
     });
-
+    await updateCategories();
+    
     // Create and populate sections with the new cards
     cardMap.forEach((section, category) => {
         if (!(category in sections)) {
@@ -81,32 +96,6 @@ const loadGallery = async (category?: string) => {
     for (let category in sections) {
         galleryGrid.appendChild(sections[category].section);
     }
-}
-
-const generateCardSection = (categoryName: string) => {
-    const section = document.createElement('section');
-    section.className = 'card-section';
-    
-    const title = document.createElement('h2');
-    title.textContent = categoryName;
-
-    const container = document.createElement('div');
-    container.className = 'image-container';
-
-    section.appendChild(title);
-    section.appendChild(container);
-
-    return { section, container };
-}
-
-const emptyGallery = () => {
-    cardMap?.forEach(s => s.forEach(e => e.remove())); // Remove all cards
-    for (let category in sections) {
-        sections[category].section.remove();
-    }
-
-    cardMap = new Map<string, HTMLElement[]>();
-    sections = {};
 }
 
 // Does not use caption or date yet. This is intended for when full images are rendered on top of the page.
@@ -132,41 +121,37 @@ const generateImageCard = (item: GalleryItem) => {
     return { category: item.category, element: cardElement };
 }
 
-const getGalleryItems = async (category?: string) => {
-    try {
-        const res = await fetch(`${API_URL}/api/gallery${category ? `?category=${category}` : ''}`);
+const generateCardSection = (categoryName: string) => {
+    const section = document.createElement('section');
+    section.className = 'card-section';
+    
+    const title = document.createElement('h2');
+    title.textContent = categoryName;
 
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return await res.json();
-    }
-    catch (e) {
-        console.error("Failed to fetch gallery items:", e);
-        return [];
-    }
+    const container = document.createElement('div');
+    container.className = 'image-container';
+
+    section.appendChild(title);
+    section.appendChild(container);
+
+    return { section, container };
 }
-
-// =================== SETUP ===================
 
 // Special version of the GalleryUploader updateCategories() for efficiency
 const updateCategories = async () => {
     // Disable filters until prepared
-    gallerySelect.disabled = true; 
-    editor?.setSelectDisabled(true);
+    gallerySelect.disabled = true;
 
     try {
-        const resCategories = await fetch(`${API_URL}/api/products?onlyTitles=true`);
+        const resCategories = await fetch(`${import.meta.env.VITE_API_URL}/api/products?onlyTitles=true`);
 
         if (!resCategories.ok) {
             throw new Error(`Failed to fetch categories: ${resCategories.status}`);
         }
 
         // Get category array from server and populate options
-        categories = await resCategories.json();
-        categories.forEach(c => {
+        (await resCategories.json()).forEach((c: string) => {
             const nextOptGallery = document.createElement('option');
-            
             nextOptGallery.value = c;
             nextOptGallery.textContent = c;
 
@@ -175,7 +160,6 @@ const updateCategories = async () => {
 
         // Re-enable filters only on success
         gallerySelect.disabled = false;
-        editor?.setSelectDisabled(false);
     } catch (e: any) {
         console.error(e);
     }
@@ -188,21 +172,15 @@ const toggleUploadMenu = () => {
 
     if (!container) { return; }
     
-    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    container.hidden = !container.hidden;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await buildComponents();
 
-    emptyGalleryMessage = document.getElementById('empty-gallery-message');
-    if (emptyGalleryMessage) {
-        emptyGalleryMessage.style.display = 'none';
-    }
-
     gallerySelect = document.getElementById('gallery-select') as HTMLSelectElement;
     if (gallerySelect) {
-        gallerySelect.addEventListener('change', async () => await loadGallery(gallerySelect.value));
-        await updateCategories();
+        gallerySelect.addEventListener('change', async () => updateDisplay(gallerySelect.value));
 
         // TODO : Replace this with server HTML injection
         if (await basicAdminAccessRequest(user)) {
@@ -222,10 +200,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 uploadText.insertAdjacentElement('afterend', editorContainer);
                 editorContainer.appendChild(closeButton);
             }
-            uploadText.addEventListener('click', toggleUploadMenu);
+
+            const container = editor.getContainer();
+            if (container) {
+                container.hidden = true;
+                uploadText.addEventListener('click', () => container.hidden = !container.hidden);
+            }
         }
     }
 
-    toggleUploadMenu();
     await loadGallery();
+    document.body.getElementsByTagName('main')[0].hidden = false;
 });

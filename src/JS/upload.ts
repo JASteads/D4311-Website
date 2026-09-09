@@ -4,7 +4,6 @@ import { PortfolioWriter } from "./portfolio-writer.ts";
 import { ProductWriter } from "./product-writer.ts";
 import { BlogEditor } from "./blog-editor.ts";
 import { basicAdminAccessRequest } from "./permissions.ts";
-import { safeLink } from "./site-nav.ts";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const details = document.getElementById('submission-details');
@@ -18,10 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     main.style.display = 'none';
 
     const user = await buildComponents();
-    if (!await basicAdminAccessRequest(user)) {
-        window.location.href = await safeLink('load_fail.html');
-        return; // Get yeeted
-    }
+    if (!await basicAdminAccessRequest(user)) { window.location.href = 'load_fail.html'; }
 
     // Find and hide all editor containers
     const items = [
